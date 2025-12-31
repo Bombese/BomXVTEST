@@ -89,64 +89,85 @@ TabFishing:Button({
 })
 --// Hack Tab
 local TabHack = Window:Tab({
-    Title = "Hack",
-    Icon = "zap"
+	Title = "Hack",
+	Icon = "zap"
 })
---// Fly Bypass (Toggle)
+
+--==============================
+-- SECTION : Movement
+--==============================
+TabHack:Label({
+	Title = "Movement"
+})
+
+--==============================
+-- SIMPLE FLY (SAFE / NO FLOAT)
+--==============================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local UIS = game:GetService("UserInputService")
 
-local player = Players.LocalPlayer
+local lp = Players.LocalPlayer
+local char, hum, hrp
 local flying = false
 local bv, bg
 local flyConn
 
-local function stopFly()
-	flying = false
-	if flyConn then flyConn:Disconnect() flyConn = nil end
-	if bv then bv:Destroy() bv = nil end
-	if bg then bg:Destroy() bg = nil end
-
-	local char = player.Character
-	if char and char:FindFirstChild("Humanoid") then
-		char.Humanoid.PlatformStand = false
-	end
+local function setupChar()
+	char = lp.Character or lp.CharacterAdded:Wait()
+	hum = char:WaitForChild("Humanoid")
+	hrp = char:WaitForChild("HumanoidRootPart")
 end
+setupChar()
+lp.CharacterAdded:Connect(setupChar)
 
 local function startFly()
-	local char = player.Character
-	if not char then return end
-	local hrp = char:FindFirstChild("HumanoidRootPart")
-	local hum = char:FindFirstChild("Humanoid")
-	if not hrp or not hum then return end
-
+	if flying then return end
 	flying = true
-	hum.PlatformStand = true
 
 	bv = Instance.new("BodyVelocity")
-	bv.MaxForce = Vector3.new(9e9,9e9,9e9)
+	bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
 	bv.Velocity = Vector3.zero
 	bv.Parent = hrp
 
 	bg = Instance.new("BodyGyro")
-	bg.MaxTorque = Vector3.new(9e9,9e9,9e9)
+	bg.MaxTorque = Vector3.new(1e5, 1e5, 1e5)
+	bg.P = 9e4
 	bg.CFrame = hrp.CFrame
 	bg.Parent = hrp
+
+	hum.PlatformStand = true
 
 	flyConn = RunService.RenderStepped:Connect(function()
 		if not flying then return end
 		local cam = workspace.CurrentCamera
-		local move = Vector3.zero
-
-		if UIS:IsKeyDown(Enum.KeyCode.W) then move += cam.CFrame.LookVector end
-		if UIS:IsKeyDown(Enum.KeyCode.S) then move -= cam.CFrame.LookVector end
-		if UIS:IsKeyDown(Enum.KeyCode.A) then move -= cam.CFrame.RightVector end
-		if UIS:IsKeyDown(Enum.KeyCode.D) then move += cam.CFrame.RightVector end
-		if UIS:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0,1,0) end
-		if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then move -= Vector3.new(0,1,0) end
-
-		bv.Velocity = move * 60
+		local dir = hum.MoveDirection
+		bv.Velocity = cam.CFrame:VectorToWorldSpace(dir) * 50
 		bg.CFrame = cam.CFrame
 	end)
 end
+
+local function stopFly()
+	flying = false
+
+	if flyConn then flyConn:Disconnect() flyConn = nil end
+	if bv then bv:Destroy() bv = nil end
+	if bg then bg:Destroy() bg = nil end
+
+	hum.PlatformStand = false
+	hrp.AssemblyLinearVelocity = Vector3.zero -- <<< ทำให้ตกจริง
+end
+
+--==============================
+-- TOGGLE : FLY
+--==============================
+TabHack:AddToggle({
+	Title = "Fly Bypass",
+	Default = false,
+	Callback = function(state)
+		if state then
+			startFly()
+		else
+			stopFly()
+		end
+	end
+})
