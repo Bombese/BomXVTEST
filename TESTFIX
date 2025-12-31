@@ -18,24 +18,20 @@ local Window = WindUI:CreateWindow({
         Draggable = true,
     }
 })
-
---// Fishing Tab (แท็บแรก)
+--// Fishing Tab
 local TabFishing = Window:Tab({
     Title = "Fishing",
     Icon = "fish"
 })
 
 TabFishing:Select()
+task.wait() -- สำคัญมากสำหรับ WindUI บางเวอร์ชัน
 
--- ช่องว่างไว้ต่อฟังก์ชันทีหลัง
-TabFishing:Label({
-    Title = "Fishing Functions"
-})
 TabFishing:Button({
     Title = "Hold Fishing Rod",
     Desc = "Equip fishing rod from hotbar",
     Callback = function()
-        local args = { 1 }
+        local args = {1}
         game:GetService("ReplicatedStorage")
             :WaitForChild("Packages")
             :WaitForChild("_Index")
