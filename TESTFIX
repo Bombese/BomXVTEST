@@ -63,3 +63,14 @@ TabFishing:Toggle({
             :InvokeServer(unpack(args))
     end
 })
+TabFishing:Button({
+    Title = "TP Buy Rods",
+    Desc = "Teleport to Rod Shop",
+    Callback = function()
+        local player = game:GetService("Players").LocalPlayer
+        local char = player.Character or player.CharacterAdded:Wait()
+        local hrp = char:WaitForChild("HumanoidRootPart")
+
+        hrp.CFrame = CFrame.new(145.23, 20.47, 2834.56)
+    end
+})
