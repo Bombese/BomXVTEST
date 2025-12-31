@@ -194,25 +194,49 @@ TabHack:Toggle({
                 bp.Position = Vector3.new(hrp.Position.X, smoothY, hrp.Position.Z)
                 bg.CFrame = cam.CFrame
             end)
+else
+    getgenv().Fly = false
 
-        else
-            getgenv().Fly = false
-            if FlyConnection then FlyConnection:Disconnect() end
-            if ReframeThread then task.cancel(ReframeThread) end
+    if FlyConnection then
+        FlyConnection:Disconnect()
+        FlyConnection = nil
+    end
 
-            local char = game.Players.LocalPlayer.Character
-            if char then
-                for _,v in ipairs(char:GetDescendants()) do
-                    if v:IsA("BasePart") then
-                        v.CanCollide = true
-                    end
-                    if v:IsA("Highlight") then
-                        v:Destroy()
-                    end
-                end
-                local hum = char:FindFirstChild("Humanoid")
-                if hum then hum.PlatformStand = false end
+    if ReframeThread then
+        task.cancel(ReframeThread)
+        ReframeThread = nil
+    end
+
+    local plr = game.Players.LocalPlayer
+    local char = plr.Character
+    if not char then return end
+
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+
+    if hrp then
+        for _,v in ipairs(hrp:GetChildren()) do
+            if v:IsA("BodyPosition")
+            or v:IsA("BodyVelocity")
+            or v:IsA("BodyGyro") then
+                v:Destroy()
             end
         end
+
+        -- บังคับให้ตก
+        hrp.AssemblyLinearVelocity = Vector3.new(0, -50, 0)
     end
-})
+
+    if hum then
+        hum.PlatformStand = false
+        hum:ChangeState(Enum.HumanoidStateType.Freefall)
+    end
+
+    for _,v in ipairs(char:GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.CanCollide = true
+        elseif v:IsA("Highlight") then
+            v:Destroy()
+        end
+    end
+end
