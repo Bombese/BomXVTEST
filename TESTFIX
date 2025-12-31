@@ -45,7 +45,7 @@ local AutoFishing = false
 
 TabFishing:Toggle({
     Title = "Auto Fishing",
-    Desc = "Toggle auto fishing on/off",
+    Desc = "Need Level 3",
     Value = false,
     Callback = function(v)
         AutoFishing = v
