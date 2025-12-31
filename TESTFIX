@@ -1,0 +1,33 @@
+--// WindUI - ORIGINAL + Fishing Tab
+local WindUI = loadstring(game:HttpGet(
+    "https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"
+))()
+
+--// Create Window
+local Window = WindUI:CreateWindow({
+    Title = "NOOBHUB",
+    Icon = "monitor",
+    Author = "Bom Bom",
+
+    OpenButton = {
+        Title = "Open UI",
+        Icon = "menu",
+        CornerRadius = UDim.new(0,16),
+        StrokeThickness = 2,
+        Enabled = true,
+        Draggable = true,
+    }
+})
+
+--// Fishing Tab (แท็บแรก)
+local TabFishing = Window:Tab({
+    Title = "Fishing",
+    Icon = "fish"
+})
+
+TabFishing:Select()
+
+-- ช่องว่างไว้ต่อฟังก์ชันทีหลัง
+TabFishing:Label({
+    Title = "Fishing Functions"
+})
