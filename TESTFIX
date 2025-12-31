@@ -92,6 +92,7 @@ local TabHack = Window:Tab({
     Title = "Hack",
     Icon = "zap"
 })
+
 --// SIMPLE FLY (SAFE & STABLE)
 
 local Players = game:GetService("Players")
