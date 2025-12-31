@@ -240,3 +240,48 @@ else
         end
     end
 end
+getgenv().StopFly = function()
+    getgenv().Fly = false
+
+    local Players = game:GetService("Players")
+    local plr = Players.LocalPlayer
+    local char = plr.Character
+    if not char then return end
+
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+
+    -- ลบ BodyMover แบบบังคับ
+    if hrp then
+        for _,v in ipairs(hrp:GetChildren()) do
+            if v:IsA("BodyPosition")
+            or v:IsA("BodyVelocity")
+            or v:IsA("BodyGyro") then
+                v.MaxForce = Vector3.zero
+                v:Destroy()
+            end
+        end
+
+        -- รีเซ็ตฟิสิกส์ (ตัวนี้ทำให้ตก)
+        hrp.Anchored = false
+        hrp.AssemblyLinearVelocity = Vector3.new(0, -120, 0)
+        hrp.AssemblyAngularVelocity = Vector3.zero
+    end
+
+    -- รีเซ็ต Humanoid State
+    if hum then
+        hum.PlatformStand = false
+        hum:ChangeState(Enum.HumanoidStateType.Freefall)
+        task.wait()
+        hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+    end
+
+    -- คืนการชน + ลบ Highlight
+    for _,v in ipairs(char:GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.CanCollide = true
+        elseif v:IsA("Highlight") then
+            v:Destroy()
+        end
+    end
+end
