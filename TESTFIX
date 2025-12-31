@@ -89,11 +89,6 @@ TabFishing:Button({
 })
 --// Hack Tab
 local TabHack = Window:Tab({
-	Title = "Hack",
-	Icon = "zap"
-})
---// Hack Tab
-local TabHack = Window:Tab({
     Title = "Hack",
     Icon = "zap"
 })
@@ -199,25 +194,31 @@ TabHack:Toggle({
                 bp.Position = Vector3.new(hrp.Position.X, smoothY, hrp.Position.Z)
                 bg.CFrame = cam.CFrame
             end)
+else
+    getgenv().Fly = false
+    if FlyConnection then FlyConnection:Disconnect() end
+    if ReframeThread then task.cancel(ReframeThread) end
 
-        else
-            getgenv().Fly = false
-            if FlyConnection then FlyConnection:Disconnect() end
-            if ReframeThread then task.cancel(ReframeThread) end
-
-            local char = game.Players.LocalPlayer.Character
-            if char then
-                for _,v in ipairs(char:GetDescendants()) do
-                    if v:IsA("BasePart") then
-                        v.CanCollide = true
-                    end
-                    if v:IsA("Highlight") then
-                        v:Destroy()
-                    end
-                end
-                local hum = char:FindFirstChild("Humanoid")
-                if hum then hum.PlatformStand = false end
+    local char = game.Players.LocalPlayer.Character
+    if char then
+        for _,v in ipairs(char:GetDescendants()) do
+            if v:IsA("BasePart") then
+                v.CanCollide = true
+            end
+            if v:IsA("Highlight") then
+                v:Destroy()
             end
         end
+
+        -- ลบ BodyPosition / BodyVelocity / BodyGyro
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            if hrp:FindFirstChild("BodyPosition") then hrp.BodyPosition:Destroy() end
+            if hrp:FindFirstChild("BodyVelocity") then hrp.BodyVelocity:Destroy() end
+            if hrp:FindFirstChild("BodyGyro") then hrp.BodyGyro:Destroy() end
+        end
+
+        local hum = char:FindFirstChild("Humanoid")
+        if hum then hum.PlatformStand = false end
     end
-})
+end
