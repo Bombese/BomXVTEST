@@ -41,3 +41,25 @@ TabFishing:Button({
             :FireServer(unpack(args))
     end
 })
+local AutoFishing = false
+
+TabFishing:Toggle({
+    Title = "Auto Fishing",
+    Desc = "Toggle auto fishing on/off",
+    Value = false,
+    Callback = function(v)
+        AutoFishing = v
+
+        local args = {
+            AutoFishing
+        }
+
+        game:GetService("ReplicatedStorage")
+            :WaitForChild("Packages")
+            :WaitForChild("_Index")
+            :WaitForChild("sleitnick_net@0.2.0")
+            :WaitForChild("net")
+            :WaitForChild("RF/UpdateAutoFishingState")
+            :InvokeServer(unpack(args))
+    end
+})
