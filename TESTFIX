@@ -238,3 +238,28 @@ TabHack:Button({
         end)
     end
 })
+TabHack:Button({
+    Title = "No Clip",
+    Desc = "เดินทะลุกำแพง",
+    Callback = function(v)
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local hrp = character:WaitForChild("HumanoidRootPart")
+        local humanoid = character:WaitForChild("Humanoid")
+
+        -- สร้าง loop no clip
+        spawn(function()
+            while true do
+                for _, part in pairs(character:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = false
+                    end
+                end
+                wait(0.1) -- อัปเดตทุก 0.1 วิ
+            end
+        end)
+        
+        -- กดเพื่อเดินทะลุผนัง
+        humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+    end
+})
