@@ -92,96 +92,61 @@ local TabHack = Window:Tab({
     Title = "Hack",
     Icon = "zap"
 })
-
---// SIMPLE FLY (SAFE & STABLE)
-
+--// Fly Bypass (Toggle)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UIS = game:GetService("UserInputService")
 
-local plr = Players.LocalPlayer
-
-getgenv().Fly = false
-local FLY_SPEED = 45
-
-local conn
+local player = Players.LocalPlayer
+local flying = false
 local bv, bg
+local flyConn
 
-local function getChar()
-    local char = plr.Character or plr.CharacterAdded:Wait()
-    return char, char:WaitForChild("Humanoid"), char:WaitForChild("HumanoidRootPart")
+local function stopFly()
+	flying = false
+	if flyConn then flyConn:Disconnect() flyConn = nil end
+	if bv then bv:Destroy() bv = nil end
+	if bg then bg:Destroy() bg = nil end
+
+	local char = player.Character
+	if char and char:FindFirstChild("Humanoid") then
+		char.Humanoid.PlatformStand = false
+	end
 end
 
---========================
--- START FLY
---========================
-getgenv().StartFly = function()
-    if getgenv().Fly then return end
-    getgenv().Fly = true
+local function startFly()
+	local char = player.Character
+	if not char then return end
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	local hum = char:FindFirstChild("Humanoid")
+	if not hrp or not hum then return end
 
-    local char, hum, hrp = getChar()
-    local cam = workspace.CurrentCamera
+	flying = true
+	hum.PlatformStand = true
 
-    hum:ChangeState(Enum.HumanoidStateType.Physics)
+	bv = Instance.new("BodyVelocity")
+	bv.MaxForce = Vector3.new(9e9,9e9,9e9)
+	bv.Velocity = Vector3.zero
+	bv.Parent = hrp
 
-    -- BodyVelocity
-    bv = Instance.new("BodyVelocity")
-    bv.MaxForce = Vector3.new(1e9, 1e9, 1e9)
-    bv.Velocity = Vector3.zero
-    bv.Parent = hrp
+	bg = Instance.new("BodyGyro")
+	bg.MaxTorque = Vector3.new(9e9,9e9,9e9)
+	bg.CFrame = hrp.CFrame
+	bg.Parent = hrp
 
-    -- BodyGyro
-    bg = Instance.new("BodyGyro")
-    bg.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
-    bg.P = 9e4
-    bg.CFrame = cam.CFrame
-    bg.Parent = hrp
+	flyConn = RunService.RenderStepped:Connect(function()
+		if not flying then return end
+		local cam = workspace.CurrentCamera
+		local move = Vector3.zero
 
-    -- Loop
-    conn = RunService.RenderStepped:Connect(function()
-        if not getgenv().Fly then return end
+		if UIS:IsKeyDown(Enum.KeyCode.W) then move += cam.CFrame.LookVector end
+		if UIS:IsKeyDown(Enum.KeyCode.S) then move -= cam.CFrame.LookVector end
+		if UIS:IsKeyDown(Enum.KeyCode.A) then move -= cam.CFrame.RightVector end
+		if UIS:IsKeyDown(Enum.KeyCode.D) then move += cam.CFrame.RightVector end
+		if UIS:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0,1,0) end
+		if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then move -= Vector3.new(0,1,0) end
 
-        -- noclip
-        for _,v in ipairs(char:GetDescendants()) do
-            if v:IsA("BasePart") then
-                v.CanCollide = false
-            end
-        end
-
-        local moveDir = hum.MoveDirection
-        local camCF = cam.CFrame
-
-        local velocity =
-            (camCF.RightVector * moveDir.X +
-            camCF.LookVector * moveDir.Z) * FLY_SPEED
-
-        bv.Velocity = Vector3.new(velocity.X, 0, velocity.Z)
-        bg.CFrame = camCF
-    end)
-end
-
---========================
--- STOP FLY (ตกพื้นจริง)
---========================
-getgenv().StopFly = function()
-    if not getgenv().Fly then return end
-    getgenv().Fly = false
-
-    if conn then conn:Disconnect() conn = nil end
-
-    local char, hum, hrp = getChar()
-
-    if bv then bv:Destroy() bv = nil end
-    if bg then bg:Destroy() bg = nil end
-
-    -- force fall
-    hrp.AssemblyLinearVelocity = Vector3.new(0, -100, 0)
-    hum:ChangeState(Enum.HumanoidStateType.Freefall)
-
-    -- restore collide
-    for _,v in ipairs(char:GetDescendants()) do
-        if v:IsA("BasePart") then
-            v.CanCollide = true
-        end
-    end
+		bv.Velocity = move * 60
+		bg.CFrame = cam.CFrame
+	end)
 end
