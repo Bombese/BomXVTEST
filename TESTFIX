@@ -74,3 +74,16 @@ TabFishing:Button({
         hrp.CFrame = CFrame.new(145.23, 20.47, 2834.56)
     end
 })
+TabFishing:Button({
+    Title = "Sell All Items",
+    Desc = "Sell all items in inventory",
+    Callback = function()
+        game:GetService("ReplicatedStorage")
+            :WaitForChild("Packages")
+            :WaitForChild("_Index")
+            :WaitForChild("sleitnick_net@0.2.0")
+            :WaitForChild("net")
+            :WaitForChild("RF/SellAllItems")
+            :InvokeServer()
+    end
+})
