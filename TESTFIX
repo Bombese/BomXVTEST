@@ -270,45 +270,47 @@ TabHack:Button({
         end
     end
 })
-TabFishings:Toggle({
-    Title = "Auto Fishing",
-    Desc = "FiX Fishing",
-    Value = false,
-    Callback = function(v)
-        AutoFishing = v
-
-    local function DoFishing()
+-- สมมติ TabFishing คือแท็บที่คุณสร้างไว้แล้ว
+TabFishing:Button({
+    Title = "Auto Fish",
+    Desc = "ตกปลาอัตโนมัติ 2 วิต่อรอบ",
+    Callback = function()
         local ReplicatedStorage = game:GetService("ReplicatedStorage")
         local net = ReplicatedStorage:WaitForChild("Packages")
             :WaitForChild("_Index")
             :WaitForChild("sleitnick_net@0.2.0")
             :WaitForChild("net")
 
-        -- 1️⃣ เริ่มชาร์จเบ็ด
-        net:WaitForChild("RF/ChargeFishingRod"):InvokeServer()
+        local fishingTime = 2 -- เวลาตกปลา 2 วิ
 
-        -- 2️⃣ เริ่มมินิเกมตกปลา
-        local args = {
-            -1.233184814453125,
-            0.5287837012594975,
-            1767193181.450767
-        }
-        net:WaitForChild("RF/RequestFishingMinigameStarted"):InvokeServer(unpack(args))
+        -- เริ่ม loop ตกปลาอัตโนมัติ
+        spawn(function()
+            while true do
+                -- 1️⃣ เริ่มชาร์จเบ็ด
+                pcall(function()
+                    net:WaitForChild("RF/ChargeFishingRod"):InvokeServer()
+                end)
 
-        -- 3️⃣ รอให้มินิเกมตกปลาเสร็จ (รวมทั้งหมด 2 วิ)
-        wait(2)
+                -- 2️⃣ เริ่มมินิเกมตกปลา
+                local args = {
+                    -1.233184814453125,
+                    0.5287837012594975,
+                    1767193181.450767
+                }
+                pcall(function()
+                    net:WaitForChild("RF/RequestFishingMinigameStarted"):InvokeServer(unpack(args))
+                end)
 
-        -- 4️⃣ จบมินิเกม
-        net:WaitForChild("RE/FishingCompleted"):FireServer()
-    end
+                -- 3️⃣ รอให้มินิเกมตกปลาเสร็จ
+                wait(fishingTime)
 
-    spawn(function()
-        while true do
-            wait(0.1) -- ป้องกันบัคและลดการกิน CPU
-            if AutoFishing then
-                DoFishing()
+                -- 4️⃣ จบมินิเกม
+                pcall(function()
+                    net:WaitForChild("RE/FishingCompleted"):FireServer()
+                end)
+
+                wait(0.5) -- เว้นก่อนรอบต่อไป
             end
-        end
-    end)
-
-}) -- ปิด Toggle ท้ายสุด
+        end)
+    end
+})
