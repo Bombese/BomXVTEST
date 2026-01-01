@@ -329,3 +329,65 @@ game:GetService("ReplicatedStorage")
         end
     end
 })
+-- สมมติว่า TabHack คือ Tab ที่นายสร้างไว้แล้ว
+
+-- WalkSpeed
+TabHack:Slider({
+    Title = "WalkSpeed",
+    Desc = "ปรับความเร็วเดิน",
+    Min = 16,
+    Max = 500,
+    Step = 1,
+    Default = getgenv().WalkSpeedValue,
+    Callback = function(value)
+        getgenv().WalkSpeedValue = value
+        local char, humanoid = GetChar()
+        if humanoid then
+            humanoid.WalkSpeed = value
+        end
+    end
+})
+
+-- Infinite Jump
+TabHack:Toggle({
+    Title = "Infinite Jump",
+    Desc = "เปิดกระโดดไม่จำกัด",
+    Default = getgenv().InfJump,
+    Callback = function(state)
+        getgenv().InfJump = state
+    end
+})
+
+-- Noclip
+TabHack:Toggle({
+    Title = "Noclip",
+    Desc = "เดินทะลุวัตถุ",
+    Default = getgenv().Noclip,
+    Callback = function(state)
+        getgenv().Noclip = state
+    end
+})
+
+-- Noclip Loop
+game:GetService("RunService").Stepped:Connect(function()
+    if getgenv().Noclip then
+        local char, humanoid, hrp = GetChar()
+        if hrp then
+            for _, part in pairs(char:GetChildren()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
+                end
+            end
+        end
+    end
+end)
+
+-- Infinite Jump
+game:GetService("UserInputService").JumpRequest:Connect(function()
+    if getgenv().InfJump then
+        local char, humanoid = GetChar()
+        if humanoid then
+            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
