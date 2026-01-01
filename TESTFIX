@@ -278,7 +278,6 @@ TabFishings:Toggle({
     Value = false,
     Callback = function(v)
         AutoFishing = v
-    end
 
 -- สร้างฟังก์ชันตกปลา
 local function DoFishing()
