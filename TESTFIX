@@ -276,44 +276,40 @@ TabFishings:Toggle({
     Title = "Auto Fishing",
     Desc = "FiX Fishing",
     Value = false,
-    Callback = function(v)
-        AutoFishing = v
+    Callback = function(v) AutoFishing = v
 
--- สร้างฟังก์ชันตกปลา
-local function DoFishing()
-    local ReplicatedStorage = game:GetService("ReplicatedStorage")
-    local net = ReplicatedStorage:WaitForChild("Packages")
-        :WaitForChild("_Index")
-        :WaitForChild("sleitnick_net@0.2.0")
-        :WaitForChild("net")
+    local function DoFishing()
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local net = ReplicatedStorage:WaitForChild("Packages")
+            :WaitForChild("_Index")
+            :WaitForChild("sleitnick_net@0.2.0")
+            :WaitForChild("net")
 
-    -- 1️⃣ เริ่มชาร์จเบ็ด
-    net:WaitForChild("RF/ChargeFishingRod"):InvokeServer()
+        -- 1️⃣ เริ่มชาร์จเบ็ด
+        net:WaitForChild("RF/ChargeFishingRod"):InvokeServer()
 
-    -- 2️⃣ เริ่มมินิเกมตกปลา
-    local args = {
-        -1.233184814453125,
-        0.5287837012594975,
-        1767193181.450767
-    }
-    net:WaitForChild("RF/RequestFishingMinigameStarted"):InvokeServer(unpack(args))
+        -- 2️⃣ เริ่มมินิเกมตกปลา
+        local args = {
+            -1.233184814453125,
+            0.5287837012594975,
+            1767193181.450767
+        }
+        net:WaitForChild("RF/RequestFishingMinigameStarted"):InvokeServer(unpack(args))
 
-    -- 3️⃣ รอให้มินิเกมตกปลาเสร็จ (รวมทั้งหมด 2 วิ)
-    wait(2)
+        -- 3️⃣ รอให้มินิเกมตกปลาเสร็จ (รวมทั้งหมด 2 วิ)
+        wait(2)
 
-    -- 4️⃣ จบมินิเกม
-    net:WaitForChild("RE/FishingCompleted"):FireServer()
-end
+        -- 4️⃣ จบมินิเกม
+        net:WaitForChild("RE/FishingCompleted"):FireServer()
+    end
 
--- วนรัน Auto Fishing ถ้าเปิด Toggle
-spawn(function()
-    while true do
-        wait() -- ป้องกันบัค
-        if AutoFishing then
-            DoFishing()
-        else
-            wait(0.1) -- ถ้าไม่เปิด รอเบา ๆ
+    spawn(function()
+        while true do
+            wait(0.1) -- ป้องกันบัคและลดการกิน CPU
+            if AutoFishing then
+                DoFishing()
             end
         end
-    end
-})
+    end)
+
+}) -- ปิด Toggle ท้ายสุด
