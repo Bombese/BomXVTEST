@@ -238,43 +238,35 @@ TabHack:Button({
         end)
     end
 })
+-- สร้างตัวแปร global สำหรับ toggle
+getgenv().NoClipEnabled = false
+
 TabHack:Button({
-    Title = "No Clip Safe",
-    Desc = "ทะลุกำแพง แต่ไม่ตกแมพ",
-    Callback = function(v)
+    Title = "No Clip Toggle",
+    Desc = "กดเปิด/ปิดทะลุกำแพง",
+    Callback = function()
+        getgenv().NoClipEnabled = not getgenv().NoClipEnabled -- สลับสถานะ
+        
         local player = game.Players.LocalPlayer
         local character = player.Character or player.CharacterAdded:Wait()
-        local hrp = character:WaitForChild("HumanoidRootPart")
         local humanoid = character:WaitForChild("Humanoid")
         
-        local RunService = game:GetService("RunService")
-
-        -- เปิด No Clip แบบตรวจสอบพื้น
-        local NoClipOn = true
-
-        spawn(function()
-            while NoClipOn do
-                for _, part in pairs(character:GetDescendants()) do
-                    if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-                        part.CanCollide = true -- ให้ชนพื้น
+        -- ถ้าเปิดแล้ว ให้เริ่ม loop no clip
+        if getgenv().NoClipEnabled then
+            spawn(function()
+                while getgenv().NoClipEnabled do
+                    local char = player.Character
+                    if char then
+                        for _, part in pairs(char:GetDescendants()) do
+                            if part:IsA("BasePart") then
+                                part.CanCollide = false -- ปิดการชน
+                            end
+                        end
+                        humanoid:ChangeState(Enum.HumanoidStateType.Physics)
                     end
+                    wait(0.1)
                 end
-
-                -- ปิด CanCollide เฉพาะ HumanoidRootPart เท่านั้น
-                hrp.CanCollide = true
-
-                -- ตรวจว่ามีพื้นด้านล่าง
-                local ray = Ray.new(hrp.Position, Vector3.new(0, -5, 0))
-                local hit = workspace:FindPartOnRay(ray, character)
-                if not hit then
-                    hrp.CanCollide = true -- ไม่มีพื้น ให้ CanCollide = true กันตก
-                else
-                    hrp.CanCollide = false -- มีพื้น ใส่ No Clip ได้
-                end
-
-                humanoid:ChangeState(Enum.HumanoidStateType.Physics)
-                RunService.Heartbeat:Wait()
-            end
-        end)
+            end)
+        end
     end
 })
