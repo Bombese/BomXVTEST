@@ -270,13 +270,12 @@ TabHack:Button({
         end
     end
 })
-local AutoFishing = false
-
 TabFishings:Toggle({
     Title = "Auto Fishing",
     Desc = "FiX Fishing",
     Value = false,
-    Callback = function(v) AutoFishing = v
+    Callback = function(v)
+        AutoFishing = v
 
     local function DoFishing()
         local ReplicatedStorage = game:GetService("ReplicatedStorage")
