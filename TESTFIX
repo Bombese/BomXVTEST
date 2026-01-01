@@ -5,9 +5,9 @@ local WindUI = loadstring(game:HttpGet(
 
 --// Create Window
 local Window = WindUI:CreateWindow({
-    Title = "NOOBHUB",
+    Title = "BomHUB",
     Icon = "monitor",
-    Author = "Bom Bom",
+    Author = "Fish it",
 
     OpenButton = {
         Title = "Open UI",
