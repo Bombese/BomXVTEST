@@ -314,6 +314,7 @@ spawn(function()
             DoFishing()
         else
             wait(0.1) -- ถ้าไม่เปิด รอเบา ๆ
+            end
         end
     end
-end)
+})
