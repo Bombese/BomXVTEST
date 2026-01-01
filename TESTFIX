@@ -7,7 +7,7 @@ local WindUI = loadstring(game:HttpGet(
 local Window = WindUI:CreateWindow({
     Title = "BomHUB",
     Icon = "monitor",
-    Author = "Fish it",
+    Author = "Fish it v0.1 Beta",
 
     OpenButton = {
         Title = "Open UI",
@@ -279,7 +279,6 @@ TabFishings:Toggle({
     Callback = function(v)
         AutoFishing = v
     end
-})
 
 -- สร้างฟังก์ชันตกปลา
 local function DoFishing()
