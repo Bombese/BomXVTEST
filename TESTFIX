@@ -275,7 +275,7 @@ getgenv().AutoFishEnabled = false
 
 TabFishing:Toggle({
     Title = "Auto Fish",
-    Desc = "เลื่อนเปิด/ปิดตกปลาอัตโนมัติ",
+    Desc = "Fix V.Beta",
     Default = false, -- เริ่มต้นปิด
     Callback = function(state)
         getgenv().AutoFishEnabled = state -- state = true/false จากการเลื่อนสวิตช์
