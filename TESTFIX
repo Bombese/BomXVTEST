@@ -275,7 +275,7 @@ getgenv().AutoFishEnabled = false
 
 TabFishing:Toggle({
     Title = "Auto Fish",
-    Desc = "Fix V.Beta",
+    Desc = "Fix TEST ",
     Default = false, -- เริ่มต้นปิด
     Callback = function(state)
         getgenv().AutoFishEnabled = state -- state = true/false จากการเลื่อนสวิตช์
@@ -299,14 +299,18 @@ TabFishing:Toggle({
                     end)
 
                     -- 2️⃣ เริ่มมินิเกมตกปลา
-                    local args = {
-                        -1.233184814453125,
-                        0.5287837012594975,
-                        1767193181.450767
-                    }
-                    pcall(function()
-                        net:WaitForChild("RF/RequestFishingMinigameStarted"):InvokeServer(unpack(args))
-                    end)
+local args = {
+    -0.5718742609024048,
+    0.9868654702702968,
+    1767239549.336499
+}
+game:GetService("ReplicatedStorage")
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RF/RequestFishingMinigameStarted")
+    :InvokeServer(unpack(args))
 
                     -- 3️⃣ รอให้มินิเกมตกปลาเสร็จ
                     wait(fishingTime)
