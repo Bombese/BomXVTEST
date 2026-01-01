@@ -275,7 +275,7 @@ getgenv().AutoFishEnabled = false
 
 TabFishing:Toggle({
     Title = "Auto Fish",
-    Desc = "Fix TEST ",
+    Desc = "Fix beta just test",
     Default = false, -- เริ่มต้นปิด
     Callback = function(state)
         getgenv().AutoFishEnabled = state -- state = true/false จากการเลื่อนสวิตช์
@@ -290,7 +290,7 @@ TabFishing:Toggle({
                     :WaitForChild("sleitnick_net@0.2.0")
                     :WaitForChild("net")
                 
-                local fishingTime = 3.5 -- เวลาตกปลา 2 วิ
+                local fishingTime = 3 -- เวลาตกปลา 2 วิ
 
                 while getgenv().AutoFishEnabled do
                     -- 1️⃣ เริ่มชาร์จเบ็ด
