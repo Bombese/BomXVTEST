@@ -288,7 +288,7 @@ local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 
 local TabFly = Window:Tab({
-    Title = "Fly",
+    Title = "freezing",
     Icon = "wind"
 })
 
