@@ -7,7 +7,7 @@ local WindUI = loadstring(game:HttpGet(
 local Window = WindUI:CreateWindow({
     Title = "Escape Tsunami For Brainrots!",
     Icon = "waves",
-    Author = "Script Beta0.5",
+    Author = "Script Beta5.0",
 
     OpenButton = {
         Title = "Bom Hack",
