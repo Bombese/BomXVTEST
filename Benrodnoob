@@ -162,3 +162,33 @@ TabMain:Button({
         end
     end
 })
+--========================
+-- TP Bypass Forward (Loop)
+--========================
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+local TPBypass = false
+local TP_DISTANCE = 5
+
+TabMain:Toggle({
+    Title = "TP Bypass Forward",
+    Default = false,
+    Callback = function(v)
+        TPBypass = v
+    end
+})
+
+RunService.Heartbeat:Connect(function()
+    if TPBypass then
+        local char = LocalPlayer.Character
+        if char then
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                local forward = hrp.CFrame.LookVector
+                hrp.CFrame = hrp.CFrame + (forward * TP_DISTANCE)
+            end
+        end
+    end
+end)
