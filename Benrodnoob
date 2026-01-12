@@ -193,89 +193,56 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 --========================
--- TP Tab
+-- TP Safe Hole (Dropdown)
 --========================
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
+-- แท็บ TP (ถ้ามีแล้ว ข้ามบรรทัดนี้ได้)
 local TabTP = Window:Tab({
     Title = "TP",
     Icon = "map-pin"
 })
 
--- ฟังก์ชัน TP
-local function TPTo(x, y, z)
-    local char = LocalPlayer.Character
-    if char then
-        local hrp = char:FindFirstChild("HumanoidRootPart")
-        if hrp then
-            hrp.CFrame = CFrame.new(x, y, z)
+-- พิกัดหลุม
+local SafeHoles = {
+    ["หลุม 1"] = Vector3.new(201,  -2.5,  2.9),
+    ["หลุม 2"] = Vector3.new(285,  -2.7,  2.9),
+    ["หลุม 3"] = Vector3.new(401,  -2.7, -2.9),
+    ["หลุม 4"] = Vector3.new(544.5,-2.5,  9.4),
+    ["หลุม 5"] = Vector3.new(759,  -2.5,  7.9),
+    ["หลุม 6"] = Vector3.new(1076, -2.5, -6.0),
+    ["หลุม 7"] = Vector3.new(1554, -2.5,  1.6),
+    ["หลุม 8"] = Vector3.new(2258, -2.5, -0.9),
+    ["หลุม 9"] = Vector3.new(2612, -2.5, 10.7),
+}
+
+local SelectedHole = "หลุม 1"
+
+-- Dropdown เลือกหลุม
+TabTP:Dropdown({
+    Title = "เลือกหลุมหลบภัย",
+    Options = {
+        "หลุม 1","หลุม 2","หลุม 3","หลุม 4","หลุม 5",
+        "หลุม 6","หลุม 7","หลุม 8","หลุม 9"
+    },
+    Default = "หลุม 1",
+    Callback = function(v)
+        SelectedHole = v
+    end
+})
+
+-- ปุ่ม TP เดียว
+TabTP:Button({
+    Title = "TP ไปหลุมที่เลือก",
+    Callback = function()
+        local char = LocalPlayer.Character
+        if char then
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            local pos = SafeHoles[SelectedHole]
+            if hrp and pos then
+                hrp.CFrame = CFrame.new(pos)
+            end
         end
-    end
-end
-
---========================
--- Safe Holes
---========================
-TabTP:Button({
-    Title = "TP หลุมหลบภัย 1",
-    Callback = function()
-        TPTo(201, -2.5, 2.9)
-    end
-})
-
-TabTP:Button({
-    Title = "TP หลุมหลบภัย 2",
-    Callback = function()
-        TPTo(285, -2.7, 2.9)
-    end
-})
-
-TabTP:Button({
-    Title = "TP หลุมหลบภัย 3",
-    Callback = function()
-        TPTo(401, -2.7, -2.9)
-    end
-})
-
-TabTP:Button({
-    Title = "TP หลุมหลบภัย 4",
-    Callback = function()
-        TPTo(544.5, -2.5, 9.4)
-    end
-})
-
-TabTP:Button({
-    Title = "TP หลุมหลบภัย 5",
-    Callback = function()
-        TPTo(759, -2.5, 7.9)
-    end
-})
-
-TabTP:Button({
-    Title = "TP หลุมหลบภัย 6",
-    Callback = function()
-        TPTo(1076, -2.5, -6.0)
-    end
-})
-
-TabTP:Button({
-    Title = "TP หลุมหลบภัย 7",
-    Callback = function()
-        TPTo(1554, -2.5, 1.6)
-    end
-})
-
-TabTP:Button({
-    Title = "TP หลุมหลบภัย 8",
-    Callback = function()
-        TPTo(2258, -2.5, -0.9)
-    end
-})
-
-TabTP:Button({
-    Title = "TP หลุมหลบภัย 9",
-    Callback = function()
-        TPTo(2612, -2.5, 10.7)
     end
 })
