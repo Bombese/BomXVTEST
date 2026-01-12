@@ -10,7 +10,7 @@ local Window = WindUI:CreateWindow({
     Author = "Free UI",
 
     OpenButton = {
-        Title = "Open UI",
+        Title = "Open ",
         Icon = "menu",
         CornerRadius = UDim.new(0,16),
         StrokeThickness = 2,
