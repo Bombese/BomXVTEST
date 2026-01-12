@@ -124,3 +124,22 @@ UserInputService.JumpRequest:Connect(function()
         end
     end
 end)
+--========================
+-- Back to Normal Level (Y = 4)
+--========================
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+TabMain:Button({
+    Title = "Back To Normal (Y = 4)",
+    Callback = function()
+        local char = LocalPlayer.Character
+        if char then
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                local pos = hrp.Position
+                hrp.CFrame = CFrame.new(pos.X, 4, pos.Z)
+            end
+        end
+    end
+})
