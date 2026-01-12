@@ -28,3 +28,53 @@ local TabMain = Window:Tab({
 -- ไม่มี Toggle
 -- ไม่มี Button
 -- เป็น UI แจกโครงล้วน
+--// Services
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+--========================
+-- Speed Hack
+--========================
+local SpeedValue = 16
+
+TabMain:Slider({
+    Title = "Speed Hack",
+    Min = 16,
+    Max = 200,
+    Default = 16,
+    Callback = function(v)
+        SpeedValue = v
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid.WalkSpeed = v
+        end
+    end
+})
+
+-- รีเซ็ตสปีดตอนเกิดใหม่
+LocalPlayer.CharacterAdded:Connect(function(char)
+    char:WaitForChild("Humanoid").WalkSpeed = SpeedValue
+end)
+
+--========================
+-- Noclip
+--========================
+local Noclip = false
+
+TabMain:Toggle({
+    Title = "Noclip",
+    Default = false,
+    Callback = function(v)
+        Noclip = v
+    end
+})
+
+RunService.Stepped:Connect(function()
+    if Noclip and LocalPlayer.Character then
+        for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
+        end
+    end
+end)
