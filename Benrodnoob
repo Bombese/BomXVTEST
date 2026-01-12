@@ -7,7 +7,7 @@ local WindUI = loadstring(game:HttpGet(
 local Window = WindUI:CreateWindow({
     Title = "Escape Tsunami For Brainrots!",
     Icon = "waves",
-    Author = "Free UI",
+    Author = "Script Beta0.5",
 
     OpenButton = {
         Title = "Bom Hack",
@@ -193,18 +193,11 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 --========================
--- TP Safe Hole (Dropdown)
+-- TP Safe Hole (FIXED Dropdown)
 --========================
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
--- แท็บ TP (ถ้ามีแล้ว ข้ามบรรทัดนี้ได้)
-local TabTP = Window:Tab({
-    Title = "TP",
-    Icon = "map-pin"
-})
-
--- พิกัดหลุม
 local SafeHoles = {
     ["หลุม 1"] = Vector3.new(201,  -2.5,  2.9),
     ["หลุม 2"] = Vector3.new(285,  -2.7,  2.9),
@@ -219,20 +212,20 @@ local SafeHoles = {
 
 local SelectedHole = "หลุม 1"
 
--- Dropdown เลือกหลุม
+-- Dropdown (ของแท้ WindUI)
 TabTP:Dropdown({
     Title = "เลือกหลุมหลบภัย",
-    Options = {
+    Values = {
         "หลุม 1","หลุม 2","หลุม 3","หลุม 4","หลุม 5",
         "หลุม 6","หลุม 7","หลุม 8","หลุม 9"
     },
-    Default = "หลุม 1",
-    Callback = function(v)
+    Default = 1, -- ⭐ ต้องเป็น index
+    OnChanged = function(v)
         SelectedHole = v
     end
 })
 
--- ปุ่ม TP เดียว
+-- ปุ่ม TP
 TabTP:Button({
     Title = "TP ไปหลุมที่เลือก",
     Callback = function()
