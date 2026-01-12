@@ -1,18 +1,30 @@
---// WindUI (Empty Template)
+--// WindUI - ORIGINAL (Empty + Main Tab)
 local WindUI = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Footagesus/WindUI/main/source.lua"
+    "https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"
 ))()
 
+--// Create Window
 local Window = WindUI:CreateWindow({
     Title = "Escape Tsunami For Brainrots!",
     Icon = "waves",
     Author = "Free UI",
-    Folder = "EscapeTsunamiUI",
-    Size = UDim2.fromOffset(500, 400),
-    Theme = "Dark"
+
+    OpenButton = {
+        Title = "Open UI",
+        Icon = "menu",
+        CornerRadius = UDim.new(0,16),
+        StrokeThickness = 2,
+        Enabled = true,
+        Draggable = true,
+    }
 })
 
--- แท็บแรก
-local MainTab = Window:CreateTab("Main")
+--// Main Tab
+local TabMain = Window:Tab({
+    Title = "Main",
+    Icon = "home"
+})
 
--- ยังไม่มี Toggle / Button / ฟังก์ชันใด ๆ
+-- ไม่มี Toggle
+-- ไม่มี Button
+-- เป็น UI แจกโครงล้วน
