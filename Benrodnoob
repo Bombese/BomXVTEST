@@ -34,8 +34,9 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
 --========================
--- Speed Hack
+-- Speed Hack (Force)
 --========================
+local SpeedEnabled = false
 local SpeedValue = 16
 
 TabMain:Slider({
@@ -45,15 +46,34 @@ TabMain:Slider({
     Default = 16,
     Callback = function(v)
         SpeedValue = v
-        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-            LocalPlayer.Character.Humanoid.WalkSpeed = v
-        end
     end
 })
 
--- รีเซ็ตสปีดตอนเกิดใหม่
+TabMain:Toggle({
+    Title = "Enable Speed Hack",
+    Default = false,
+    Callback = function(v)
+        SpeedEnabled = v
+    end
+})
+
+-- บังคับสปีดทุกเฟรม
+RunService.Heartbeat:Connect(function()
+    if SpeedEnabled then
+        local char = LocalPlayer.Character
+        if char then
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if hum and hum.WalkSpeed ~= SpeedValue then
+                hum.WalkSpeed = SpeedValue
+            end
+        end
+    end
+end)
+
+-- กันตาย / รีเกิด
 LocalPlayer.CharacterAdded:Connect(function(char)
-    char:WaitForChild("Humanoid").WalkSpeed = SpeedValue
+    local hum = char:WaitForChild("Humanoid")
+    hum.WalkSpeed = SpeedValue
 end)
 
 --========================
