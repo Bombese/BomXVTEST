@@ -193,6 +193,13 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 --========================
+-- Restore TP Tab
+--========================
+local TabTP = Window:Tab({
+    Title = "TP",
+    Icon = "map-pin"
+})
+--========================
 -- TP Safe Hole (FIXED Dropdown)
 --========================
 local Players = game:GetService("Players")
