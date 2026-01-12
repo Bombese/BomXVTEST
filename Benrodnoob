@@ -279,3 +279,85 @@ TabTP:Button({
         TPTo(2612, -2.5, 10.7)
     end
 })
+--========================
+-- Fly Tab
+--========================
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+
+local TabFly = Window:Tab({
+    Title = "Fly",
+    Icon = "wind"
+})
+
+--========================
+-- Fly Logic
+--========================
+local Flying = false
+local FlySpeed = 60
+local BodyGyro, BodyVelocity
+
+local function StartFly()
+    local char = LocalPlayer.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    BodyGyro = Instance.new("BodyGyro")
+    BodyGyro.P = 9e4
+    BodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+    BodyGyro.CFrame = hrp.CFrame
+    BodyGyro.Parent = hrp
+
+    BodyVelocity = Instance.new("BodyVelocity")
+    BodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+    BodyVelocity.Velocity = Vector3.zero
+    BodyVelocity.Parent = hrp
+end
+
+local function StopFly()
+    if BodyGyro then BodyGyro:Destroy() BodyGyro = nil end
+    if BodyVelocity then BodyVelocity:Destroy() BodyVelocity = nil end
+end
+
+-- Toggle Fly
+TabFly:Toggle({
+    Title = "Fly",
+    Default = false,
+    Callback = function(v)
+        Flying = v
+        if v then
+            StartFly()
+        else
+            StopFly()
+        end
+    end
+})
+
+-- คุมทิศทางการบิน
+RunService.RenderStepped:Connect(function()
+    if Flying and BodyVelocity and BodyGyro then
+        local cam = workspace.CurrentCamera
+        local moveDir = Vector3.zero
+
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir += cam.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir -= cam.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir -= cam.CFrame.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir += cam.CFrame.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir += Vector3.new(0,1,0) end
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir -= Vector3.new(0,1,0) end
+
+        BodyVelocity.Velocity = moveDir.Magnitude > 0 and moveDir.Unit * FlySpeed or Vector3.zero
+        BodyGyro.CFrame = cam.CFrame
+    end
+end)
+
+-- กันตาย/รีเกิด
+LocalPlayer.CharacterAdded:Connect(function()
+    if Flying then
+        task.wait(0.2)
+        StartFly()
+    end
+end)
