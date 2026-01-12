@@ -95,3 +95,32 @@ RunService.Stepped:Connect(function()
         end
     end
 end)
+--// Services
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+
+--========================
+-- Infinite Jump
+--========================
+local InfJump = false
+
+TabMain:Toggle({
+    Title = "Infinite Jump",
+    Default = false,
+    Callback = function(v)
+        InfJump = v
+    end
+})
+
+UserInputService.JumpRequest:Connect(function()
+    if InfJump then
+        local char = LocalPlayer.Character
+        if char then
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if hum then
+                hum:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+        end
+    end
+end)
