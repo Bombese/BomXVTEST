@@ -10,7 +10,7 @@ local Window = WindUI:CreateWindow({
     Author = "Free UI",
 
     OpenButton = {
-        Title = "Open ",
+        Title = "Bom Hack",
         Icon = "menu",
         CornerRadius = UDim.new(0,16),
         StrokeThickness = 2,
@@ -34,7 +34,7 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
 --========================
--- Speed Hack (Force)
+-- Speed Hack (WORKING)
 --========================
 local SpeedEnabled = false
 local SpeedValue = 16
@@ -44,7 +44,8 @@ TabMain:Slider({
     Min = 16,
     Max = 200,
     Default = 16,
-    Callback = function(v)
+
+    OnChanged = function(v) -- ⭐ สำคัญมาก
         SpeedValue = v
     end
 })
@@ -57,23 +58,20 @@ TabMain:Toggle({
     end
 })
 
--- บังคับสปีดทุกเฟรม
 RunService.Heartbeat:Connect(function()
     if SpeedEnabled then
         local char = LocalPlayer.Character
         if char then
             local hum = char:FindFirstChildOfClass("Humanoid")
-            if hum and hum.WalkSpeed ~= SpeedValue then
+            if hum then
                 hum.WalkSpeed = SpeedValue
             end
         end
     end
 end)
 
--- กันตาย / รีเกิด
 LocalPlayer.CharacterAdded:Connect(function(char)
-    local hum = char:WaitForChild("Humanoid")
-    hum.WalkSpeed = SpeedValue
+    char:WaitForChild("Humanoid").WalkSpeed = SpeedValue
 end)
 
 --========================
