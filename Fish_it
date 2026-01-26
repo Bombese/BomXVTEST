@@ -1,1 +1,76 @@
-t
+--// WindUI - ORIGINAL + Fishing Tab
+local WindUI = loadstring(game:HttpGet(
+    "https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"
+))()
+
+--// Create Window
+local Window = WindUI:CreateWindow({
+    Title = "Felon HUB : Fish it",
+    Icon = "monitor",
+    Author = "Fish it v0.1",
+
+    OpenButton = {
+        Title = "Felon HUB",
+        Icon = "menu",
+        CornerRadius = UDim.new(0,16),
+        StrokeThickness = 2,
+        Enabled = true,
+        Draggable = true,
+    }
+})
+--// Fishing Tab
+local TabFishing = Window:Tab({
+    Title = "Fishing",
+    Icon = "fish"
+})
+
+TabFishing:Select()
+task.wait() -- สำคัญมากสำหรับ WindUI บางเวอร์ชัน
+
+TabFishing:Button({
+    Title = "Hold Fishing Rod",
+    Desc = "Equip fishing rod from hotbar",
+    Callback = function()
+        local args = {1}
+        game:GetService("ReplicatedStorage")
+            :WaitForChild("Packages")
+            :WaitForChild("_Index")
+            :WaitForChild("sleitnick_net@0.2.0")
+            :WaitForChild("net")
+            :WaitForChild("RE/EquipToolFromHotbar")
+            :FireServer(unpack(args))
+    end
+})
+local AutoFishing = false
+
+TabFishing:Toggle({
+    Title = "Auto Fishing",
+    Desc = "Need Level 3",
+    Value = false,
+    Callback = function(v)
+        AutoFishing = v
+
+        local args = {
+            AutoFishing
+        }
+
+        game:GetService("ReplicatedStorage")
+            :WaitForChild("Packages")
+            :WaitForChild("_Index")
+            :WaitForChild("sleitnick_net@0.2.0")
+            :WaitForChild("net")
+            :WaitForChild("RF/UpdateAutoFishingState")
+            :InvokeServer(unpack(args))
+    end
+})
+TabFishing:Button({
+    Title = "TP Buy Rods",
+    Desc = "Teleport to Rod Shop",
+    Callback = function()
+        local player = game:GetService("Players").LocalPlayer
+        local char = player.Character or player.CharacterAdded:Wait()
+        local hrp = char:WaitForChild("HumanoidRootPart")
+
+        hrp.CFrame = CFrame.new(145.23, 20.47, 2834.56)
+    end
+})
