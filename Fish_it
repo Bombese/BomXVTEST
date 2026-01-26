@@ -147,3 +147,7 @@ TabFishing:Button({
         hrp.CFrame = CFrame.new(145.23, 20.47, 2834.56)
     end
 })
+local Function = Window:Tab({
+    Title = "Function",
+    Icon = "function"
+})
