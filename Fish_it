@@ -24,7 +24,6 @@ local TabFishing = Window:Tab({
     Icon = "fish"
 })
 
-TabFishing:Section({ Title = "Fishing Settings" })
 TabFishing:Select()
 task.wait() -- สำคัญมากสำหรับ WindUI บางเวอร์ชัน
 
@@ -42,6 +41,7 @@ TabFishing:Button({
             :FireServer(unpack(args))
     end
 })
+TabFishing:Section({ Title = "Fishing Settings" })
 local AutoFishing = false
 
 TabFishing:Toggle({
