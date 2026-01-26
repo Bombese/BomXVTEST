@@ -151,6 +151,7 @@ local Function = Window:Tab({
     Title = "Function",
     Icon = "function"
 })
+Function:Section({ Title = "Function Setting " })
 Function:Button({
     Title = "Oxygen inf",
     Desc = "O2 Infinity",
