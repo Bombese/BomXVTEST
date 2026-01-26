@@ -121,7 +121,7 @@ game:GetService("ReplicatedStorage")
         end
     end
 })
-TapFishing:Section({ Title = "Sell and buy rods" })
+TabFishing:Section({ Title = "Sell and buy rods" })
 TabFishing:Button({
     Title = "TP Buy Rods",
     Desc = "Teleport to Rod Shop",
