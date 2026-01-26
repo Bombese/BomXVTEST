@@ -24,6 +24,7 @@ local TabFishing = Window:Tab({
     Icon = "fish"
 })
 
+TabFishing:Section({ Title = "Fishing Settings" })
 TabFishing:Select()
 task.wait() -- สำคัญมากสำหรับ WindUI บางเวอร์ชัน
 
