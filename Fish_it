@@ -151,3 +151,22 @@ local Function = Window:Tab({
     Title = "Function",
     Icon = "function"
 })
+Function:Button({
+    Title = "Oxygen inf",
+    Desc = "O2 Infinity",
+    Callback = function(v)
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        
+        -- RemoteFunction ใส่ Oxygen Tank
+        local EquipTank = ReplicatedStorage:WaitForChild("Packages")
+            :WaitForChild("_Index")
+            :WaitForChild("sleitnick_net@0.2.0")
+            :WaitForChild("net")
+            :WaitForChild("RF/EquipOxygenTank")
+        
+        -- ใส่ Oxygen Tank รหัส 105
+        pcall(function()
+            EquipTank:InvokeServer(105)
+        end)
+    end
+})
