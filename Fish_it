@@ -123,6 +123,19 @@ game:GetService("ReplicatedStorage")
 })
 TabFishing:Section({ Title = "Sell and buy rods" })
 TabFishing:Button({
+    Title = "Sell All Items",
+    Desc = "Sell all items in inventory",
+    Callback = function()
+        game:GetService("ReplicatedStorage")
+            :WaitForChild("Packages")
+            :WaitForChild("_Index")
+            :WaitForChild("sleitnick_net@0.2.0")
+            :WaitForChild("net")
+            :WaitForChild("RF/SellAllItems")
+            :InvokeServer()
+    end
+})
+TabFishing:Button({
     Title = "TP Buy Rods",
     Desc = "Teleport to Rod Shop",
     Callback = function()
