@@ -138,7 +138,7 @@ TabFishing:Button({
 })
 TabFishing:Button({
     Title = "TP Buy Rods",
-    Desc = "Teleport to Rod Shop",
+    Desc = "Teleport to Rods Shop",
     Callback = function()
         local player = game:GetService("Players").LocalPlayer
         local char = player.Character or player.CharacterAdded:Wait()
