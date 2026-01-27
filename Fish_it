@@ -7,7 +7,7 @@ local WindUI = loadstring(game:HttpGet(
 local Window = WindUI:CreateWindow({
     Title = "Felon HUB : Fish it",
     Icon = "monitor",
-    Author = "Fish it v0.10",
+    Author = "Fish it v0.15",
 
     OpenButton = {
         Title = "Felon HUB",
