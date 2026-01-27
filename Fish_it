@@ -83,7 +83,7 @@ TabFishing:Toggle({
                     :WaitForChild("sleitnick_net@0.2.0")
                     :WaitForChild("net")
                 
-                local fishingTime = 1.5 -- เวลาตกปลา 2 วิ
+                local fishingTime = 0.1777 -- เวลาตกปลา 2 วิ
 
                 while getgenv().AutoFishEnabled do
                     -- 1️⃣ เริ่มชาร์จเบ็ด
