@@ -113,7 +113,7 @@ game:GetService("ReplicatedStorage")
                         net:WaitForChild("RE/FishingCompleted"):FireServer()
                     end)
 
-                    wait(0.0001) -- เว้นก่อนรอบต่อไป
+                    wait(2.333) -- เว้นก่อนรอบต่อไป
                 end
             end)
         else
