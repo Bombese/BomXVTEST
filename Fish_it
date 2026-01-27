@@ -67,8 +67,8 @@ TabFishing:Toggle({
 getgenv().AutoFishEnabled = false
 
 TabFishing:Toggle({
-    Title = "Auto Fish",
-    Desc = "Fix beta just test",
+    Title = "Auto Fishing (Hack)",
+    Desc = "Auto fishing Script",
     Default = false, -- เริ่มต้นปิด
     Callback = function(state)
         getgenv().AutoFishEnabled = state -- state = true/false จากการเลื่อนสวิตช์
