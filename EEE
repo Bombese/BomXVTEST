@@ -1,73 +1,18 @@
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local PlaceId = game.PlaceId
 
-local Window = Rayfield:CreateWindow({
-   Name = "FELON Script HUB",
-   LoadingTitle = "Loading Custom Scripts...",
-   LoadingSubtitle = "by Felon HUB",
-   ConfigurationSaving = {
-      Enabled = true,
-      FolderName = "EnanScriptConfig",
-      FileName = "MainHub"
-   }
-})
+local Maps = {
+    [9872472334] = "https://raw.githubusercontent.com/Bombese/ENANSCRIPT/main/Evade",
+    [6516141723] = "https://raw.githubusercontent.com/Bombese/ENANSCRIPT/main/Doors",
+    [121864768012064] = "https://raw.githubusercontent.com/Bombese/ENANSCRIPT/main/Fish_it",
+    [136599248168660] = "https://raw.githubusercontent.com/Bombese/ENANSCRIPT/main/Solo_hunters",
+}
 
-local Tab = Window:CreateTab("🎮 Game Scripts", 4483362458) -- ไอคอนรูปจอยเกม
+local ScriptURL = Maps[PlaceId]
 
--- ฟังก์ชันสำหรับรัน Script เพื่อประหยัดบรรทัด
-local function RunScript(name)
-    local url = "https://raw.githubusercontent.com/Bombese/ENANSCRIPT/main/" .. name
-    local success, err = pcall(function()
-        loadstring(game:HttpGet(url))()
-    end)
-    if not success then
-        Rayfield:Notify({
-            Title = "Error!",
-            Content = "ไม่สามารถโหลดสคริปต์ได้: " .. name,
-            Duration = 5,
-            Image = 4483362458,
-        })
-    end
+if ScriptURL then
+    loadstring(game:HttpGet(ScriptURL))()
+else
+    LocalPlayer:Kick("❌ Script นี้ไม่รองรับแมพนี้\nPlaceId: "..PlaceId)
 end
-
--- ปุ่มเลือกเกมต่างๆ
-Tab:CreateButton({
-   Name = "🐟 Fish It",
-   Callback = function() RunScript("Fish_it") end,
-})
-
-Tab:CreateButton({
-   Name = "🏃 Evade",
-   Callback = function() RunScript("Evade") end,
-})
-
-Tab:CreateButton({
-   Name = "👁️ DOORS",
-   Callback = function() RunScript("Doors") end,
-})
-
-Tab:CreateButton({
-   Name = "⚔️ Solo Hunters",
-   Callback = function() RunScript("Solo_hunters") end,
-})
-
--- ปุ่มเสริมสำหรับคนชอบลุย
-local MiscTab = Window:CreateTab("🛠️ Extras", 4483362458)
-MiscTab:CreateButton({
-   Name = "Anti-AFK (กันหลุด)",
-   Callback = function()
-       local vu = game:GetService("VirtualUser")
-       game:GetService("Players").LocalPlayer.Idled:Connect(function()
-           vu:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-           wait(1)
-           vu:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-       end)
-       Rayfield:Notify({Title = "System", Content = "Anti-AFK Enabled!"})
-   end,
-})
-
-Rayfield:Notify({
-   Title = "พร้อมใช้งาน!",
-   Content = "เลือกเกมที่ต้องการรันได้เลยครับ",
-   Duration = 5,
-   Image = 4483362458,
-})
