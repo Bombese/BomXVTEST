@@ -5,7 +5,7 @@ local WindUI = loadstring(game:HttpGet(
 
 -- Window
 local Window = WindUI:CreateWindow({
-    Title = "PVP Script (test)",
+    Title = "PVP Script (test1)",
     Icon = "user",
     Author = "https://discord.gg/AXTKtmUvyf",
     OpenButton = {
@@ -85,6 +85,7 @@ Main:AddToggle({
         end
     end
 })
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
