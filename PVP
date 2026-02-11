@@ -85,3 +85,84 @@ Main:AddToggle({
         end
     end
 })
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+-- การตั้งค่าเบื้องต้น
+local AimSettings = {
+    Enabled = false,
+    FovSize = 150,
+    FovColor = Color3.fromRGB(255, 255, 0), -- สีเหลือง
+    Thickness = 1,
+    Smoothing = 0.5 -- ความสมูท (0-1) ยิ่งน้อยยิ่งเลื่อนเร็ว
+}
+
+-- สร้างวงกลม FOV
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Visible = false
+FOVCircle.Color = AimSettings.FovColor
+FOVCircle.Thickness = AimSettings.Thickness
+FOVCircle.Transparency = 1
+FOVCircle.Filled = false
+FOVCircle.Radius = AimSettings.FovSize
+
+-- ฟังก์ชันหาตัวละครที่ใกล้เป้า (Mouse) ที่สุดใน FOV
+local function getClosestPlayerToMouse()
+    local target = nil
+    local dist = AimSettings.FovSize
+
+    for _, v in pairs(Players:GetPlayers()) do
+        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") and v.Character:FindFirstChild("Humanoid").Health > 0 then
+            local screenPos, onScreen = Camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
+            if onScreen then
+                local mouseDistance = (Vector2.new(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y) - Vector2.new(screenPos.X, screenPos.Y)).Magnitude
+                if mouseDistance < dist then
+                    dist = mouseDistance
+                    target = v
+                end
+            end
+        end
+    end
+    return target
+end
+
+-- อัปเดตวงกลม FOV ตามเมาส์ตลอดเวลา
+RunService.RenderStepped:Connect(function()
+    FOVCircle.Position = UserInputService:GetMouseLocation()
+    
+    if AimSettings.Enabled then
+        local target = getClosestPlayerToMouse()
+        if target then
+            local targetPos = Camera:WorldToViewportPoint(target.Character.HumanoidRootPart.Position)
+            local mousePos = UserInputService:GetMouseLocation()
+            -- ระบบช่วยเล็ง (Smoothing)
+            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, target.Character.HumanoidRootPart.Position), AimSettings.Smoothing)
+        end
+    end
+end)
+
+-- เพิ่มเข้าไปใน Wind UI
+Main:AddToggle({
+    Title = "Aimbot + FOV",
+    Desc = "ล็อคเป้าหมายอัตโนมัติ (เส้นสีเหลือง)",
+    Value = false,
+    Callback = function(v)
+        AimSettings.Enabled = v
+        FOVCircle.Visible = v
+    end
+})
+
+-- (Optional) Slider ปรับขนาด FOV
+Main:AddSlider({
+    Title = "FOV Size",
+    Min = 50,
+    Max = 500,
+    Default = 150,
+    Callback = function(v)
+        AimSettings.FovSize = v
+        FOVCircle.Radius = v
+    end
+})
