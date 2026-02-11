@@ -22,83 +22,56 @@ local Main = Window:Tab({
 })
 
 Main:Section({ Title = " Player Settings " })
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local connection -- ตัวแปรสำหรับเก็บการเชื่อมต่อ loop
 
--- สร้างตัวแปรเก็บชื่อผู้เล่นที่เลือก
-local SelectedPlayer = nil
+-- ฟังก์ชันหาผู้เล่นที่ใกล้ที่สุด
+local function getClosestPlayer()
+    local closestPlayer = nil
+    local shortestDistance = math.huge
 
--- 1. สร้าง Dropdown สำหรับเลือกผู้เล่น
-local PlayerDropdown = Tabs.Main:AddDropdown({
-    Title = "เลือกผู้เล่น",
-    Multi = false,
-    Options = {}, -- เริ่มต้นเป็นว่างไว้
-    Default = nil,
-    Callback = function(Value)
-        SelectedPlayer = Value
-        print("เลือกผู้เล่น: " .. Value)
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local distance = (LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+            if distance < shortestDistance then
+                shortestDistance = distance
+                closestPlayer = player
+            end
+        end
     end
-})
-
--- ฟังก์ชันสำหรับอัปเดตรายชื่อผู้เล่นใน Dropdown
-local function UpdatePlayerList()
-    local players = {}
-    for _, v in pairs(game:GetService("Players"):GetPlayers()) do
-        table.insert(players, v.Name)
-    end
-    PlayerDropdown:SetValues(players)
+    return closestPlayer
 end
 
--- อัปเดตรายชื่อทันทีที่รันสคริปต์ และอัปเดตเมื่อมีคนเข้า/ออก
-UpdatePlayerList()
-game:GetService("Players").PlayerAdded:Connect(UpdatePlayerList)
-game:GetService("Players").PlayerRemoving:Connect(UpdatePlayerList)
-
---- 2. Toggle สำหรับเปิด/ปิดการลอยวน (Orbit)
-Tabs.Main:AddToggle({
-    Title = "เปิดระบบ Orbit",
+Main:Toggle({
+    Title = "Orbit Nearest Player",
+    Desc = "วาร์ปไปลอยวนบนหัวคนที่ใกล้ที่สุด",
     Value = false,
-    Callback = function(Value)
-        _G.OrbitEnabled = Value
-        
-        if _G.OrbitEnabled and SelectedPlayer then
-            local RunService = game:GetService("RunService")
-            
-            _G.OrbitConnection = RunService.RenderStepped:Connect(function()
-                if not _G.OrbitEnabled then 
-                    _G.OrbitConnection:Disconnect() 
-                    return 
-                end
-                
-                local targetPlayer = game:GetService("Players"):FindFirstChild(SelectedPlayer)
-                if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                    local char = targetPlayer.Character
-                    local hrp = char.HumanoidRootPart
+    Callback = function(v)
+        if v then
+            -- เริ่มทำงานเมื่อเปิด Switch
+            connection = RunService.Heartbeat:Connect(function()
+                local target = getClosestPlayer()
+                if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+                    local rootPart = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    local targetPart = target.Character.HumanoidRootPart
                     
-                    local orb = char:FindFirstChild("OrbitPart")
-                    if not orb then
-                        orb = Instance.new("Part")
-                        orb.Name = "OrbitPart"
-                        orb.Size = Vector3.new(1, 1, 1)
-                        orb.Shape = Enum.PartType.Ball
-                        orb.Color = Color3.fromRGB(0, 255, 255) -- สีฟ้า Cyan
-                        orb.Material = Enum.Material.Neon
-                        orb.CanCollide = false
-                        orb.Anchored = true
-                        orb.Parent = char
+                    -- คำนวณตำแหน่งการหมุน (ลอยสูงขึ้น 5 หน่วย และหมุนรอบตัว)
+                    local speed = tick() * 5 -- ความเร็วในการหมุน
+                    local radius = 3 -- ระยะห่างจากตัวเป้าหมาย
+                    local offset = Vector3.new(math.sin(speed) * radius, 5, math.cos(speed) * radius)
+                    
+                    if rootPart then
+                        rootPart.CFrame = CFrame.new(targetPart.Position + offset, targetPart.Position)
                     end
-                    
-                    -- สูตรคำนวณวงกลม
-                    local time = tick() * 5
-                    local offsetX = math.cos(time) * 4
-                    local offsetZ = math.sin(time) * 4
-                    orb.CFrame = hrp.CFrame * CFrame.new(offsetX, 3, offsetZ)
                 end
             end)
         else
-            -- ลบพาร์ทออกเมื่อปิด
-            for _, p in pairs(game:GetService("Players"):GetPlayers()) do
-                if p.Character and p.Character:FindFirstChild("OrbitPart") then
-                    p.Character.OrbitPart:Destroy()
-                end
+            -- หยุดทำงานเมื่อปิด Switch
+            if connection then
+                connection:Disconnect()
+                connection = nil
             end
         end
     end
