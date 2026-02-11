@@ -22,56 +22,65 @@ local Main = Window:Tab({
 })
 
 Main:Section({ Title = " Player Settings " })
+
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local connection -- ตัวแปรสำหรับเก็บการเชื่อมต่อ loop
+local lp = Players.LocalPlayer
+local orbitConnection = nil
 
--- ฟังก์ชันหาผู้เล่นที่ใกล้ที่สุด
-local function getClosestPlayer()
-    local closestPlayer = nil
-    local shortestDistance = math.huge
-
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local distance = (LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
-            if distance < shortestDistance then
-                shortestDistance = distance
-                closestPlayer = player
+-- ฟังก์ชันหาคนใกล้ที่สุด
+local function getClosest()
+    local target = nil
+    local dist = math.huge
+    for _, v in pairs(Players:GetPlayers()) do
+        if v ~= lp and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+            local magnitude = (lp.Character.HumanoidRootPart.Position - v.Character.HumanoidRootPart.Position).Magnitude
+            if magnitude < dist then
+                dist = magnitude
+                target = v
             end
         end
     end
-    return closestPlayer
+    return target
 end
 
-Main:Toggle({
+-- สำหรับ Wind UI โครงสร้างจะเป็นแบบนี้:
+Main:AddToggle({
     Title = "Orbit Nearest Player",
     Desc = "วาร์ปไปลอยวนบนหัวคนที่ใกล้ที่สุด",
-    Value = false,
+    Value = false, -- ค่าเริ่มต้น
     Callback = function(v)
         if v then
-            -- เริ่มทำงานเมื่อเปิด Switch
-            connection = RunService.Heartbeat:Connect(function()
-                local target = getClosestPlayer()
-                if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-                    local rootPart = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                    local targetPart = target.Character.HumanoidRootPart
-                    
-                    -- คำนวณตำแหน่งการหมุน (ลอยสูงขึ้น 5 หน่วย และหมุนรอบตัว)
-                    local speed = tick() * 5 -- ความเร็วในการหมุน
-                    local radius = 3 -- ระยะห่างจากตัวเป้าหมาย
-                    local offset = Vector3.new(math.sin(speed) * radius, 5, math.cos(speed) * radius)
-                    
-                    if rootPart then
-                        rootPart.CFrame = CFrame.new(targetPart.Position + offset, targetPart.Position)
+            -- ถ้ามีงานเก่าค้างอยู่ให้ปิดก่อนเพื่อกันซ้อน
+            if orbitConnection then orbitConnection:Disconnect() end
+            
+            orbitConnection = RunService.Heartbeat:Connect(function()
+                -- ใช้ pcall ครอบไว้กันสคริปต์หลุดเวลาคนที่เราตามกดรีเซ็ตตัวละคร
+                pcall(function()
+                    local target = getClosest()
+                    if target and target.Character and lp.Character then
+                        local root = lp.Character:FindFirstChild("HumanoidRootPart")
+                        local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
+                        
+                        if root and targetRoot then
+                            local t = tick() * 4 -- ความเร็วในการหมุน (ปรับเลข 4 ได้)
+                            local radius = 6 -- ระยะห่างวงกลม
+                            local height = 5 -- ความสูงเหนือหัว
+                            
+                            -- คำนวณตำแหน่งใหม่
+                            local orbitPos = targetRoot.Position + Vector3.new(math.sin(t) * radius, height, math.cos(t) * radius)
+                            
+                            -- วาร์ปและหันหน้าไปหาเป้าหมาย
+                            root.CFrame = CFrame.new(orbitPos, targetRoot.Position)
+                        end
                     end
-                end
+                end)
             end)
         else
-            -- หยุดทำงานเมื่อปิด Switch
-            if connection then
-                connection:Disconnect()
-                connection = nil
+            -- เมื่อกดปิด
+            if orbitConnection then
+                orbitConnection:Disconnect()
+                orbitConnection = nil
             end
         end
     end
