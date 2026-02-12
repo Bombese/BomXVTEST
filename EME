@@ -1,0 +1,202 @@
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
+
+local LocalPlayer = Players.LocalPlayer
+
+local function createUI()
+	if LocalPlayer.PlayerGui:FindFirstChild("WACKShopUI") then
+		LocalPlayer.PlayerGui.WACKShopUI:Destroy()
+	end
+
+	local ScreenGui = Instance.new("ScreenGui")
+	ScreenGui.Name = "WACKShopUI"
+	ScreenGui.ResetOnSpawn = false
+
+	-- ป้องกัน GUI ไม่จำเป็นสำหรับทุก executor
+	-- pcall(function()
+	--     syn.protect_gui(ScreenGui)
+	-- end)
+
+	ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+	-- 🟩 MAIN FRAME (ขนาดเล็กลง)
+	local main = Instance.new("Frame")
+	main.Size = UDim2.new(0, 480, 0, 300)
+	main.Position = UDim2.new(0.5, -240, 0.5, -150)
+	main.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+	main.BackgroundTransparency = 0.1
+	main.BorderSizePixel = 0
+	main.Parent = ScreenGui
+	main.Active = true
+	main.Draggable = true
+	Instance.new("UICorner", main).CornerRadius = UDim.new(0, 12)
+
+	-- เงา
+	local shadow = Instance.new("ImageLabel", main)
+	shadow.Name = "Shadow"
+	shadow.AnchorPoint = Vector2.new(0.5, 0.5)
+	shadow.Position = UDim2.new(0.5, 0, 0.5, 0)
+	shadow.Size = UDim2.new(1, 40, 1, 40)
+	shadow.BackgroundTransparency = 1
+	shadow.Image = "rbxassetid://1316045217"
+	shadow.ImageTransparency = 0.85
+	shadow.ZIndex = -1
+
+	-- ปุ่มปิด
+	local closeBtn = Instance.new("TextButton")
+	closeBtn.Size = UDim2.new(0, 28, 0, 28)
+	closeBtn.Position = UDim2.new(1, -33, 0, 5)
+	closeBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+	closeBtn.Text = "X"
+	closeBtn.TextColor3 = Color3.new(1, 1, 1)
+	closeBtn.Font = Enum.Font.GothamBold
+	closeBtn.TextSize = 16
+	closeBtn.BorderSizePixel = 0
+	closeBtn.Parent = main
+	Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 5)
+
+	closeBtn.MouseEnter:Connect(function()
+		closeBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+	end)
+	closeBtn.MouseLeave:Connect(function()
+		closeBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+	end)
+	closeBtn.MouseButton1Click:Connect(function()
+		main.Visible = false
+	end)
+
+	-- หัวข้อ
+	local title = Instance.new("TextLabel")
+	title.Parent = main
+	title.BackgroundTransparency = 1
+	title.Size = UDim2.new(1, 0, 0, 35)
+	title.Font = Enum.Font.GothamBold
+	title.Text = "🔥 HACK BYPASS (ENG 🇬🇧)🔥"
+	title.TextSize = 20
+	title.TextColor3 = Color3.fromRGB(230, 230, 230)
+
+	-- 🧭 แบ่งซ้าย-ขวา (เล็กลง)
+	local categoryFrame = Instance.new("Frame")
+	categoryFrame.Parent = main
+	categoryFrame.Size = UDim2.new(0, 150, 1, -50)
+	categoryFrame.Position = UDim2.new(0, 10, 0, 45)
+	categoryFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+	Instance.new("UICorner", categoryFrame).CornerRadius = UDim.new(0, 8)
+
+	local funcFrame = Instance.new("ScrollingFrame")
+	funcFrame.Parent = main
+	funcFrame.Size = UDim2.new(1, -180, 1, -50)
+	funcFrame.Position = UDim2.new(0, 170, 0, 45)
+	funcFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+	funcFrame.ScrollBarThickness = 5
+	funcFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+	Instance.new("UICorner", funcFrame).CornerRadius = UDim.new(0, 8)
+
+	-- 📂 หมวดหมู่และสคริปต์
+	local functionCategories = {
+		["🏃 Movement"] = {
+			["🚀 Fly"] = "https://pastebin.com/raw/iUVERBrs",
+			["🔥 TP"] = "https://pastebin.com/raw/K5FYvtvN",
+			["🦴 No clip"] = "https://pastebin.com/raw/7Qab6kg9",
+			["🏃 Speed x4"] = "https://pastebin.com/raw/pZhkm5mD"
+		},
+		["⚔️ การโจมตี"] = {
+			["⚔️ kill bot(Risk)"] = "https://pastebin.com/raw/DczvQZyU",
+			["🎯 Aim bot"] = "https://gist.githubusercontent.com/Aimboter477387/582af6aec49782899d5d375ab239039e/raw"
+		},
+		["🔧 -HACK"] = {
+			["🎁 Conjure items"] = "https://raw.githubusercontent.com/yofriendfromschool1/Sky-Hub-Backup/main/gametoolgiver.lua",
+			["🔥 FPS"] = "https://raw.githubusercontent.com/XNEOFF/FPS-BOOSTER/main/FPSBooster.txt",
+			["🎩 Hitbox 32%"] = "https://pastebin.com/raw/iRyTtfmf",
+			["💪🏻 god mod"] = "https://pastebin.com/raw/EjrTrMwC"
+		},
+		["😈 people "] = {
+			["🌌 backhoe"] = "https://pastebin.com/raw/pkZnU5P5",
+			["🤧 kick"] = "https://pastebin.com/raw/TXMNj1yy"
+		},
+		["🔍 ESP & ESP Bot"] = {
+			["🔍 ESP Players"] = "https://pastebin.com/raw/ZkLhNuDL",
+			["🤖 ESP BOT,NPC(beta)"] = "https://pastebin.com/raw/q26QuUBF"
+		}
+	}
+
+	-- 🧠 โหลดฟังก์ชัน
+	local function clearFunctions()
+		for _, c in pairs(funcFrame:GetChildren()) do
+			if c:IsA("TextButton") then
+				c:Destroy()
+			end
+		end
+	end
+
+	local function loadFunctions(category)
+		clearFunctions()
+		local y = 8
+		for name, url in pairs(functionCategories[category]) do
+			local btn = Instance.new("TextButton")
+			btn.Parent = funcFrame
+			btn.Size = UDim2.new(1, -16, 0, 30)
+			btn.Position = UDim2.new(0, 8, 0, y)
+			btn.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
+			btn.Text = name
+			btn.TextColor3 = Color3.fromRGB(240, 240, 240)
+			btn.Font = Enum.Font.GothamBold
+			btn.TextSize = 13
+			Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+
+			btn.MouseEnter:Connect(function()
+				btn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+			end)
+			btn.MouseLeave:Connect(function()
+				btn.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
+			end)
+			btn.MouseButton1Click:Connect(function()
+				loadstring(game:HttpGet(url))()
+			end)
+			y += 38
+		end
+		funcFrame.CanvasSize = UDim2.new(0, 0, 0, y)
+	end
+
+	-- ปุ่มหมวด
+	local y = 8
+	for category, _ in pairs(functionCategories) do
+		local catBtn = Instance.new("TextButton")
+		catBtn.Parent = categoryFrame
+		catBtn.Size = UDim2.new(1, -16, 0, 35)
+		catBtn.Position = UDim2.new(0, 8, 0, y)
+		catBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+		catBtn.Text = category
+		catBtn.Font = Enum.Font.GothamBold
+		catBtn.TextSize = 14
+		catBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+		Instance.new("UICorner", catBtn).CornerRadius = UDim.new(0, 6)
+
+		catBtn.MouseButton1Click:Connect(function()
+			loadFunctions(category)
+		end)
+
+		y += 42
+	end
+
+	-- 🔘 Toggle
+	local toggle = Instance.new("TextButton")
+	toggle.Parent = ScreenGui
+	toggle.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+	toggle.Size = UDim2.new(0, 45, 0, 45)
+	toggle.Position = UDim2.new(0, 50, 0, 50)
+	toggle.Font = Enum.Font.GothamBold
+	toggle.Text = "HACK"
+	toggle.TextSize = 18
+	toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+	Instance.new("UICorner", toggle).CornerRadius = UDim.new(1, 0)
+
+	local isVisible = true
+	toggle.MouseButton1Click:Connect(function()
+		isVisible = not isVisible
+		main.Visible = isVisible
+	end)
+end
+
+createUI()
