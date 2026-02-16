@@ -4,7 +4,7 @@ local PlaceId = game.PlaceId
 
 local Maps = {
     [9872472334] = "https://raw.githubusercontent.com/Bombese/ENANSCRIPT/main/Evade",
-    [6516141723] = "https://raw.githubusercontent.com/Bombese/ENANSCRIPT/main/Doors",
+    [6839171747] = "https://raw.githubusercontent.com/Bombese/ENANSCRIPT/main/Doors",
     [121864768012064] = "https://raw.githubusercontent.com/Bombese/ENANSCRIPT/main/Fish_it",
     [136599248168660] = "https://raw.githubusercontent.com/Bombese/ENANSCRIPT/main/Solo_hunters",
 }
