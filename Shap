@@ -1,0 +1,22 @@
+local WindUI = loadstring(game:HttpGet(
+    "https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"
+))()
+
+-- Window
+local Window = WindUI:CreateWindow({
+    Title = "Bom HUB",
+    Icon = "user",
+    Author = "https://discord.gg/5d6W4wuTdR",
+    OpenButton = {
+        Title = "Bom Hack",
+        Icon = "monitor",
+        Enabled = true,
+        Draggable = true,
+    }
+})
+
+-- Tab
+local Tab = Window:Tab({
+    Title = "Main",
+    Icon = "user",
+})
