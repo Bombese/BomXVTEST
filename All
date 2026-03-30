@@ -9,3 +9,60 @@ local Window = Fluent:CreateWindow({
     Theme = "VSC Dark High Contrast",
     MinimizeKey = Enum.KeyCode.LeftControl
 })
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local MainTab = Window:AddTab({ Title = "Main", Icon = "home" })
+
+local PlayerList = {}
+local SelectedPlayer = nil
+
+local function UpdatePlayerList()
+    PlayerList = {}
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            table.insert(PlayerList, player.Name)
+        end
+    end
+
+    Dropdown:SetValues(PlayerList)
+end
+
+local Dropdown = MainTab:AddDropdown("PlayerDropdown", {
+    Title = "Select Player",
+    Values = PlayerList,
+    Multi = false,
+    Default = nil,
+})
+
+Dropdown:OnChanged(function(value)
+    SelectedPlayer = value
+end)
+
+MainTab:AddButton({
+    Title = "Teleport",
+    Description = "วาร์ปไปหาผู้เล่น",
+    Callback = function()
+        if SelectedPlayer then
+            local target = Players:FindFirstChild(SelectedPlayer)
+            if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+                LocalPlayer.Character.HumanoidRootPart.CFrame =
+                    target.Character.HumanoidRootPart.CFrame
+            end
+        end
+    end
+})
+
+MainTab:AddButton({
+    Title = "Refresh Player List",
+    Description = "อัปเดตรายชื่อผู้เล่น",
+    Callback = function()
+        UpdatePlayerList()
+    end
+})
+
+UpdatePlayerList()
+
+Players.PlayerAdded:Connect(UpdatePlayerList)
+Players.PlayerRemoving:Connect(UpdatePlayerList)
