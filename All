@@ -395,7 +395,7 @@ _G.HeadSize = 10
 _G.Disabled = true 
 _G.WhitelistName = "RinYoSp1_47651"
 
-FuncTab:AddSlider("HitboxSize", {
+CombatTab:AddSlider("HitboxSize", {
     Title = "Hitbox Size",
     Min = 1, Max = 50, Default = 10, Rounding = 0,
     Callback = function(v) _G.HeadSize = v end
