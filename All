@@ -15,34 +15,42 @@ local LocalPlayer = Players.LocalPlayer
 
 local MainTab = Window:AddTab({ Title = "Main", Icon = "home" })
 
-local PlayerList = {}
 local SelectedPlayer = nil
 
+-- สร้าง Dropdown ก่อน (สำคัญ)
+local Dropdown = MainTab:AddDropdown("PlayerDropdown", {
+    Title = "Select Player",
+    Values = {},
+    Multi = false,
+})
+
+-- ฟังก์ชันอัปเดต
 local function UpdatePlayerList()
-    PlayerList = {}
-    for _, player in pairs(Players:GetPlayers()) do
+    local list = {}
+
+    for _, player in ipairs(Players:GetPlayers()) do
         if player ~= LocalPlayer then
-            table.insert(PlayerList, player.Name)
+            table.insert(list, player.Name)
         end
     end
 
-    Dropdown:SetValues(PlayerList)
+    -- อัปเดต Dropdown
+    Dropdown:SetValues(list)
+
+    -- ถ้าคนที่เลือกอยู่หาย → รีเซ็ต
+    if SelectedPlayer and not table.find(list, SelectedPlayer) then
+        SelectedPlayer = nil
+    end
 end
 
-local Dropdown = MainTab:AddDropdown("PlayerDropdown", {
-    Title = "Select Player",
-    Values = PlayerList,
-    Multi = false,
-    Default = nil,
-})
-
+-- เลือกผู้เล่น
 Dropdown:OnChanged(function(value)
     SelectedPlayer = value
 end)
 
+-- ปุ่ม Teleport
 MainTab:AddButton({
     Title = "Teleport",
-    Description = "วาร์ปไปหาผู้เล่น",
     Callback = function()
         if SelectedPlayer then
             local target = Players:FindFirstChild(SelectedPlayer)
@@ -50,19 +58,24 @@ MainTab:AddButton({
                 LocalPlayer.Character.HumanoidRootPart.CFrame =
                     target.Character.HumanoidRootPart.CFrame
             end
+        else
+            warn("ยังไม่ได้เลือกผู้เล่น")
         end
     end
 })
 
+-- ปุ่ม Refresh
 MainTab:AddButton({
-    Title = "Refresh Player List",
-    Description = "อัปเดตรายชื่อผู้เล่น",
+    Title = "Refresh",
     Callback = function()
         UpdatePlayerList()
     end
 })
 
+-- โหลดครั้งแรก (หน่วงนิดนึงกันบัค)
+task.wait(1)
 UpdatePlayerList()
 
+-- อัปเดตอัตโนมัติ
 Players.PlayerAdded:Connect(UpdatePlayerList)
 Players.PlayerRemoving:Connect(UpdatePlayerList)
