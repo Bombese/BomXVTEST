@@ -331,32 +331,38 @@ local AimbotEnabled = false
 local FOVVisible = false
 local FOV = 100
 
--- 🔵 วง FOV
-local FOVCircle = Drawing.new("Circle")
-FOVCircle.Visible = false
-FOVCircle.Radius = FOV
-FOVCircle.Color = Color3.fromRGB(0, 170, 255)
-FOVCircle.Thickness = 2
-FOVCircle.Filled = false
-FOVCircle.Transparency = 1
+-- ================== FOV GUI ==================
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = game.CoreGui
 
--- อัปเดตวง
-RunService.RenderStepped:Connect(function()
-    if FOVCircle then
-        FOVCircle.Position = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
-        FOVCircle.Radius = FOV
-        FOVCircle.Visible = FOVVisible
-    end
-end)
+local Circle = Instance.new("Frame")
+Circle.Parent = ScreenGui
+Circle.AnchorPoint = Vector2.new(0.5, 0.5)
+Circle.Position = UDim2.new(0.5, 0, 0.5, 0)
+Circle.Size = UDim2.new(0, FOV*2, 0, FOV*2)
+Circle.BackgroundTransparency = 1
 
--- 🎯 หาเป้าหมายใกล้สุดใน FOV
+local Stroke = Instance.new("UIStroke")
+Stroke.Parent = Circle
+Stroke.Color = Color3.fromRGB(0,170,255)
+Stroke.Thickness = 2
+
+local Corner = Instance.new("UICorner")
+Corner.Parent = Circle
+Corner.CornerRadius = UDim.new(1, 0)
+
+Circle.Visible = false
+
+-- ================== หาเป้า ==================
 local function GetClosestPlayer()
     local closest = nil
     local shortest = FOV
 
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local pos, onScreen = Camera:WorldToViewportPoint(player.Character.HumanoidRootPart.Position)
+            
+            local hrp = player.Character.HumanoidRootPart
+            local pos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
 
             if onScreen then
                 local dist = (Vector2.new(pos.X, pos.Y) - Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)).Magnitude
@@ -372,7 +378,7 @@ local function GetClosestPlayer()
     return closest
 end
 
--- 🎯 Aimbot (ทำงานเฉพาะตอนเปิดวง)
+-- ================== AIMBOT ==================
 RunService.RenderStepped:Connect(function()
     if AimbotEnabled and FOVVisible then
         local target = GetClosestPlayer()
@@ -383,7 +389,9 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- 🔘 Toggle Aimbot
+-- ================== UI ==================
+
+-- Toggle Aimbot
 CombatTab:AddToggle("AimbotToggle", {
     Title = "Aimbot",
     Default = false,
@@ -392,21 +400,22 @@ CombatTab:AddToggle("AimbotToggle", {
     end
 })
 
--- 🔘 Toggle วง FOV
+-- Toggle FOV
 CombatTab:AddToggle("FOVToggle", {
     Title = "Show FOV Circle",
     Default = false,
     Callback = function(state)
         FOVVisible = state
+        Circle.Visible = state
 
-        -- ❗ ปิดวง = ปิด Aimbot อัตโนมัติ
+        -- ปิดวง = ปิด aimbot
         if not state then
             AimbotEnabled = false
         end
     end
 })
 
--- 🎚️ Slider ปรับขนาด FOV
+-- Slider FOV
 CombatTab:AddSlider("FOVSlider", {
     Title = "FOV Size",
     Default = 100,
@@ -415,5 +424,6 @@ CombatTab:AddSlider("FOVSlider", {
     Rounding = 0,
     Callback = function(value)
         FOV = value
+        Circle.Size = UDim2.new(0, value*2, 0, value*2)
     end
 })
