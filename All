@@ -72,78 +72,6 @@ Players.PlayerAdded:Connect(UpdatePlayerList)
 Players.PlayerRemoving:Connect(UpdatePlayerList)
 
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-
-local SpeedEnabled = false
-local JumpEnabled = false
-
-local SpeedValue = 16
-local JumpValue = 50
-
-local function ApplyStats()
-    local char = LocalPlayer.Character
-    if char then
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if hum then
-            hum.WalkSpeed = SpeedEnabled and SpeedValue or 16
-            hum.JumpPower = JumpEnabled and JumpValue or 50
-        end
-    end
-end
-
--- 2️⃣ Speed Slider
-MainTab:AddSlider("SpeedSlider", {
-    Title = "Speed",
-    Default = 16,
-    Min = 16,
-    Max = 200,
-    Rounding = 0,
-    Callback = function(value)
-        SpeedValue = value
-        if SpeedEnabled then ApplyStats() end
-    end
-})
-
--- 1️⃣ Speed Toggle
-MainTab:AddToggle("SpeedToggle", {
-    Title = "Enable Speed",
-    Default = false,
-    Callback = function(state)
-        SpeedEnabled = state
-        ApplyStats()
-    end
-})
-
--- 4️⃣ Jump Slider
-MainTab:AddSlider("JumpSlider", {
-    Title = "Jump Power",
-    Default = 50,
-    Min = 50,
-    Max = 200,
-    Rounding = 0,
-    Callback = function(value)
-        JumpValue = value
-        if JumpEnabled then ApplyStats() end
-    end
-})
-
--- 3️⃣ Jump Toggle
-MainTab:AddToggle("JumpToggle", {
-    Title = "Enable Jump",
-    Default = false,
-    Callback = function(state)
-        JumpEnabled = state
-        ApplyStats()
-    end
-})
-
--- รีสปอว์น
-LocalPlayer.CharacterAdded:Connect(function()
-    task.wait(1)
-    ApplyStats()
-end)
-
-local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
@@ -258,4 +186,76 @@ end)
 -- คนออก
 Players.PlayerRemoving:Connect(function(player)
     RemoveESP(player)
+end)
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local SpeedEnabled = false
+local JumpEnabled = false
+
+local SpeedValue = 16
+local JumpValue = 50
+
+local function ApplyStats()
+    local char = LocalPlayer.Character
+    if char then
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum.WalkSpeed = SpeedEnabled and SpeedValue or 16
+            hum.JumpPower = JumpEnabled and JumpValue or 50
+        end
+    end
+end
+
+-- 2️⃣ Speed Slider
+MainTab:AddSlider("SpeedSlider", {
+    Title = "Speed",
+    Default = 16,
+    Min = 16,
+    Max = 200,
+    Rounding = 0,
+    Callback = function(value)
+        SpeedValue = value
+        if SpeedEnabled then ApplyStats() end
+    end
+})
+
+-- 1️⃣ Speed Toggle
+MainTab:AddToggle("SpeedToggle", {
+    Title = "Enable Speed",
+    Default = false,
+    Callback = function(state)
+        SpeedEnabled = state
+        ApplyStats()
+    end
+})
+
+-- 4️⃣ Jump Slider
+MainTab:AddSlider("JumpSlider", {
+    Title = "Jump Power",
+    Default = 50,
+    Min = 50,
+    Max = 200,
+    Rounding = 0,
+    Callback = function(value)
+        JumpValue = value
+        if JumpEnabled then ApplyStats() end
+    end
+})
+
+-- 3️⃣ Jump Toggle
+MainTab:AddToggle("JumpToggle", {
+    Title = "Enable Jump",
+    Default = false,
+    Callback = function(state)
+        JumpEnabled = state
+        ApplyStats()
+    end
+})
+
+-- รีสปอว์น
+LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(1)
+    ApplyStats()
 end)
