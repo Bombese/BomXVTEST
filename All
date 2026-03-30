@@ -71,7 +71,7 @@ UpdatePlayerList()
 Players.PlayerAdded:Connect(UpdatePlayerList)
 Players.PlayerRemoving:Connect(UpdatePlayerList)
 
-MainTab:AddSection("Settings And ESP")
+MainTab:AddSection("Noclip Inf Jump And ESP")
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -244,6 +244,8 @@ if not NoclipEnabled and LocalPlayer.Character then
         end
     end
 end
+
+MainTab:AddSection("Settings Speed And Jump")
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
