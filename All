@@ -91,7 +91,7 @@ local function ApplyStats()
     end
 end
 
--- 🔼 Slider มาก่อน
+-- 2️⃣ Speed Slider
 MainTab:AddSlider("SpeedSlider", {
     Title = "Speed",
     Default = 16,
@@ -104,6 +104,17 @@ MainTab:AddSlider("SpeedSlider", {
     end
 })
 
+-- 1️⃣ Speed Toggle
+MainTab:AddToggle("SpeedToggle", {
+    Title = "Enable Speed",
+    Default = false,
+    Callback = function(state)
+        SpeedEnabled = state
+        ApplyStats()
+    end
+})
+
+-- 4️⃣ Jump Slider
 MainTab:AddSlider("JumpSlider", {
     Title = "Jump Power",
     Default = 50,
@@ -116,16 +127,7 @@ MainTab:AddSlider("JumpSlider", {
     end
 })
 
--- 🔽 Toggle อยู่ล่าง
-MainTab:AddToggle("SpeedToggle", {
-    Title = "Enable Speed",
-    Default = false,
-    Callback = function(state)
-        SpeedEnabled = state
-        ApplyStats()
-    end
-})
-
+-- 3️⃣ Jump Toggle
 MainTab:AddToggle("JumpToggle", {
     Title = "Enable Jump",
     Default = false,
