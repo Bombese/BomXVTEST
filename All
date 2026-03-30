@@ -190,6 +190,61 @@ Players.PlayerRemoving:Connect(function(player)
     RemoveESP(player)
 end)
 
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local NoclipEnabled = false
+local InfJumpEnabled = false
+
+-- 🧱 NoClip (ทะลุกำแพง)
+RunService.Stepped:Connect(function()
+    if NoclipEnabled and LocalPlayer.Character then
+        for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
+            if v:IsA("BasePart") then
+                v.CanCollide = false
+            end
+        end
+    end
+end)
+
+-- 🦘 Infinite Jump
+UserInputService.JumpRequest:Connect(function()
+    if InfJumpEnabled and LocalPlayer.Character then
+        local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
+
+-- 🔘 Toggle NoClip
+MainTab:AddToggle("NoclipToggle", {
+    Title = "NoClip",
+    Default = false,
+    Callback = function(state)
+        NoclipEnabled = state
+    end
+})
+
+-- 🔘 Toggle Infinite Jump
+MainTab:AddToggle("InfJumpToggle", {
+    Title = "Infinite Jump",
+    Default = false,
+    Callback = function(state)
+        InfJumpEnabled = state
+    end
+})
+
+if not NoclipEnabled and LocalPlayer.Character then
+    for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.CanCollide = true
+        end
+    end
+end
+
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
