@@ -329,7 +329,9 @@ local Camera = workspace.CurrentCamera
 
 local AimbotEnabled = false
 local FOVVisible = false
+local TeamCheckEnabled = true
 local FOV = 100
+local Smoothness = 0.1
 
 -- ================== FOV GUI ==================
 local ScreenGui = Instance.new("ScreenGui")
@@ -353,24 +355,60 @@ Corner.CornerRadius = UDim.new(1, 0)
 
 Circle.Visible = false
 
+-- ================== WALL CHECK ==================
+local function IsVisible(targetPart)
+    if not targetPart then return false end
+
+    local origin = Camera.CFrame.Position
+    local direction = (targetPart.Position - origin)
+
+    local params = RaycastParams.new()
+    params.FilterType = Enum.RaycastFilterType.Blacklist
+    params.FilterDescendantsInstances = {LocalPlayer.Character}
+
+    local result = workspace:Raycast(origin, direction, params)
+
+    if result then
+        return result.Instance:IsDescendantOf(targetPart.Parent)
+    end
+
+    return false
+end
+
+-- ================== TEAM CHECK ==================
+local function IsEnemy(player)
+    if not TeamCheckEnabled then return true end
+    if not LocalPlayer.Team or not player.Team then return true end
+
+    return player.Team ~= LocalPlayer.Team
+end
+
 -- ================== หาเป้า ==================
 local function GetClosestPlayer()
     local closest = nil
     local shortest = FOV
 
     for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        if player ~= LocalPlayer and player.Character then
             
-            local hrp = player.Character.HumanoidRootPart
-            local pos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+            if IsEnemy(player) then
 
-            if onScreen then
-                local dist = (Vector2.new(pos.X, pos.Y) - Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)).Magnitude
+                local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+                local head = player.Character:FindFirstChild("Head")
 
-                if dist < shortest then
-                    shortest = dist
-                    closest = player
+                if hrp and head then
+                    local pos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+
+                    if onScreen then
+                        local dist = (Vector2.new(pos.X, pos.Y) - Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)).Magnitude
+
+                        if dist < shortest and IsVisible(head) then
+                            shortest = dist
+                            closest = player
+                        end
+                    end
                 end
+
             end
         end
     end
@@ -378,13 +416,18 @@ local function GetClosestPlayer()
     return closest
 end
 
--- ================== AIMBOT ==================
+-- ================== SMOOTH AIMBOT ==================
 RunService.RenderStepped:Connect(function()
     if AimbotEnabled and FOVVisible then
         local target = GetClosestPlayer()
 
         if target and target.Character and target.Character:FindFirstChild("Head") then
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character.Head.Position)
+            local aimPos = target.Character.Head.Position
+            local current = Camera.CFrame
+            local new = CFrame.new(current.Position, aimPos)
+
+            -- 🔥 Smooth Aim
+            Camera.CFrame = current:Lerp(new, Smoothness)
         end
     end
 end)
@@ -408,10 +451,18 @@ CombatTab:AddToggle("FOVToggle", {
         FOVVisible = state
         Circle.Visible = state
 
-        -- ปิดวง = ปิด aimbot
         if not state then
             AimbotEnabled = false
         end
+    end
+})
+
+-- Toggle Team Check
+CombatTab:AddToggle("TeamCheck", {
+    Title = "Team Check",
+    Default = true,
+    Callback = function(state)
+        TeamCheckEnabled = state
     end
 })
 
@@ -425,6 +476,18 @@ CombatTab:AddSlider("FOVSlider", {
     Callback = function(value)
         FOV = value
         Circle.Size = UDim2.new(0, value*2, 0, value*2)
+    end
+})
+
+-- Slider Smoothness
+CombatTab:AddSlider("Smoothness", {
+    Title = "Aim Smoothness",
+    Default = 0.1,
+    Min = 0.01,
+    Max = 0.5,
+    Rounding = 2,
+    Callback = function(value)
+        Smoothness = value
     end
 })
 
