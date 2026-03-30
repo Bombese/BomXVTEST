@@ -427,3 +427,55 @@ CombatTab:AddSlider("FOVSlider", {
         Circle.Size = UDim2.new(0, value*2, 0, value*2)
     end
 })
+
+CombatTab:AddSection("Hitbox Settings")
+
+_G.HeadSize = 10 
+_G.Disabled = true 
+_G.WhitelistName = "" -- ใส่ชื่อคนที่ไม่อยากให้โดน
+
+-- Slider ปรับขนาด
+CombatTab:AddSlider("HitboxSize", {
+    Title = "Hitbox Size",
+    Min = 1, Max = 50, Default = 10, Rounding = 0,
+    Callback = function(v) 
+        _G.HeadSize = v 
+    end
+})
+
+-- Toggle เปิด/ปิด
+CombatTab:AddToggle("Hitbox_Toggle", {
+    Title = "Enable Hitbox",
+    Default = false,
+    Callback = function(v) 
+        _G.Disabled = not v 
+    end
+})
+
+-- ================== LOGIC ==================
+RunService.RenderStepped:Connect(function()
+    pcall(function()
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character then
+                local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+
+                if hrp then
+                    if not _G.Disabled and player.Name ~= _G.WhitelistName then
+                        -- 🔵 เปิด: ขยาย
+                        hrp.Size = Vector3.new(_G.HeadSize, _G.HeadSize, _G.HeadSize)
+                        hrp.Transparency = 0.5
+                        hrp.Material = Enum.Material.Neon
+                        hrp.Color = Color3.fromRGB(0,170,255)
+                        hrp.CanCollide = false
+                    else
+                        -- 🔴 ปิด: คืนค่า
+                        hrp.Size = Vector3.new(2, 2, 1)
+                        hrp.Transparency = 1
+                        hrp.Material = Enum.Material.Plastic
+                        hrp.CanCollide = true
+                    end
+                end
+            end
+        end
+    end)
+end)
