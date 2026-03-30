@@ -74,37 +74,49 @@ Players.PlayerRemoving:Connect(UpdatePlayerList)
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
--- ค่าเริ่มต้น
 local SpeedEnabled = false
 local JumpEnabled = false
 
 local SpeedValue = 16
 local JumpValue = 50
 
--- ฟังก์ชันอัปเดตค่า
 local function ApplyStats()
     local char = LocalPlayer.Character
     if char then
         local hum = char:FindFirstChildOfClass("Humanoid")
         if hum then
-            -- Speed
-            if SpeedEnabled then
-                hum.WalkSpeed = SpeedValue
-            else
-                hum.WalkSpeed = 16
-            end
-
-            -- Jump
-            if JumpEnabled then
-                hum.JumpPower = JumpValue
-            else
-                hum.JumpPower = 50
-            end
+            hum.WalkSpeed = SpeedEnabled and SpeedValue or 16
+            hum.JumpPower = JumpEnabled and JumpValue or 50
         end
     end
 end
 
--- Toggle Speed
+-- 🔼 Slider มาก่อน
+MainTab:AddSlider("SpeedSlider", {
+    Title = "Speed",
+    Default = 16,
+    Min = 16,
+    Max = 200,
+    Rounding = 0,
+    Callback = function(value)
+        SpeedValue = value
+        if SpeedEnabled then ApplyStats() end
+    end
+})
+
+MainTab:AddSlider("JumpSlider", {
+    Title = "Jump Power",
+    Default = 50,
+    Min = 50,
+    Max = 200,
+    Rounding = 0,
+    Callback = function(value)
+        JumpValue = value
+        if JumpEnabled then ApplyStats() end
+    end
+})
+
+-- 🔽 Toggle อยู่ล่าง
 MainTab:AddToggle("SpeedToggle", {
     Title = "Enable Speed",
     Default = false,
@@ -114,23 +126,6 @@ MainTab:AddToggle("SpeedToggle", {
     end
 })
 
--- Slider Speed
-MainTab:AddSlider("SpeedSlider", {
-    Title = "Speed",
-    Description = "ปรับความเร็ว",
-    Default = 16,
-    Min = 16,
-    Max = 200,
-    Rounding = 0,
-    Callback = function(value)
-        SpeedValue = value
-        if SpeedEnabled then
-            ApplyStats()
-        end
-    end
-})
-
--- Toggle Jump
 MainTab:AddToggle("JumpToggle", {
     Title = "Enable Jump",
     Default = false,
@@ -140,23 +135,7 @@ MainTab:AddToggle("JumpToggle", {
     end
 })
 
--- Slider Jump
-MainTab:AddSlider("JumpSlider", {
-    Title = "Jump Power",
-    Description = "ปรับแรงกระโดด",
-    Default = 50,
-    Min = 50,
-    Max = 200,
-    Rounding = 0,
-    Callback = function(value)
-        JumpValue = value
-        if JumpEnabled then
-            ApplyStats()
-        end
-    end
-})
-
--- รีเซ็ตตอนเกิดใหม่
+-- รีสปอว์น
 LocalPlayer.CharacterAdded:Connect(function()
     task.wait(1)
     ApplyStats()
