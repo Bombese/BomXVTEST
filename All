@@ -17,14 +17,12 @@ local MainTab = Window:AddTab({ Title = "Main", Icon = "home" })
 
 local SelectedPlayer = nil
 
--- สร้าง Dropdown ก่อน (สำคัญ)
 local Dropdown = MainTab:AddDropdown("PlayerDropdown", {
     Title = "Select Player",
     Values = {},
     Multi = false,
 })
 
--- ฟังก์ชันอัปเดต
 local function UpdatePlayerList()
     local list = {}
 
@@ -34,21 +32,17 @@ local function UpdatePlayerList()
         end
     end
 
-    -- อัปเดต Dropdown
     Dropdown:SetValues(list)
 
-    -- ถ้าคนที่เลือกอยู่หาย → รีเซ็ต
     if SelectedPlayer and not table.find(list, SelectedPlayer) then
         SelectedPlayer = nil
     end
 end
 
--- เลือกผู้เล่น
 Dropdown:OnChanged(function(value)
     SelectedPlayer = value
 end)
 
--- ปุ่ม Teleport
 MainTab:AddButton({
     Title = "Teleport",
     Callback = function()
@@ -64,7 +58,6 @@ MainTab:AddButton({
     end
 })
 
--- ปุ่ม Refresh
 MainTab:AddButton({
     Title = "Refresh",
     Callback = function()
@@ -72,10 +65,8 @@ MainTab:AddButton({
     end
 })
 
--- โหลดครั้งแรก (หน่วงนิดนึงกันบัค)
 task.wait(1)
 UpdatePlayerList()
 
--- อัปเดตอัตโนมัติ
 Players.PlayerAdded:Connect(UpdatePlayerList)
 Players.PlayerRemoving:Connect(UpdatePlayerList)
