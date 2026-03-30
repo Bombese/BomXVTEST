@@ -328,25 +328,28 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 local AimbotEnabled = false
+local FOVVisible = false
 local FOV = 100
 
--- 🎯 วง FOV
+-- 🔵 วง FOV
 local FOVCircle = Drawing.new("Circle")
 FOVCircle.Visible = false
 FOVCircle.Radius = FOV
 FOVCircle.Color = Color3.fromRGB(0, 170, 255)
-FOVCircle.Thickness = 1
+FOVCircle.Thickness = 2
 FOVCircle.Filled = false
 FOVCircle.Transparency = 1
 
--- อัปเดตตำแหน่งวง
+-- อัปเดตวง
 RunService.RenderStepped:Connect(function()
-    FOVCircle.Position = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
-    FOVCircle.Radius = FOV
-    FOVCircle.Visible = AimbotEnabled
+    if FOVCircle then
+        FOVCircle.Position = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+        FOVCircle.Radius = FOV
+        FOVCircle.Visible = FOVVisible
+    end
 end)
 
--- หาเป้าหมายใกล้สุดใน FOV
+-- 🎯 หาเป้าหมายใกล้สุดใน FOV
 local function GetClosestPlayer()
     local closest = nil
     local shortest = FOV
@@ -369,9 +372,9 @@ local function GetClosestPlayer()
     return closest
 end
 
--- 🎯 Aimbot ทำงาน
+-- 🎯 Aimbot (ทำงานเฉพาะตอนเปิดวง)
 RunService.RenderStepped:Connect(function()
-    if AimbotEnabled then
+    if AimbotEnabled and FOVVisible then
         local target = GetClosestPlayer()
 
         if target and target.Character and target.Character:FindFirstChild("Head") then
@@ -386,11 +389,24 @@ CombatTab:AddToggle("AimbotToggle", {
     Default = false,
     Callback = function(state)
         AimbotEnabled = state
-        FOVCircle.Visible = state
     end
 })
 
--- 🎚️ Slider FOV
+-- 🔘 Toggle วง FOV
+CombatTab:AddToggle("FOVToggle", {
+    Title = "Show FOV Circle",
+    Default = false,
+    Callback = function(state)
+        FOVVisible = state
+
+        -- ❗ ปิดวง = ปิด Aimbot อัตโนมัติ
+        if not state then
+            AimbotEnabled = false
+        end
+    end
+})
+
+-- 🎚️ Slider ปรับขนาด FOV
 CombatTab:AddSlider("FOVSlider", {
     Title = "FOV Size",
     Default = 100,
