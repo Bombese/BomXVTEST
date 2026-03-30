@@ -331,7 +331,6 @@ local AimbotEnabled = false
 local FOVVisible = false
 local TeamCheckEnabled = true
 local FOV = 100
-local Smoothness = 0.1
 
 -- ================== FOV GUI ==================
 local ScreenGui = Instance.new("ScreenGui")
@@ -416,18 +415,14 @@ local function GetClosestPlayer()
     return closest
 end
 
--- ================== SMOOTH AIMBOT ==================
+-- ================== SNAP AIMBOT ==================
 RunService.RenderStepped:Connect(function()
     if AimbotEnabled and FOVVisible then
         local target = GetClosestPlayer()
 
         if target and target.Character and target.Character:FindFirstChild("Head") then
-            local aimPos = target.Character.Head.Position
-            local current = Camera.CFrame
-            local new = CFrame.new(current.Position, aimPos)
-
-            -- 🔥 Smooth Aim
-            Camera.CFrame = current:Lerp(new, Smoothness)
+            -- 🔥 ล็อกทันที (แข็ง)
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character.Head.Position)
         end
     end
 end)
@@ -476,18 +471,6 @@ CombatTab:AddSlider("FOVSlider", {
     Callback = function(value)
         FOV = value
         Circle.Size = UDim2.new(0, value*2, 0, value*2)
-    end
-})
-
--- Slider Smoothness
-CombatTab:AddSlider("Smoothness", {
-    Title = "Aim Smoothness",
-    Default = 0.1,
-    Min = 0.01,
-    Max = 0.5,
-    Rounding = 2,
-    Callback = function(value)
-        Smoothness = value
     end
 })
 
