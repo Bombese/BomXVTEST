@@ -318,3 +318,86 @@ LocalPlayer.CharacterAdded:Connect(function()
     task.wait(1)
     ApplyStats()
 end)
+
+-- ================== COMBAT TAB ==================
+local CombatTab = Window:AddTab({ Title = "Combat", Icon = "crosshair" })
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+local AimbotEnabled = false
+local FOV = 100
+
+-- 🎯 วง FOV
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Visible = false
+FOVCircle.Radius = FOV
+FOVCircle.Color = Color3.fromRGB(0, 170, 255)
+FOVCircle.Thickness = 1
+FOVCircle.Filled = false
+FOVCircle.Transparency = 1
+
+-- อัปเดตตำแหน่งวง
+RunService.RenderStepped:Connect(function()
+    FOVCircle.Position = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+    FOVCircle.Radius = FOV
+    FOVCircle.Visible = AimbotEnabled
+end)
+
+-- หาเป้าหมายใกล้สุดใน FOV
+local function GetClosestPlayer()
+    local closest = nil
+    local shortest = FOV
+
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local pos, onScreen = Camera:WorldToViewportPoint(player.Character.HumanoidRootPart.Position)
+
+            if onScreen then
+                local dist = (Vector2.new(pos.X, pos.Y) - Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)).Magnitude
+
+                if dist < shortest then
+                    shortest = dist
+                    closest = player
+                end
+            end
+        end
+    end
+
+    return closest
+end
+
+-- 🎯 Aimbot ทำงาน
+RunService.RenderStepped:Connect(function()
+    if AimbotEnabled then
+        local target = GetClosestPlayer()
+
+        if target and target.Character and target.Character:FindFirstChild("Head") then
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character.Head.Position)
+        end
+    end
+end)
+
+-- 🔘 Toggle Aimbot
+CombatTab:AddToggle("AimbotToggle", {
+    Title = "Aimbot",
+    Default = false,
+    Callback = function(state)
+        AimbotEnabled = state
+        FOVCircle.Visible = state
+    end
+})
+
+-- 🎚️ Slider FOV
+CombatTab:AddSlider("FOVSlider", {
+    Title = "FOV Size",
+    Default = 100,
+    Min = 50,
+    Max = 300,
+    Rounding = 0,
+    Callback = function(value)
+        FOV = value
+    end
+})
