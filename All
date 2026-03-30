@@ -389,7 +389,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-FuncTab:AddSection("Hitbox System (ขยายฮิตบ็อกซ์)")
+CombatTab:AddSection("Hitbox System (ขยายฮิตบ็อกซ์)")
 
 _G.HeadSize = 10 
 _G.Disabled = true 
