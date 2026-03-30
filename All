@@ -72,6 +72,97 @@ Players.PlayerAdded:Connect(UpdatePlayerList)
 Players.PlayerRemoving:Connect(UpdatePlayerList)
 
 local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- ค่าเริ่มต้น
+local SpeedEnabled = false
+local JumpEnabled = false
+
+local SpeedValue = 16
+local JumpValue = 50
+
+-- ฟังก์ชันอัปเดตค่า
+local function ApplyStats()
+    local char = LocalPlayer.Character
+    if char then
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if hum then
+            -- Speed
+            if SpeedEnabled then
+                hum.WalkSpeed = SpeedValue
+            else
+                hum.WalkSpeed = 16
+            end
+
+            -- Jump
+            if JumpEnabled then
+                hum.JumpPower = JumpValue
+            else
+                hum.JumpPower = 50
+            end
+        end
+    end
+end
+
+-- Toggle Speed
+MainTab:AddToggle("SpeedToggle", {
+    Title = "Enable Speed",
+    Default = false,
+    Callback = function(state)
+        SpeedEnabled = state
+        ApplyStats()
+    end
+})
+
+-- Slider Speed
+MainTab:AddSlider("SpeedSlider", {
+    Title = "Speed",
+    Description = "ปรับความเร็ว",
+    Default = 16,
+    Min = 16,
+    Max = 200,
+    Rounding = 0,
+    Callback = function(value)
+        SpeedValue = value
+        if SpeedEnabled then
+            ApplyStats()
+        end
+    end
+})
+
+-- Toggle Jump
+MainTab:AddToggle("JumpToggle", {
+    Title = "Enable Jump",
+    Default = false,
+    Callback = function(state)
+        JumpEnabled = state
+        ApplyStats()
+    end
+})
+
+-- Slider Jump
+MainTab:AddSlider("JumpSlider", {
+    Title = "Jump Power",
+    Description = "ปรับแรงกระโดด",
+    Default = 50,
+    Min = 50,
+    Max = 200,
+    Rounding = 0,
+    Callback = function(value)
+        JumpValue = value
+        if JumpEnabled then
+            ApplyStats()
+        end
+    end
+})
+
+-- รีเซ็ตตอนเกิดใหม่
+LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(1)
+    ApplyStats()
+end)
+
+local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
