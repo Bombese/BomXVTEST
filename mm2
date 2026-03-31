@@ -189,26 +189,31 @@ task.spawn(function()
             end
 
             -- 🔫 GUN RGB
-            if ESPGun then
-                local gun = getGun()
-                if gun then
-                    local pos, onScreen = Camera:WorldToViewportPoint(gun.Position)
+if ESPGun then
+    local gun = getGun()
 
-                    if not GunTracer then
-                        GunTracer = Drawing.new("Line")
-                        GunTracer.Thickness = 3
-                    end
+    if gun then
+        local pos, onScreen = Camera:WorldToViewportPoint(gun.Position)
 
-                    if onScreen then
-                        GunTracer.From = center
-                        GunTracer.To = Vector2.new(pos.X, pos.Y)
-                        GunTracer.Color = getRGB()
-                        GunTracer.Visible = true
-                    else
-                        GunTracer.Visible = false
-                    end
-                end
-            end
+        if not GunTracer then
+            GunTracer = Drawing.new("Line")
+            GunTracer.Thickness = 3
+        end
+
+        if onScreen then
+            GunTracer.From = center
+            GunTracer.To = Vector2.new(pos.X, pos.Y)
+            GunTracer.Color = Color3.fromHSV(tick()%5/5,1,1)
+            GunTracer.Visible = true
+        else
+            GunTracer.Visible = false
+        end
+    else
+        if GunTracer then
+            GunTracer.Visible = false
+        end
+    end
+end
 
         end)
     end
