@@ -22,8 +22,6 @@ local ESPGun = false
 local Tracers = {}
 local GunTracer = nil
 local Camera = workspace.CurrentCamera
-
--- 🔔 Notify State
 local GunSpawned = false
 
 -- ==============================
@@ -117,20 +115,35 @@ local function removeTracer(player)
 end
 
 -- ==============================
--- 🔫 GUN (FIXED)
+-- 🔫 GUN (REAL ONLY)
 -- ==============================
 local function getGun()
     for _, v in pairs(workspace:GetDescendants()) do
-        if string.find(v.Name:lower(),"gun") then
+        
+        if v.Name == "Gun" then
             
-            if v:IsA("BasePart") then
-                local parent = v.Parent
+            local parent = v.Parent
 
-                -- ❌ ไม่เอาปืนที่อยู่กับคน
-                if parent and parent:FindFirstChild("Humanoid") then
-                    continue
+            -- ❌ ข้ามปืนที่อยู่กับคน
+            if parent and parent:FindFirstChild("Humanoid") then
+                continue
+            end
+
+            -- ❌ ข้ามปืนโชว์ (ติดแมพ)
+            if v:IsA("BasePart") and v.Anchored then
+                continue
+            end
+
+            -- ✅ Tool (ของจริง)
+            if v:IsA("Tool") then
+                local handle = v:FindFirstChild("Handle")
+                if handle then
+                    return handle
                 end
+            end
 
+            -- ✅ BasePart (ของตกพื้น)
+            if v:IsA("BasePart") and not v.Anchored then
                 return v
             end
         end
@@ -216,7 +229,7 @@ task.spawn(function()
                         })
                     end
 
-                    local pos, onScreen = Camera:WorldToViewportPoint(gun.Position)
+                    local pos, onScreen = Camera:WorldToViewportPoint(gun.Position + Vector3.new(0,1,0))
 
                     if not GunTracer then
                         GunTracer = Drawing.new("Line")
@@ -232,18 +245,18 @@ task.spawn(function()
                         GunTracer.Visible = false
                     end
 
-                    -- 💡 Highlight Gun
-                    if not gun:FindFirstChild("ESP_GUN") then
+                    -- 💡 Highlight Gun (ติด parent)
+                    if not gun.Parent:FindFirstChild("ESP_GUN") then
                         local hl = Instance.new("Highlight")
                         hl.Name = "ESP_GUN"
                         hl.FillColor = Color3.fromRGB(255,255,0)
                         hl.OutlineColor = Color3.fromRGB(255,255,0)
                         hl.FillTransparency = 0.3
-                        hl.Parent = gun
+                        hl.Parent = gun.Parent
                     end
 
                 else
-                    GunSpawned = false -- รีเซ็ตให้แจ้งใหม่รอบหน้า
+                    GunSpawned = false
                     if GunTracer then
                         GunTracer.Visible = false
                     end
