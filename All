@@ -768,3 +768,53 @@ SettingTab:AddButton({
         print("Copied Server ID:", id)
     end
 })
+
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+SettingTab:AddSection("Advanced Server")
+
+-- 🔁 Rejoin
+SettingTab:AddButton({
+    Title = "Rejoin Server",
+    Description = "เข้าเซิร์ฟเดิมใหม่",
+    Callback = function()
+        TeleportService:Teleport(game.PlaceId, LocalPlayer)
+    end
+})
+
+-- 🎲 Random Server
+SettingTab:AddButton({
+    Title = "Join Random Server",
+    Description = "สุ่มเซิร์ฟใหม่",
+    Callback = function()
+        local url = "https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100"
+        local data = HttpService:JSONDecode(game:HttpGet(url))
+
+        for _, v in pairs(data.data) do
+            if v.playing < v.maxPlayers then
+                TeleportService:TeleportToPlaceInstance(game.PlaceId, v.id, LocalPlayer)
+                break
+            end
+        end
+    end
+})
+
+-- 🔄 Server Hop (หาเรื่อยๆจนเข้าได้)
+SettingTab:AddButton({
+    Title = "Server Hop",
+    Description = "หาเซิร์ฟว่างใหม่",
+    Callback = function()
+        local url = "https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100"
+        local data = HttpService:JSONDecode(game:HttpGet(url))
+
+        for _, v in pairs(data.data) do
+            if v.playing < v.maxPlayers and v.id ~= game.JobId then
+                TeleportService:TeleportToPlaceInstance(game.PlaceId, v.id, LocalPlayer)
+                break
+            end
+        end
+    end
+})
