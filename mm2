@@ -480,7 +480,7 @@ end)
 
 -- [[ 7. UI Toggle ]]
 KillTab:AddToggle("AutoKillToggle", {
-    Title = "Auto Kill (Distance 1500m)",
+    Title = "Auto Kill BETA",
     Default = false,
     Callback = function(Value)
         _G.AutoKill = Value
@@ -609,7 +609,7 @@ end
 
 -- [[ 7. UI Toggle ]]
 KillTab:AddToggle("AutoKillMurder", {
-    Title = "Auto Kill Murderer",
+    Title = " Kill Murderer BETA",
     Default = false,
     Callback = function(Value)
         _G.AutoShootMurder = Value
