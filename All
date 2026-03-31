@@ -819,6 +819,8 @@ SettingTab:AddButton({
     end
 })
 
+SettingTab:AddSection("Translate Tools BETA")
+
 -- ==============================
 -- 🌐 TRANSLATOR
 -- ==============================
