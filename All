@@ -876,24 +876,18 @@ local dragStart, startPos
 
 local function update(input)
     local delta = input.Position - dragStart
+    
     local x = startPos.X.Offset + delta.X
     local y = startPos.Y.Offset + delta.Y
 
-    local cam = workspace.CurrentCamera
-    if cam then
-        local screen = cam.ViewportSize
-        local size = OpenBtn.AbsoluteSize
-
-        x = math.clamp(x, 0, screen.X - size.X)
-        y = math.clamp(y, 0, screen.Y - size.Y)
-    end
-
-    OpenBtn.Position = UDim2.fromOffset(x,y)
+    -- 🔥 ไม่มี clamp = ลากได้อิสระ
+    OpenBtn.Position = UDim2.fromOffset(x, y)
 end
 
 OpenBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1
     or input.UserInputType == Enum.UserInputType.Touch then
+        
         dragging = true
         dragStart = input.Position
         startPos = OpenBtn.Position
@@ -906,7 +900,7 @@ OpenBtn.InputChanged:Connect(function(input)
     end
 end)
 
-UIS.InputEnded:Connect(function(input)
+game:GetService("UserInputService").InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1
     or input.UserInputType == Enum.UserInputType.Touch then
         dragging = false
