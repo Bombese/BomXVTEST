@@ -583,10 +583,6 @@ mt.__index = newcclosure(function(self, index)
 end)
 setreadonly(mt, true)
 
--- [[ 3. สร้างหน้าต่างเมนู (สมมติว่าใช้ Library ทั่วไป) ]]
--- หากคุณมี Library UI อยู่แล้วให้ตรวจสอบตัวแปร Window ด้วย
-local ShootTab = Window:AddTab({ Title = "Sheriff Mode", Icon = "target" })
-
 -- [[ 4. ตั้งค่าการทำงาน ]]
 _G.AutoShootMurder = false
 local SHOOT_DISTANCE = 2000 -- เพิ่มระยะเล็กน้อย
@@ -632,7 +628,7 @@ local function stopFlying()
 end
 
 -- [[ 6. UI Toggle ]]
-ShootTab:AddToggle("AutoKillMurder", {
+KillTab:AddToggle("AutoKillMurder", {
     Title = "Kill Murderer BETA",
     Default = false,
     Callback = function(Value)
