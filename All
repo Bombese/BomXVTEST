@@ -322,6 +322,114 @@ end)
 -- ================== COMBAT TAB ==================
 local CombatTab = Window:AddTab({ Title = "Combat", Icon = "crosshair" })
 
+CombatTab:AddSection("Target Teleport")
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+local SelectedPlayer = nil
+local TPEnabled = false
+local TPMode = "Behind"
+local Distance = 7 -- 🔥 ค่าเริ่มต้น
+
+-- 📜 เลือกผู้เล่น
+local PlayerDropdown = CombatTab:AddDropdown("Combat_TP_Player", {
+    Title = "Select Target",
+    Values = {},
+    Multi = false
+})
+
+-- 🔄 อัปเดตรายชื่อ (อัตโนมัติ)
+local function UpdatePlayers()
+    local list = {}
+
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer then
+            table.insert(list, p.Name)
+        end
+    end
+
+    PlayerDropdown:SetValues(list)
+
+    -- ถ้าคนที่เลือกออก = รีเซ็ต
+    if SelectedPlayer and not table.find(list, SelectedPlayer) then
+        SelectedPlayer = nil
+    end
+end
+
+UpdatePlayers()
+Players.PlayerAdded:Connect(UpdatePlayers)
+Players.PlayerRemoving:Connect(UpdatePlayers)
+
+PlayerDropdown:OnChanged(function(v)
+    SelectedPlayer = v
+end)
+
+-- 📍 เลือกตำแหน่ง
+local ModeDropdown = CombatTab:AddDropdown("Combat_TP_Mode", {
+    Title = "Position",
+    Values = {"Front", "Behind", "Above", "Below"},
+    Default = "Behind",
+    Multi = false
+})
+
+ModeDropdown:OnChanged(function(v)
+    TPMode = v
+end)
+
+-- 🎚️ ระยะห่าง
+CombatTab:AddSlider("Combat_TP_Distance", {
+    Title = "Distance",
+    Description = "ระยะห่างจากเป้าหมาย",
+    Default = 7,
+    Min = 3,
+    Max = 25,
+    Rounding = 0,
+    Callback = function(v)
+        Distance = v
+    end
+})
+
+-- 🔘 Toggle
+CombatTab:AddToggle("Combat_TP_Toggle", {
+    Title = "Enable Target TP",
+    Default = false,
+    Callback = function(v)
+        TPEnabled = v
+    end
+})
+
+-- 🚀 ระบบ
+RunService.RenderStepped:Connect(function()
+    if not TPEnabled then return end
+    if not SelectedPlayer then return end
+
+    local target = Players:FindFirstChild(SelectedPlayer)
+    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+        
+        local myChar = LocalPlayer.Character
+        if not myChar or not myChar:FindFirstChild("HumanoidRootPart") then return end
+
+        local hrp = target.Character.HumanoidRootPart
+        local pos = hrp.CFrame
+
+        local offset
+
+        if TPMode == "Front" then
+            offset = hrp.CFrame.LookVector * Distance
+        elseif TPMode == "Behind" then
+            offset = -hrp.CFrame.LookVector * Distance
+        elseif TPMode == "Above" then
+            offset = Vector3.new(0, Distance, 0)
+        elseif TPMode == "Below" then
+            offset = Vector3.new(0, -Distance, 0)
+        end
+
+        myChar.HumanoidRootPart.CFrame = pos + offset
+    end
+end)
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
