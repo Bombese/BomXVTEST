@@ -820,46 +820,108 @@ SettingTab:AddButton({
 })
 
 -- ==============================
--- 🎨 UI COLOR
+-- 🎨 COLOR DATA
 -- ==============================
-local SelectedColor = Color3.fromRGB(255, 0, 255)
+local Colors = {
+    ["Default"] = Color3.fromRGB(30, 30, 30),
+    ["Purple"] = Color3.fromRGB(170, 0, 255),
+    ["Red"] = Color3.fromRGB(255, 0, 0),
+    ["Blue"] = Color3.fromRGB(0, 170, 255),
+    ["Green"] = Color3.fromRGB(0, 255, 100),
+    ["Yellow"] = Color3.fromRGB(255, 255, 0),
+    ["Orange"] = Color3.fromRGB(255, 140, 0),
+    ["Pink"] = Color3.fromRGB(255, 0, 150),
+    ["Cyan"] = Color3.fromRGB(0, 255, 255),
+    ["White"] = Color3.fromRGB(255, 255, 255)
+}
 
+local ColorNames = {}
+for name,_ in pairs(Colors) do table.insert(ColorNames, name) end
+table.sort(ColorNames)
+
+local CurrentIndex = 1
+local RGBMode = false
+
+-- ==============================
+-- 🎨 APPLY COLOR
+-- ==============================
+local function applyColor(color)
+    for _, obj in pairs(Window:GetDescendants()) do
+        if obj:IsA("Frame") or obj:IsA("TextButton") then
+            pcall(function()
+                obj.BackgroundColor3 = color
+            end)
+        end
+    end
+end
+
+-- ==============================
+-- 📜 DROPDOWN
+-- ==============================
 SettingTab:AddDropdown("UIColor", {
-    Title = "UI Color",
-    Values = {
-        "Purple",
-        "Red",
-        "Blue",
-        "Green",
-        "Yellow",
-        "White"
-    },
-    Multi = false,
+    Title = "Select Color",
+    Values = ColorNames,
     Default = 1,
     Callback = function(v)
+        RGBMode = false
 
-        if v == "Purple" then
-            SelectedColor = Color3.fromRGB(170, 0, 255)
-        elseif v == "Red" then
-            SelectedColor = Color3.fromRGB(255, 0, 0)
-        elseif v == "Blue" then
-            SelectedColor = Color3.fromRGB(0, 170, 255)
-        elseif v == "Green" then
-            SelectedColor = Color3.fromRGB(0, 255, 100)
-        elseif v == "Yellow" then
-            SelectedColor = Color3.fromRGB(255, 255, 0)
-        elseif v == "White" then
-            SelectedColor = Color3.fromRGB(255, 255, 255)
-        end
-
-        -- 🔥 เปลี่ยนสีทั้ง UI
-        for _, v in pairs(game.CoreGui:GetDescendants()) do
-            if v:IsA("Frame") or v:IsA("TextButton") or v:IsA("TextLabel") then
-                pcall(function()
-                    v.BackgroundColor3 = SelectedColor
-                end)
+        for i,name in ipairs(ColorNames) do
+            if name == v then
+                CurrentIndex = i
+                break
             end
         end
 
+        applyColor(Colors[v])
     end
 })
+
+-- ==============================
+-- 🔘 NEXT COLOR
+-- ==============================
+SettingTab:AddButton({
+    Title = "Next Color",
+    Callback = function()
+        RGBMode = false
+
+        CurrentIndex += 1
+        if CurrentIndex > #ColorNames then
+            CurrentIndex = 1
+        end
+
+        local name = ColorNames[CurrentIndex]
+        applyColor(Colors[name])
+    end
+})
+
+-- ==============================
+-- ♻️ RESET
+-- ==============================
+SettingTab:AddButton({
+    Title = "Reset Default",
+    Callback = function()
+        RGBMode = false
+        applyColor(Colors["Default"])
+    end
+})
+
+-- ==============================
+-- 🌈 RGB MODE
+-- ==============================
+SettingTab:AddToggle("RGBMode", {
+    Title = "RGB Mode",
+    Default = false,
+    Callback = function(v)
+        RGBMode = v
+    end
+})
+
+task.spawn(function()
+    while task.wait(0.05) do
+        if RGBMode then
+            local hue = tick() % 5 / 5
+            local color = Color3.fromHSV(hue, 1, 1)
+            applyColor(color)
+        end
+    end
+end)
