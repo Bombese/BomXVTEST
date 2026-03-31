@@ -2,7 +2,7 @@ local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/
 
 local Window = Fluent:CreateWindow({
     Title = "Eclipse Mod HUB | murder mystery 2",
-    SubTitle = "Version VXV",
+    SubTitle = "Version VVV",
     TabWidth = 160,
     Size = UDim2.fromOffset(450, 350),
     Acrylic = true,
@@ -420,17 +420,17 @@ task.spawn(function()
     end
 end)
 
--- [[ 1. ประกาศตัวแปรระบบ ]]
+-- [[ 1. ประกาศตัวแปรระบบ (System Services) - ต้องอยู่บนสุด ]]
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage") -- เพิ่มอันนี้เพื่อเช็คค่าสถานะเกม
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 
--- [[ 2. สร้างหน้าต่างเมนู ]]
+-- [[ 2. สร้างหน้าต่างเมนู (Tabs) ]]
 local FarmTab = Window:AddTab({ Title = "Farm", Icon = "skull" })
 
--- [[ 3. ตัวแปรตั้งค่า ]]
+-- [[ 3. ตัวแปรตั้งค่าฟาร์ม ]]
 _G.AutoFarm = false
 local CollectedCoins = {}
 local HEIGHT_OFFSET = Vector3.new(0, 1.5, 0)
@@ -438,24 +438,23 @@ local FIRST_WAIT = 2.5
 local HOLD_TIME = 0.75
 local FLOAT_SPEED = 40
 
--- [[ 4. ฟังก์ชันเช็คสถานะเกม (สำคัญมาก) ]]
--- หมายเหตุ: คุณต้องเปลี่ยนชื่อ Path ด้านล่างให้ตรงกับเกมที่เล่น 
--- เช่น ReplicatedStorage.GameStatus หรือ workspace.State
+-- [[ 4. ฟังก์ชันเช็คสถานะเกม (ตรวจสอบว่าเริ่มแข่งหรือยัง) ]]
 local function isGameStarted()
-    -- ตัวอย่าง: เช็คจากค่าใน ReplicatedStorage (ปรับแก้ตามชื่อใน Explorer ของเกมนั้นๆ)
-    local status = ReplicatedStorage:FindFirstChild("GameStatus") or workspace:FindFirstChild("Status")
+    -- ระบบจะพยายามหาค่า Status จากที่ต่างๆ ในเกม
+    local status = ReplicatedStorage:FindFirstChild("GameStatus") 
+                  or ReplicatedStorage:FindFirstChild("Status") 
+                  or workspace:FindFirstChild("Status")
     
     if status then
-        -- ถ้าค่า status เป็น "In Game" หรือ "Started" ถึงจะทำงาน
-        -- ตัวอย่างนี้เช็คว่าถ้าไม่ใช่ "Waiting" หรือ "Intermission" แปลว่าเริ่มแล้ว
         local s = status.Value:lower()
-        if s:find("wait") or s:find("intermission") or s:find("lobby") then
+        -- ถ้ามีคำว่า Wait, Intermission, Lobby, หรือ Map Voting ให้ถือว่ายังไม่เริ่ม
+        if s:find("wait") or s:find("intermission") or s:find("lobby") or s:find("vote") then
             return false
         end
         return true
     end
     
-    -- ถ้าหาตัวเช็คสถานะไม่เจอ ให้เช็คจาก "เหรียญ" ในแมพแทน (ถ้ามีเหรียญ = เกมเริ่ม)
+    -- สำรอง: ถ้าหา Status ไม่เจอ ให้เช็คว่ามีเหรียญในแมพไหม
     if workspace:FindFirstChild("Coin") or workspace:FindFirstChild("Coin_Server") then
         return true
     end
@@ -463,7 +462,9 @@ local function isGameStarted()
     return false
 end
 
--- [[ 5. ฟังก์ชันช่วยเหลืออื่นๆ ]]
+-- [[ 5. ฟังก์ชันช่วยเหลือ (Helper Functions) ]]
+
+-- ฟังก์ชันล็อคตัวละครให้นอนราบ
 local function setHorizontalFloat(root)
     local bv = root:FindFirstChild("StableVelocity") or Instance.new("BodyVelocity")
     bv.Name = "StableVelocity"
@@ -479,6 +480,29 @@ local function setHorizontalFloat(root)
     bg.Parent = root
 end
 
+-- ฟังก์ชันล้างค่าฟิสิกส์ (คืนค่าให้ยืน/กระโดดปกติ)
+local function resetPhysics()
+    local char = LocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    
+    if root then
+        if root:FindFirstChild("StableVelocity") then root.StableVelocity:Destroy() end
+        if root:FindFirstChild("StableGyro") then root.StableGyro:Destroy() end
+    end
+    if hum then
+        hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+        task.wait(0.1)
+        hum:ChangeState(Enum.HumanoidStateType.Running)
+    end
+    if char then
+        for _, part in ipairs(char:GetDescendants()) do
+            if part:IsA("BasePart") then part.CanCollide = true end
+        end
+    end
+end
+
+-- ฟังก์ชันหาเหรียญตัวถัดไป
 local function findNextCoin()
     local closest, dist = nil, math.huge
     local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -498,7 +522,7 @@ local function findNextCoin()
     return closest
 end
 
--- [[ 6. ระบบ Noclip ]]
+-- [[ 6. ระบบ Noclip (ทำงานเฉพาะตอนเกมเริ่มและเปิด AutoFarm) ]]
 RunService.Stepped:Connect(function()
     if _G.AutoFarm and isGameStarted() and LocalPlayer.Character then
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
@@ -511,18 +535,18 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- [[ 7. UI Toggle ]]
+-- [[ 7. เพิ่มปุ่มเปิด/ปิดใน UI ]]
 FarmTab:AddToggle("AutoFarmCoins", {
-    Title = "Auto Farm Coins BETA",
+    Title = "Auto Farm Coins",
     Default = false,
     Callback = function(Value)
         _G.AutoFarm = Value
         
         if Value then
+            -- เริ่มทำงาน Loop ฟาร์ม
             task.spawn(function()
                 local isFirstTime = true
                 while _G.AutoFarm do
-                    -- เช็คเงื่อนไขเกมเริ่มก่อนรัน Loop ฟาร์ม
                     if isGameStarted() then
                         local char = LocalPlayer.Character
                         local root = char and char:FindFirstChild("HumanoidRootPart")
@@ -540,50 +564,29 @@ FarmTab:AddToggle("AutoFarmCoins", {
                                     task.wait(FIRST_WAIT)
                                     isFirstTime = false
                                 else
-                                    local dist = (root.Position - target.Position).Magnitude
-                                    local tween = TweenService:Create(root, TweenInfo.new(dist/FLOAT_SPEED, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
+                                    local distance = (root.Position - target.Position).Magnitude
+                                    local tween = TweenService:Create(root, TweenInfo.new(distance/FLOAT_SPEED, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
                                     tween:Play()
                                     tween.Completed:Wait()
                                     task.wait(HOLD_TIME)
                                 end
                             else
-                                task.wait(0.5) -- ไม่มีเหรียญให้ฟาร์ม
+                                task.wait(0.5) -- ไม่มีเหรียญ
                             end
                         else
-                            task.wait(1) -- รอตัวเกิด
+                            task.wait(1)
                         end
                     else
-                        -- ถ้าเกมยังไม่เริ่ม ให้รีเซ็ตท่าทางและรอ
-                        local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                        if root then
-                            if root:FindFirstChild("StableVelocity") then root.StableVelocity:Destroy() end
-                            if root:FindFirstChild("StableGyro") then root.StableGyro:Destroy() end
-                        end
+                        -- อยู่ที่ล็อบบี้: คืนค่าให้ยืนปกติและ Standby รอ
+                        resetPhysics()
                         isFirstTime = true -- รีเซ็ตเพื่อให้วาร์ปใหม่รอบหน้า
-                        task.wait(2) -- รอเช็คสถานะเกมทุก 2 วินาที
+                        task.wait(2)
                     end
                 end
             end)
         else
-            -- คืนค่าเดิมเมื่อปิด Toggle
-            local char = LocalPlayer.Character
-            local hum = char and char:FindFirstChildOfClass("Humanoid")
-            local root = char and char:FindFirstChild("HumanoidRootPart")
-
-            if root then
-                if root:FindFirstChild("StableVelocity") then root.StableVelocity:Destroy() end
-                if root:FindFirstChild("StableGyro") then root.StableGyro:Destroy() end
-            end
-            if hum then
-                hum:ChangeState(Enum.HumanoidStateType.GettingUp)
-                task.wait(0.1)
-                hum:ChangeState(Enum.HumanoidStateType.Running)
-            end
-            if char then
-                for _, part in ipairs(char:GetDescendants()) do
-                    if part:IsA("BasePart") then part.CanCollide = true end
-                end
-            end
+            -- ปิดสคริปต์: คืนค่าทุกอย่างทันที
+            resetPhysics()
         end
     end
 })
