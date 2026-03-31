@@ -419,3 +419,107 @@ task.spawn(function()
         end)
     end
 end)
+
+Window:SelectTab(1)
+
+-- 🔒 LOCK กันรันซ้ำ
+if getgenv().FelonBtnLoaded then return end
+getgenv().FelonBtnLoaded = true
+
+local UIS = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+
+-- 🧹 ลบของเก่า
+pcall(function()
+    CoreGui:FindFirstChild("FelonButtonGui"):Destroy()
+end)
+
+-- 📦 GUI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "FelonButtonGui"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = false
+ScreenGui.Parent = (gethui and gethui()) or CoreGui
+
+-- 🔘 ปุ่ม (เปลี่ยนเป็น ImageButton)
+local OpenBtn = Instance.new("ImageButton")
+OpenBtn.Parent = ScreenGui
+OpenBtn.BackgroundColor3 = Color3.fromRGB(20,20,20)
+OpenBtn.Position = UDim2.fromOffset(10,200)
+
+-- 🔲 จตุรัส
+OpenBtn.Size = UDim2.fromOffset(55,55)
+
+-- 🖼️ ใส่รูป
+OpenBtn.Image = "rbxassetid://99999562308968"
+OpenBtn.ScaleType = Enum.ScaleType.Fit
+
+OpenBtn.Active = true
+
+-- 🟣 ขอบมน
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0,12)
+UICorner.Parent = OpenBtn
+
+-- 🔷 ขอบ
+local UIStroke = Instance.new("UIStroke")
+UIStroke.Color = Color3.fromRGB(0,170,255)
+UIStroke.Thickness = 2
+UIStroke.Parent = OpenBtn
+
+-- ==============================
+-- 🛠️ DRAG SYSTEM
+-- ==============================
+local dragging = false
+local dragStart, startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    
+    local x = startPos.X.Offset + delta.X
+    local y = startPos.Y.Offset + delta.Y
+
+    -- 🔥 ไม่มี clamp = ลากได้อิสระ
+    OpenBtn.Position = UDim2.fromOffset(x, y)
+end
+
+OpenBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+    or input.UserInputType == Enum.UserInputType.Touch then
+        
+        dragging = true
+        dragStart = input.Position
+        startPos = OpenBtn.Position
+    end
+end)
+
+OpenBtn.InputChanged:Connect(function(input)
+    if dragging then
+        update(input)
+    end
+end)
+
+game:GetService("UserInputService").InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+    or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end)
+
+-- ==============================
+-- 🔘 CLICK
+-- ==============================
+OpenBtn.MouseButton1Click:Connect(function()
+    if Window then
+        Window:Minimize()
+    end
+end)
+
+-- ==============================
+-- 🛡️ กันโดนลบ
+-- ==============================
+ScreenGui.AncestryChanged:Connect(function(_, parent)
+    if not parent then
+        getgenv().FelonBtnLoaded = false
+    end
+end)
