@@ -1,0 +1,110 @@
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+-- [[ การตั้งค่า ]]
+_G.AutoFarm = true
+local HEIGHT_OFFSET = Vector3.new(0, 1.5, 0) -- ความสูงลอยเหนือเหรียญ
+local FIRST_WAIT = 2.5 -- ครั้งแรกที่รันให้รอ 2.5 วิ
+local HOLD_TIME = 0.75 -- แช่ที่จุดเก็บ 0.75 วินาที ตามที่ขอ
+local FLOAT_SPEED = 40 -- ความเร็วลอย (เน้นความเรียบสมูท)
+local CollectedCoins = {}
+
+-- ฟังก์ชันล็อคตัวละครให้นอนราบและนิ่งสนิท (Horizontal Lock)
+local function setHorizontalFloat(root)
+    -- 1. ล็อคความเร็ว (กันเด้ง/กันตก)
+    local bv = root:FindFirstChild("StableVelocity") or Instance.new("BodyVelocity")
+    bv.Name = "StableVelocity"
+    bv.Velocity = Vector3.zero
+    bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+    bv.Parent = root
+
+    -- 2. ล็อคองศาให้นอนราบขนานพื้น (Lock หมุน)
+    local bg = root:FindFirstChild("StableGyro") or Instance.new("BodyGyro")
+    bg.Name = "StableGyro"
+    bg.P = 300000 
+    bg.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+    bg.CFrame = CFrame.new() * CFrame.Angles(math.rad(-90), 0, 0) -- ท่านอนราบ
+    bg.Parent = root
+end
+
+-- ระบบ Noclip & Physics State (ทำงานทุกเฟรม)
+RunService.Stepped:Connect(function()
+    if _G.AutoFarm and LocalPlayer.Character then
+        local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then 
+            hum:ChangeState(11) -- Physics Mode กันดีด
+        end
+        for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
+        end
+    end
+end)
+
+-- ฟังก์ชันหาเหรียญตัวถัดไปที่ใกล้ที่สุด
+local function findNextCoin()
+    local closest, dist = nil, math.huge
+    local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return nil end
+
+    for _, v in ipairs(workspace:GetDescendants()) do
+        if (v.Name == "Coin_Server" or v.Name == "Coin") and not CollectedCoins[v] then
+            local p = v:IsA("BasePart") and v or v:FindFirstChildWhichIsA("BasePart")
+            if p then
+                local d = (myRoot.Position - p.Position).Magnitude
+                if d < dist then
+                    closest, dist = p, d
+                end
+            end
+        end
+    end
+    return closest
+end
+
+-- ลูปหลัก (Glide & Hold Mode)
+task.spawn(function()
+    local isFirstTime = true
+    print("--- Auto Farm Active | Cooldown 0.75s | Horizontal Glide ---")
+    
+    while _G.AutoFarm do
+        local char = LocalPlayer.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        
+        if root then
+            setHorizontalFloat(root) -- ล็อคท่านอนราบ
+            local target = findNextCoin()
+            
+            if target then
+                CollectedCoins[target] = true
+                local targetCFrame = target.CFrame + HEIGHT_OFFSET
+                
+                if isFirstTime then
+                    -- จังหวะแรก: วาร์ปไปจุดเริ่มต้น
+                    root.CFrame = targetCFrame
+                    task.wait(FIRST_WAIT)
+                    isFirstTime = false
+                else
+                    -- จังหวะต่อๆ ไป: ลอยเรียบขนานพื้นไปหาเหรียญ
+                    local distance = (root.Position - target.Position).Magnitude
+                    local tweenInfo = TweenInfo.new(distance/FLOAT_SPEED, Enum.EasingStyle.Linear)
+                    
+                    local tween = TweenService:Create(root, tweenInfo, {
+                        CFrame = targetCFrame
+                    })
+                    tween:Play()
+                    tween.Completed:Wait() -- เมื่อลอยถึงเป้าหมาย
+                    
+                    -- แช่นิ่งๆ 0.75 วินาทีก่อนไปต่อ
+                    task.wait(HOLD_TIME)
+                end
+            else
+                task.wait(0.5) -- รอเหรียญเกิดใหม่
+            end
+        else
+            task.wait(1)
+        end
+    end
+end)
