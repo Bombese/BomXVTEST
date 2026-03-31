@@ -17,6 +17,7 @@ local ESPTab = Window:AddTab({ Title = "ESP", Icon = "eye" })
 
 local ESPSheriff = false
 local ESPMurder = false
+local ESPInnocent = false
 local ESPGun = false
 
 local Tracers = {}
@@ -57,7 +58,8 @@ end
 -- 💡 HIGHLIGHT
 -- ==============================
 local function createHighlight(char, color)
-    if not char or char:FindFirstChild("ESP_HL") then return end
+    if not char then return end
+    if char:FindFirstChild("ESP_HL") then return end
 
     local hl = Instance.new("Highlight")
     hl.Name = "ESP_HL"
@@ -115,26 +117,28 @@ local function removeTracer(player)
 end
 
 -- ==============================
--- 🔫 GUN (REAL ONLY)
+-- 🔫 GUN (YOUR VERSION FIXED)
 -- ==============================
 local function getGun()
     for _, v in pairs(workspace:GetDescendants()) do
         
-        if v.Name == "Gun" then
+        local name = v.Name:lower()
+
+        if name == "gun" or name == "revolver" then
             
             local parent = v.Parent
 
-            -- ❌ ข้ามปืนที่อยู่กับคน
+            -- ❌ ข้ามของที่อยู่กับผู้เล่น
             if parent and parent:FindFirstChild("Humanoid") then
                 continue
             end
 
-            -- ❌ ข้ามปืนโชว์ (ติดแมพ)
-            if v:IsA("BasePart") and v.Anchored then
+            -- ❌ ข้าม Backpack
+            if parent and parent:IsA("Backpack") then
                 continue
             end
 
-            -- ✅ Tool (ของจริง)
+            -- ✅ Tool
             if v:IsA("Tool") then
                 local handle = v:FindFirstChild("Handle")
                 if handle then
@@ -142,7 +146,7 @@ local function getGun()
                 end
             end
 
-            -- ✅ BasePart (ของตกพื้น)
+            -- ✅ BasePart (ตกพื้นจริง)
             if v:IsA("BasePart") and not v.Anchored then
                 return v
             end
@@ -163,8 +167,13 @@ ESPTab:AddToggle("MurderESP", {
     Callback = function(v) ESPMurder = v end
 })
 
+ESPTab:AddToggle("InnocentESP", {
+    Title = "Innocent",
+    Callback = function(v) ESPInnocent = v end
+})
+
 ESPTab:AddToggle("GunESP", {
-    Title = "Gun (BETA)",
+    Title = "Gun + Notify",
     Callback = function(v) ESPGun = v end
 })
 
@@ -177,7 +186,7 @@ task.spawn(function()
 
             local center = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
 
-            -- 👤 PLAYER
+            -- 👤 PLAYER ESP
             for _, player in pairs(game.Players:GetPlayers()) do
                 if player ~= game.Players.LocalPlayer then
 
@@ -198,8 +207,21 @@ task.spawn(function()
                             createHighlight(char, Color3.fromRGB(255,0,0))
                             createBillboard(player, player.Name.." [Murder]", Color3.fromRGB(255,0,0))
 
+                        elseif ESPInnocent and role == "Innocent" then
+                            createTracer(player, Color3.fromRGB(255,255,255))
+                            createHighlight(char, Color3.fromRGB(255,255,255))
+                            createBillboard(player, player.Name.." [Innocent]", Color3.fromRGB(255,255,255))
+
                         else
                             removeTracer(player)
+
+                            if char and char:FindFirstChild("ESP_HL") then
+                                char.ESP_HL:Destroy()
+                            end
+
+                            if char and char:FindFirstChild("ESP_TAG") then
+                                char.ESP_TAG:Destroy()
+                            end
                         end
 
                         local line = Tracers[player]
@@ -214,22 +236,21 @@ task.spawn(function()
                 end
             end
 
-            -- 🔫 GUN
+            -- 🔫 GUN ESP
             if ESPGun then
                 local gun = getGun()
 
-                if gun then
-                    -- 🔔 แจ้งเตือนครั้งเดียว
+                if gun and gun:IsA("BasePart") then
                     if not GunSpawned then
                         GunSpawned = true
                         game.StarterGui:SetCore("SendNotification", {
                             Title = "🔫 Gun Spawned!",
-                            Text = "ปืนตกแล้ว ไปเก็บด่วน 💀",
+                            Text = "ปืนตกแล้ว 💀",
                             Duration = 5
                         })
                     end
 
-                    local pos, onScreen = Camera:WorldToViewportPoint(gun.Position + Vector3.new(0,1,0))
+                    local pos, onScreen = Camera:WorldToViewportPoint(gun.Position)
 
                     if not GunTracer then
                         GunTracer = Drawing.new("Line")
@@ -245,7 +266,7 @@ task.spawn(function()
                         GunTracer.Visible = false
                     end
 
-                    -- 💡 Highlight Gun (ติด parent)
+                    -- Highlight Gun
                     if not gun.Parent:FindFirstChild("ESP_GUN") then
                         local hl = Instance.new("Highlight")
                         hl.Name = "ESP_GUN"
