@@ -549,25 +549,57 @@ local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
 
--- [[ 3. ตั้งค่าการทำงาน ]]
+-- [[ 2. ระบบ Silent Aim (ล็อคเป้ากระสุน) ]]
+-- ส่วนนี้จะทำให้ปืนยิงตรงตัวฆาตกรเสมอแม้เราจะไม่ได้หันเมาส์ไปหา
+local mt = getrawmetatable(game)
+local oldIndex = mt.__index
+setreadonly(mt, false)
+
+mt.__index = newcclosure(function(self, index)
+    if _G.AutoShootMurder and not checkcaller() and self == Mouse then
+        local murdererChar = nil
+        -- หาฆาตกร (ใช้ Logic เดียวกับฟังก์ชัน findMurderer)
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character then
+                local knife = p.Character:FindFirstChildWhichIsA("Tool")
+                if knife and (knife.Name:lower():find("knife") or knife.Name:lower():find("blade")) then
+                    murdererChar = p.Character
+                    break
+                end
+            end
+        end
+
+        if murdererChar and murdererChar:FindFirstChild("HumanoidRootPart") then
+            if index == "Hit" then
+                return murdererChar.HumanoidRootPart.CFrame
+            elseif index == "Target" then
+                return murdererChar.HumanoidRootPart
+            end
+        end
+    end
+    return oldIndex(self, index)
+end)
+setreadonly(mt, true)
+
+-- [[ 3. สร้างหน้าต่างเมนู (สมมติว่าใช้ Library ทั่วไป) ]]
+-- หากคุณมี Library UI อยู่แล้วให้ตรวจสอบตัวแปร Window ด้วย
+local ShootTab = Window:AddTab({ Title = "Sheriff Mode", Icon = "target" })
+
+-- [[ 4. ตั้งค่าการทำงาน ]]
 _G.AutoShootMurder = false
-local SHOOT_DISTANCE = 1500 -- ระยะมองเห็นฆาตกร
-local KEEP_DISTANCE = 15     -- ระยะห่างที่จะรักษาระดับไว้ตอนยิง (ไม่จ่อตัวเกินไปกันโดนฟัน)
-local SHOOT_SPEED = 60       -- ความเร็วในการลอยตาม
+local SHOOT_DISTANCE = 2000 -- เพิ่มระยะเล็กน้อย
+local TARGET_HEIGHT = 8      -- ความสูงที่ลอยเหนือฆาตกร
 
--- [[ 4. ฟังก์ชันเช็คปืนและถืออัตโนมัติ ]]
+-- [[ 5. ฟังก์ชันสนับสนุน ]]
 local function equipGun()
     local char = LocalPlayer.Character
     if not char then return nil end
-
-    -- เช็คในมือ
     local tool = char:FindFirstChildWhichIsA("Tool")
     if tool and (tool.Name:lower():find("gun") or tool.Name:lower():find("revolver")) then
         return tool
     end
-
-    -- เช็คในกระเป๋า
     local backpackTool = LocalPlayer.Backpack:FindFirstChildWhichIsA("Tool")
     if backpackTool and (backpackTool.Name:lower():find("gun") or backpackTool.Name:lower():find("revolver")) then
         local hum = char:FindFirstChildOfClass("Humanoid")
@@ -579,18 +611,11 @@ local function equipGun()
     return nil
 end
 
--- [[ 5. ฟังก์ชันระบุตัวฆาตกร (หาคนถือมีด) ]]
 local function findMurderer()
     for _, p in ipairs(Players:GetPlayers()) do
         if p ~= LocalPlayer and p.Character then
-            -- เช็คว่าถือมีดอยู่หรือไม่
             local knife = p.Character:FindFirstChildWhichIsA("Tool")
             if knife and (knife.Name:lower():find("knife") or knife.Name:lower():find("blade")) then
-                return p.Character
-            end
-            -- เช็คใน Backpack (บางเกมเก็บมีดไว้)
-            local bKnife = p.Backpack:FindFirstChildWhichIsA("Tool")
-            if bKnife and (bKnife.Name:lower():find("knife") or bKnife.Name:lower():find("blade")) then
                 return p.Character
             end
         end
@@ -598,7 +623,6 @@ local function findMurderer()
     return nil
 end
 
--- [[ 6. ฟังก์ชันรีเซ็ต ]]
 local function stopFlying()
     local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if root then
@@ -607,9 +631,9 @@ local function stopFlying()
     end
 end
 
--- [[ 7. UI Toggle ]]
-KillTab:AddToggle("AutoKillMurder", {
-    Title = " Kill Murderer BETA",
+-- [[ 6. UI Toggle ]]
+ShootTab:AddToggle("AutoKillMurder", {
+    Title = "Kill Murderer BETA",
     Default = false,
     Callback = function(Value)
         _G.AutoShootMurder = Value
@@ -619,7 +643,8 @@ KillTab:AddToggle("AutoKillMurder", {
                 while _G.AutoShootMurder do
                     local gun = equipGun()
                     local murdererChar = findMurderer()
-                    local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    local myChar = LocalPlayer.Character
+                    local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
 
                     if gun and murdererChar and myRoot then
                         local mRoot = murdererChar:FindFirstChild("HumanoidRootPart")
@@ -629,21 +654,19 @@ KillTab:AddToggle("AutoKillMurder", {
                             local dist = (myRoot.Position - mRoot.Position).Magnitude
                             
                             if dist <= SHOOT_DISTANCE then
-                                -- เปิดโหมดลอยตัว
+                                -- ระบบเคลื่อนที่ (BodyVelocity)
                                 local bv = myRoot:FindFirstChild("ShootVelocity") or Instance.new("BodyVelocity")
                                 bv.Name = "ShootVelocity"
-                                bv.Velocity = Vector3.zero
                                 bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+                                bv.Velocity = Vector3.new(0, 0, 0)
                                 bv.Parent = myRoot
 
-                                -- ลอยไปหาและรักษาระยะห่าง
-                                local targetPos = mRoot.Position + Vector3.new(0, 10, 0) -- ลอยเหนือหัวฆาตกร 10 เมตร (ปลอดภัย)
-                                myRoot.CFrame = CFrame.new(myRoot.Position, mRoot.Position) -- หันหน้าไปหาฆาตกร
+                                -- ลอยเหนือหัวฆาตกรเพื่อความปลอดภัย
+                                local targetPos = mRoot.Position + Vector3.new(0, TARGET_HEIGHT, 0)
+                                myRoot.CFrame = CFrame.new(myRoot.Position, mRoot.Position)
+                                myRoot.CFrame = myRoot.CFrame:Lerp(CFrame.new(targetPos, mRoot.Position), 0.15)
                                 
-                                -- ขยับเข้าหา
-                                myRoot.CFrame = myRoot.CFrame:Lerp(CFrame.new(targetPos, mRoot.Position), 0.1)
-                                
-                                -- สั่งกดยิง (Activate Tool)
+                                -- สั่งยิง (ทำงานร่วมกับ Silent Aim ด้านบน)
                                 gun:Activate()
                             end
                         else
@@ -652,7 +675,7 @@ KillTab:AddToggle("AutoKillMurder", {
                     else
                         stopFlying()
                     end
-                    task.wait() -- ทำงานถี่เพื่อให้ล็อคเป้าแม่น
+                    task.wait(0.05) -- หน่วงเวลาเล็กน้อยกันกระตุกและกันหลุด
                 end
                 stopFlying()
             end)
