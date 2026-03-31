@@ -823,126 +823,110 @@ SettingTab:AddSection("Translate Tools BETA")
 
 Window:SelectTab(1)
 
--- ==============================
--- 💠 UI BUTTON (FELON AI) - FIXED FULL
--- ==============================
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
-local VIM = game:GetService("VirtualInputManager")
+-- 🔒 LOCK กันรันซ้ำ
+if getgenv().FelonBtnLoaded then return end
+getgenv().FelonBtnLoaded = true
 
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "FelonUIButton"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.IgnoreGuiInset = false -- ✅ FIX SAFE AREA
-ScreenGui.Parent = (gethui and gethui()) or game:GetService("CoreGui")
+local UIS = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
 
--- 🔘 ปุ่ม
-local ToggleBtn = Instance.new("ImageButton")
-ToggleBtn.Parent = ScreenGui
-ToggleBtn.Size = UDim2.new(0, 55, 0, 55)
-ToggleBtn.Position = UDim2.new(0, 20, 0.5, -25)
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-ToggleBtn.Image = "rbxassetid://129444837650395"
-ToggleBtn.ScaleType = Enum.ScaleType.Fit
-ToggleBtn.ZIndex = 10
-ToggleBtn.Active = true
-
--- 🟣 ขอบมน
-Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 12)
-
--- 🌈 Stroke
-local Stroke = Instance.new("UIStroke", ToggleBtn)
-Stroke.Thickness = 2.5
-
--- 🌈 Glow
-local Glow = Instance.new("ImageLabel")
-Glow.Parent = ToggleBtn
-Glow.Size = UDim2.new(1.8, 0, 1.8, 0)
-Glow.Position = UDim2.new(-0.4, 0, -0.4, 0)
-Glow.BackgroundTransparency = 1
-Glow.Image = "rbxassetid://5028857084"
-Glow.ImageTransparency = 0.4
-Glow.ZIndex = 9
-
--- 🎨 RGB Animation
-RunService.RenderStepped:Connect(function()
-    local t = tick()
-    local color = Color3.fromHSV((t * 0.3) % 1, 0.7, 1)
-    Stroke.Color = color
-    Glow.ImageColor3 = color
+-- 🧹 ลบของเก่า
+pcall(function()
+    CoreGui:FindFirstChild("FelonButtonGui"):Destroy()
 end)
 
+-- 📦 GUI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "FelonButtonGui"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = false
+ScreenGui.Parent = (gethui and gethui()) or CoreGui
+
+-- 🔘 ปุ่ม (เปลี่ยนเป็น ImageButton)
+local OpenBtn = Instance.new("ImageButton")
+OpenBtn.Parent = ScreenGui
+OpenBtn.BackgroundColor3 = Color3.fromRGB(20,20,20)
+OpenBtn.Position = UDim2.fromOffset(10,200)
+
+-- 🔲 จตุรัส
+OpenBtn.Size = UDim2.fromOffset(55,55)
+
+-- 🖼️ ใส่รูป
+OpenBtn.Image = "rbxassetid://99999562308968"
+OpenBtn.ScaleType = Enum.ScaleType.Fit
+
+OpenBtn.Active = true
+
+-- 🟣 ขอบมน
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0,12)
+UICorner.Parent = OpenBtn
+
+-- 🔷 ขอบ
+local UIStroke = Instance.new("UIStroke")
+UIStroke.Color = Color3.fromRGB(0,170,255)
+UIStroke.Thickness = 2
+UIStroke.Parent = OpenBtn
+
 -- ==============================
--- 🛠️ DRAG SYSTEM (FIXED)
+-- 🛠️ DRAG SYSTEM
 -- ==============================
 local dragging = false
-local dragInput, dragStart, startPos
-local moved = false
-local dragThreshold = 6
+local dragStart, startPos
 
 local function update(input)
     local delta = input.Position - dragStart
+    local x = startPos.X.Offset + delta.X
+    local y = startPos.Y.Offset + delta.Y
 
-    local newX = startPos.X.Offset + delta.X
-    local newY = startPos.Y.Offset + delta.Y
+    local cam = workspace.CurrentCamera
+    if cam then
+        local screen = cam.ViewportSize
+        local size = OpenBtn.AbsoluteSize
 
-    -- 🔒 กันหลุดจอ
-    local screen = workspace.CurrentCamera.ViewportSize
-    local size = ToggleBtn.AbsoluteSize
+        x = math.clamp(x, 0, screen.X - size.X)
+        y = math.clamp(y, 0, screen.Y - size.Y)
+    end
 
-    newX = math.clamp(newX, 0, screen.X - size.X)
-    newY = math.clamp(newY, 0, screen.Y - size.Y)
-
-    ToggleBtn.Position = UDim2.new(0, newX, 0, newY)
+    OpenBtn.Position = UDim2.fromOffset(x,y)
 end
 
-ToggleBtn.InputBegan:Connect(function(input)
+OpenBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1
     or input.UserInputType == Enum.UserInputType.Touch then
-
         dragging = true
-        moved = false
         dragStart = input.Position
-        startPos = ToggleBtn.Position
-
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
+        startPos = OpenBtn.Position
     end
 end)
 
-ToggleBtn.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement
-    or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        if (input.Position - dragStart).Magnitude > dragThreshold then
-            moved = true
-        end
+OpenBtn.InputChanged:Connect(function(input)
+    if dragging then
         update(input)
     end
 end)
 
--- ==============================
--- 💠 CLICK (ไม่ชนกับลาก)
--- ==============================
-ToggleBtn.MouseButton1Click:Connect(function()
-    if moved then return end -- 🔥 ถ้าลากจะไม่กด
+UIS.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+    or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end)
 
-    local info = TweenInfo.new(0.15, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-    TweenService:Create(ToggleBtn, info, {Size = UDim2.new(0, 48, 0, 48)}):Play()
-    task.wait(0.1)
-    TweenService:Create(ToggleBtn, info, {Size = UDim2.new(0, 55, 0, 55)}):Play()
+-- ==============================
+-- 🔘 CLICK
+-- ==============================
+OpenBtn.MouseButton1Click:Connect(function()
+    if Window then
+        Window:Minimize()
+    end
+end)
 
-    -- 🎮 จำลองกด Ctrl
-    VIM:SendKeyEvent(true, Enum.KeyCode.LeftControl, false, game)
-    task.wait(0.05)
-    VIM:SendKeyEvent(false, Enum.KeyCode.LeftControl, false, game)
+-- ==============================
+-- 🛡️ กันโดนลบ
+-- ==============================
+ScreenGui.AncestryChanged:Connect(function(_, parent)
+    if not parent then
+        getgenv().FelonBtnLoaded = false
+    end
 end)
