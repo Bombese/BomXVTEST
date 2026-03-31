@@ -572,6 +572,130 @@ FarmTab:AddToggle("AutoFarmCoins", {
     end
 })
 
+-- [[ 1. ประกาศตัวแปรระบบ ]]
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+-- [[ 2. สร้างหน้าต่างเมนู ]]
+local KillTab = Window:AddTab({ Title = "Auto Kill", Icon = "sword" })
+
+-- [[ 3. ตั้งค่าการทำงาน ]]
+_G.AutoKill = false
+local KILL_DISTANCE = 1500 -- ระยะสูงสุด 1500 เมตร
+local KILL_SPEED = 50      -- ความเร็วลอยไล่ล่า
+local OFFSET = Vector3.new(0, 0, 2) -- ตำแหน่งลอย (จ่อหลังเป้าหมาย)
+
+-- [[ 4. ฟังก์ชันหา "มีด" และถืออัตโนมัติ ]]
+local function equipKnife()
+    local char = LocalPlayer.Character
+    if not char then return nil end
+
+    -- 1. เช็คว่าถืออยู่ในมือหรือยัง (หา Tool ที่มีคำว่า Knife หรือตามชื่อที่เกมกำหนด)
+    local tool = char:FindFirstChildWhichIsA("Tool")
+    if tool and (tool.Name:lower():find("knife") or tool.Name:lower():find("sword")) then
+        return tool
+    end
+
+    -- 2. ถ้าไม่ได้ถือ ให้หาใน Backpack
+    local backpackTool = LocalPlayer.Backpack:FindFirstChildWhichIsA("Tool")
+    if backpackTool and (backpackTool.Name:lower():find("knife") or backpackTool.Name:lower():find("sword")) then
+        hum = char:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum:EquipTool(backpackTool) -- ถือมีดอัตโนมัติ
+            return backpackTool
+        end
+    end
+
+    return nil -- ไม่มีมีดในตัว
+end
+
+-- [[ 5. ฟังก์ชันรีเซ็ตฟิสิกส์ ]]
+local function resetPhysics()
+    local char = LocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if root then
+        if root:FindFirstChild("KillVelocity") then root.KillVelocity:Destroy() end
+        if root:FindFirstChild("KillGyro") then root.KillGyro:Destroy() end
+    end
+end
+
+-- [[ 6. ระบบ Noclip (กันชนขณะไล่ล่า) ]]
+RunService.Stepped:Connect(function()
+    if _G.AutoKill and LocalPlayer.Character then
+        for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") then part.CanCollide = false end
+        end
+    end
+end)
+
+-- [[ 7. UI Toggle ]]
+KillTab:AddToggle("AutoKillToggle", {
+    Title = "Auto Kill BETA",
+    Default = false,
+    Callback = function(Value)
+        _G.AutoKill = Value
+        
+        if Value then
+            task.spawn(function()
+                while _G.AutoKill do
+                    local knife = equipKnife() -- เช็คและถือมีด
+                    local char = LocalPlayer.Character
+                    local root = char and char:FindFirstChild("HumanoidRootPart")
+
+                    if knife and root then
+                        -- วนลูปหาผู้เล่นทีละคนเรียงตามชื่อ
+                        local targets = Players:GetPlayers()
+                        for _, targetPlayer in ipairs(targets) do
+                            if not _G.AutoKill then break end
+                            
+                            -- ไม่ฆ่าตัวเอง และเช็คว่าเป้าหมายมีตัวตน
+                            if targetPlayer ~= LocalPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                                local tRoot = targetPlayer.Character.HumanoidRootPart
+                                local tHum = targetPlayer.Character:FindFirstChildOfClass("Humanoid")
+                                
+                                -- เช็คระยะห่าง และเป้าหมายยังไม่ตาย
+                                local dist = (root.Position - tRoot.Position).Magnitude
+                                if dist <= KILL_DISTANCE and tHum and tHum.Health > 0 then
+                                    
+                                    -- ล็อคท่านอน/ลอยไปหา
+                                    local bv = root:FindFirstChild("KillVelocity") or Instance.new("BodyVelocity")
+                                    bv.Name = "KillVelocity"
+                                    bv.Velocity = Vector3.zero
+                                    bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+                                    bv.Parent = root
+                                    
+                                    -- ลอยไปจ่อหลังเป้าหมาย
+                                    while _G.AutoKill and tHum.Health > 0 and (root.Position - tRoot.Position).Magnitude <= KILL_DISTANCE do
+                                        local targetPos = tRoot.CFrame * CFrame.new(0, 0, 3) -- ยืนข้างหลังเป้าหมาย 3 เมตร
+                                        root.CFrame = CFrame.new(root.Position, tRoot.Position) -- หันหน้าไปหาเป้าหมาย
+                                        
+                                        -- ใช้ Tween หรือการขยับ CFrame เพื่อเข้าหา
+                                        root.CFrame = root.CFrame:Lerp(targetPos, 0.2)
+                                        
+                                        -- สั่งฟัน (Trigger การใช้งาน Tool)
+                                        knife:Activate() 
+                                        
+                                        task.wait() -- ทำงานทุกเฟรมเพื่อให้ติดตัวเป้าหมาย
+                                    end
+                                end
+                            end
+                        end
+                    else
+                        -- ถ้าไม่มีมีด ให้หยุดนิ่งรอ
+                        resetPhysics()
+                    end
+                    task.wait(0.5)
+                end
+                resetPhysics()
+            end)
+        else
+            resetPhysics()
+        end
+    end
+})
+
 local TeleportService = game:GetService("TeleportService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
