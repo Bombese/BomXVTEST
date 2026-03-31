@@ -164,7 +164,7 @@ ESPTab:AddToggle("MurderESP", {
 })
 
 ESPTab:AddToggle("GunESP", {
-    Title = "Gun + Notify",
+    Title = "Gun (BETA)",
     Callback = function(v) ESPGun = v end
 })
 
