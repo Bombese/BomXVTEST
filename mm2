@@ -2,7 +2,7 @@ local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/
 
 local Window = Fluent:CreateWindow({
     Title = "Eclipse Mod HUB | murder mystery 2",
-    SubTitle = "Version XXX",
+    SubTitle = "Version XVX",
     TabWidth = 160,
     Size = UDim2.fromOffset(450, 350),
     Acrylic = true,
@@ -419,6 +419,11 @@ task.spawn(function()
         end)
     end
 end)
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local LocalPlayer = Players.LocalPlayer
 
 local FarmTab = Window:AddTab({ Title = "Farm", Icon = "skull" })
 
