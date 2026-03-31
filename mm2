@@ -20,7 +20,6 @@ local ESPMurder = false
 local ESPGun = false
 
 local Tracers = {}
-local Billboards = {}
 local GunTracer = nil
 local Camera = workspace.CurrentCamera
 
@@ -57,7 +56,7 @@ end
 -- 💡 HIGHLIGHT
 -- ==============================
 local function createHighlight(char, color)
-    if char:FindFirstChild("ESP_HL") then return end
+    if not char or char:FindFirstChild("ESP_HL") then return end
 
     local hl = Instance.new("Highlight")
     hl.Name = "ESP_HL"
@@ -115,29 +114,42 @@ local function removeTracer(player)
 end
 
 -- ==============================
--- 🔫 GUN
+-- 🔫 GUN (FIXED 100%)
 -- ==============================
 local function getGun()
-    local g = workspace:FindFirstChild("GunDrop")
-    if g and g:IsA("BasePart") then return g end
-    if g and g:FindFirstChild("Gun") then return g.Gun end
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v.Name == "Gun" then
+
+            local parent = v.Parent
+            if parent and parent:FindFirstChild("Humanoid") then
+                continue -- ❌ อยู่กับคน
+            end
+
+            if v:IsA("Tool") then
+                return v:FindFirstChild("Handle") or v:FindFirstChildWhichIsA("BasePart")
+            elseif v:IsA("BasePart") then
+                return v
+            end
+
+        end
+    end
 end
 
 -- ==============================
 -- 🔘 TOGGLES
 -- ==============================
 ESPTab:AddToggle("SheriffESP", {
-    Title = "Sheriff",
+    Title = "Sheriff (Blue)",
     Callback = function(v) ESPSheriff = v end
 })
 
 ESPTab:AddToggle("MurderESP", {
-    Title = "Murderer",
+    Title = "Murderer (Red)",
     Callback = function(v) ESPMurder = v end
 })
 
 ESPTab:AddToggle("GunESP", {
-    Title = "Gun RGB",
+    Title = "Gun (RGB)",
     Callback = function(v) ESPGun = v end
 })
 
@@ -150,6 +162,7 @@ task.spawn(function()
 
             local center = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
 
+            -- 👤 PLAYER
             for _, player in pairs(game.Players:GetPlayers()) do
                 if player ~= game.Players.LocalPlayer then
 
@@ -160,13 +173,11 @@ task.spawn(function()
                     if root then
                         local pos, onScreen = Camera:WorldToViewportPoint(root.Position)
 
-                        -- 🔵 Sheriff
                         if ESPSheriff and role == "Sheriff" then
                             createTracer(player, Color3.fromRGB(0,170,255))
                             createHighlight(char, Color3.fromRGB(0,170,255))
                             createBillboard(player, player.Name.." [Sheriff]", Color3.fromRGB(0,170,255))
 
-                        -- 🔴 Murder
                         elseif ESPMurder and role == "Murderer" then
                             createTracer(player, Color3.fromRGB(255,0,0))
                             createHighlight(char, Color3.fromRGB(255,0,0))
@@ -188,32 +199,43 @@ task.spawn(function()
                 end
             end
 
-            -- 🔫 GUN RGB
-if ESPGun then
-    local gun = getGun()
+            -- 🔫 GUN RGB + Highlight
+            if ESPGun then
+                local gun = getGun()
 
-    if gun then
-        local pos, onScreen = Camera:WorldToViewportPoint(gun.Position)
+                if gun then
+                    local pos, onScreen = Camera:WorldToViewportPoint(gun.Position)
 
-        if not GunTracer then
-            GunTracer = Drawing.new("Line")
-            GunTracer.Thickness = 3
-        end
+                    if not GunTracer then
+                        GunTracer = Drawing.new("Line")
+                        GunTracer.Thickness = 3
+                    end
 
-        if onScreen then
-            GunTracer.From = center
-            GunTracer.To = Vector2.new(pos.X, pos.Y)
-            GunTracer.Color = Color3.fromHSV(tick()%5/5,1,1)
-            GunTracer.Visible = true
-        else
-            GunTracer.Visible = false
-        end
-    else
-        if GunTracer then
-            GunTracer.Visible = false
-        end
-    end
-end
+                    if onScreen then
+                        GunTracer.From = center
+                        GunTracer.To = Vector2.new(pos.X, pos.Y)
+                        GunTracer.Color = getRGB()
+                        GunTracer.Visible = true
+                    else
+                        GunTracer.Visible = false
+                    end
+
+                    -- 💡 Highlight Gun
+                    if not gun:FindFirstChild("ESP_GUN") then
+                        local hl = Instance.new("Highlight")
+                        hl.Name = "ESP_GUN"
+                        hl.FillColor = Color3.fromRGB(255,255,0)
+                        hl.OutlineColor = Color3.fromRGB(255,255,0)
+                        hl.FillTransparency = 0.3
+                        hl.Parent = gun
+                    end
+
+                else
+                    if GunTracer then
+                        GunTracer.Visible = false
+                    end
+                end
+            end
 
         end)
     end
