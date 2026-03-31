@@ -824,7 +824,7 @@ SettingTab:AddSection("Translate Tools BETA")
 Window:SelectTab(1)
 
 -- ==============================
--- 💠 UI BUTTON (FELON AI) - FIX CONTROL BUG
+-- 💠 UI BUTTON (FELON AI) - FIXED FULL
 -- ==============================
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -834,43 +834,38 @@ local VIM = game:GetService("VirtualInputManager")
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "FelonUIButton"
 ScreenGui.ResetOnSpawn = false
--- ✅ ปิด IgnoreGuiInset เพื่อให้ปุ่มไม่ไปทับพื้นที่ระบบ (Optional)
-ScreenGui.IgnoreGuiInset = true 
-ScreenGui.Parent = (gethui and gethui()) or game:GetService("CoreGui") or game:GetService("Players").LocalPlayer.PlayerGui
+ScreenGui.IgnoreGuiInset = false -- ✅ FIX SAFE AREA
+ScreenGui.Parent = (gethui and gethui()) or game:GetService("CoreGui")
 
--- 🔘 ตัวปุ่ม
+-- 🔘 ปุ่ม
 local ToggleBtn = Instance.new("ImageButton")
 ToggleBtn.Parent = ScreenGui
 ToggleBtn.Size = UDim2.new(0, 55, 0, 55)
 ToggleBtn.Position = UDim2.new(0, 20, 0.5, -25)
 ToggleBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-ToggleBtn.Image = "rbxassetid://99999562308968"
+ToggleBtn.Image = "rbxassetid://129444837650395"
 ToggleBtn.ScaleType = Enum.ScaleType.Fit
 ToggleBtn.ZIndex = 10
 ToggleBtn.Active = true
--- ❌ เลิกใช้ Draggable = true เพราะทำให้ปุ่มเดินหาย
-ToggleBtn.Draggable = false 
 
 -- 🟣 ขอบมน
-local Corner = Instance.new("UICorner")
-Corner.Parent = ToggleBtn
-Corner.CornerRadius = UDim.new(0, 12)
+Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 12)
 
--- 🌈 ขอบ RGB & Aura
-local Stroke = Instance.new("UIStroke")
-Stroke.Parent = ToggleBtn
+-- 🌈 Stroke
+local Stroke = Instance.new("UIStroke", ToggleBtn)
 Stroke.Thickness = 2.5
-Stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
+-- 🌈 Glow
 local Glow = Instance.new("ImageLabel")
 Glow.Parent = ToggleBtn
 Glow.Size = UDim2.new(1.8, 0, 1.8, 0)
 Glow.Position = UDim2.new(-0.4, 0, -0.4, 0)
 Glow.BackgroundTransparency = 1
-Glow.Image = "rbxassetid://5028857084" 
+Glow.Image = "rbxassetid://5028857084"
 Glow.ImageTransparency = 0.4
 Glow.ZIndex = 9
 
+-- 🎨 RGB Animation
 RunService.RenderStepped:Connect(function()
     local t = tick()
     local color = Color3.fromHSV((t * 0.3) % 1, 0.7, 1)
@@ -879,18 +874,35 @@ RunService.RenderStepped:Connect(function()
 end)
 
 -- ==============================
--- 🛠️ สคริปต์ระบบลาก (Manual Drag) - แก้บั๊กปุ่มเดินหาย
+-- 🛠️ DRAG SYSTEM (FIXED)
 -- ==============================
-local dragging, dragInput, dragStart, startPos
+local dragging = false
+local dragInput, dragStart, startPos
+local moved = false
+local dragThreshold = 6
 
 local function update(input)
     local delta = input.Position - dragStart
-    ToggleBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+
+    local newX = startPos.X.Offset + delta.X
+    local newY = startPos.Y.Offset + delta.Y
+
+    -- 🔒 กันหลุดจอ
+    local screen = workspace.CurrentCamera.ViewportSize
+    local size = ToggleBtn.AbsoluteSize
+
+    newX = math.clamp(newX, 0, screen.X - size.X)
+    newY = math.clamp(newY, 0, screen.Y - size.Y)
+
+    ToggleBtn.Position = UDim2.new(0, newX, 0, newY)
 end
 
 ToggleBtn.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+    or input.UserInputType == Enum.UserInputType.Touch then
+
         dragging = true
+        moved = false
         dragStart = input.Position
         startPos = ToggleBtn.Position
 
@@ -903,27 +915,33 @@ ToggleBtn.InputBegan:Connect(function(input)
 end)
 
 ToggleBtn.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+    if input.UserInputType == Enum.UserInputType.MouseMovement
+    or input.UserInputType == Enum.UserInputType.Touch then
         dragInput = input
     end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
     if input == dragInput and dragging then
+        if (input.Position - dragStart).Magnitude > dragThreshold then
+            moved = true
+        end
         update(input)
     end
 end)
 
 -- ==============================
--- 💠 Animation & Toggle
+-- 💠 CLICK (ไม่ชนกับลาก)
 -- ==============================
 ToggleBtn.MouseButton1Click:Connect(function()
+    if moved then return end -- 🔥 ถ้าลากจะไม่กด
+
     local info = TweenInfo.new(0.15, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
     TweenService:Create(ToggleBtn, info, {Size = UDim2.new(0, 48, 0, 48)}):Play()
     task.wait(0.1)
     TweenService:Create(ToggleBtn, info, {Size = UDim2.new(0, 55, 0, 55)}):Play()
 
-    -- ✅ จำลองกด LeftControl
+    -- 🎮 จำลองกด Ctrl
     VIM:SendKeyEvent(true, Enum.KeyCode.LeftControl, false, game)
     task.wait(0.05)
     VIM:SendKeyEvent(false, Enum.KeyCode.LeftControl, false, game)
