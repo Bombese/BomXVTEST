@@ -429,6 +429,8 @@ local LocalPlayer = Players.LocalPlayer
 -- [[ 2. สร้างหน้าต่างเมนู ]]
 local KillTab = Window:AddTab({ Title = "Auto Kill", Icon = "sword" })
 
+KillTab:AddSection("Murder Kill Aura")
+
 -- [[ 3. ตั้งค่าการทำงาน ]]
 _G.AutoKill = false
 local KILL_DISTANCE = 1500 -- ระยะสูงสุด 1500 เมตร
@@ -550,6 +552,8 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
+
+KillTab:AddSection("Sheriff Kill Aura")
 
 -- [[ 2. ระบบ Silent Aim (ล็อคเป้ากระสุน) ]]
 -- ส่วนนี้จะทำให้ปืนยิงตรงตัวฆาตกรเสมอแม้เราจะไม่ได้หันเมาส์ไปหา
