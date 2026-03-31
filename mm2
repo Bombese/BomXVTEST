@@ -2,7 +2,7 @@ local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/
 
 local Window = Fluent:CreateWindow({
     Title = "Eclipse Mod HUB | murder mystery 2",
-    SubTitle = "Version VVV",
+    SubTitle = "Version Apha",
     TabWidth = 160,
     Size = UDim2.fromOffset(450, 350),
     Acrylic = true,
@@ -420,72 +420,46 @@ task.spawn(function()
     end
 end)
 
--- [[ 1. ประกาศตัวแปรระบบ (System Services) - ต้องอยู่บนสุด ]]
+-- [[ 1. ประกาศตัวแปรระบบ ]]
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 
--- [[ 2. สร้างหน้าต่างเมนู (Tabs) ]]
+-- [[ 2. สร้างหน้าต่างเมนู ]]
 local FarmTab = Window:AddTab({ Title = "Farm", Icon = "skull" })
 
--- [[ 3. ตัวแปรตั้งค่าฟาร์ม ]]
+-- [[ 3. ตัวแปรตั้งค่า ]]
 _G.AutoFarm = false
 local CollectedCoins = {}
 local HEIGHT_OFFSET = Vector3.new(0, 1.5, 0)
 local FIRST_WAIT = 2.5
 local HOLD_TIME = 0.75
 local FLOAT_SPEED = 40
+local LOBBY_DISTANCE = 50 -- ถ้ารัศมีใกล้จุดเกิดน้อยกว่า 50 เมตร ถือว่าอยู่ในล็อบบี้ (ปรับเลขนี้ได้)
 
--- [[ 4. ฟังก์ชันเช็คสถานะเกม (ตรวจสอบว่าเริ่มแข่งหรือยัง) ]]
-local function isGameStarted()
-    -- ระบบจะพยายามหาค่า Status จากที่ต่างๆ ในเกม
-    local status = ReplicatedStorage:FindFirstChild("GameStatus") 
-                  or ReplicatedStorage:FindFirstChild("Status") 
-                  or workspace:FindFirstChild("Status")
-    
-    if status then
-        local s = status.Value:lower()
-        -- ถ้ามีคำว่า Wait, Intermission, Lobby, หรือ Map Voting ให้ถือว่ายังไม่เริ่ม
-        if s:find("wait") or s:find("intermission") or s:find("lobby") or s:find("vote") then
-            return false
+-- [[ 4. ฟังก์ชันเช็คว่าอยู่ล็อบบี้ไหม ]]
+local function isInLobby()
+    local char = LocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if not root then return true end
+
+    -- เช็คระยะห่างจากจุด Respawn ของผู้เล่น
+    local spawnPoint = workspace:FindFirstChildOfClass("SpawnLocation")
+    if spawnPoint then
+        local dist = (root.Position - spawnPoint.Position).Magnitude
+        if dist < LOBBY_DISTANCE then
+            return true -- อยู่ในล็อบบี้
         end
-        return true
     end
-    
-    -- สำรอง: ถ้าหา Status ไม่เจอ ให้เช็คว่ามีเหรียญในแมพไหม
-    if workspace:FindFirstChild("Coin") or workspace:FindFirstChild("Coin_Server") then
-        return true
-    end
-    
-    return false
+    return false -- ออกมานอกล็อบบี้แล้ว (เกมเริ่ม)
 end
 
--- [[ 5. ฟังก์ชันช่วยเหลือ (Helper Functions) ]]
-
--- ฟังก์ชันล็อคตัวละครให้นอนราบ
-local function setHorizontalFloat(root)
-    local bv = root:FindFirstChild("StableVelocity") or Instance.new("BodyVelocity")
-    bv.Name = "StableVelocity"
-    bv.Velocity = Vector3.zero
-    bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-    bv.Parent = root
-
-    local bg = root:FindFirstChild("StableGyro") or Instance.new("BodyGyro")
-    bg.Name = "StableGyro"
-    bg.P = 300000 
-    bg.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-    bg.CFrame = CFrame.new() * CFrame.Angles(math.rad(-90), 0, 0)
-    bg.Parent = root
-end
-
--- ฟังก์ชันล้างค่าฟิสิกส์ (คืนค่าให้ยืน/กระโดดปกติ)
+-- [[ 5. ฟังก์ชันช่วยเหลือ ]]
 local function resetPhysics()
     local char = LocalPlayer.Character
     local root = char and char:FindFirstChild("HumanoidRootPart")
     local hum = char and char:FindFirstChildOfClass("Humanoid")
-    
     if root then
         if root:FindFirstChild("StableVelocity") then root.StableVelocity:Destroy() end
         if root:FindFirstChild("StableGyro") then root.StableGyro:Destroy() end
@@ -502,7 +476,21 @@ local function resetPhysics()
     end
 end
 
--- ฟังก์ชันหาเหรียญตัวถัดไป
+local function setHorizontalFloat(root)
+    local bv = root:FindFirstChild("StableVelocity") or Instance.new("BodyVelocity")
+    bv.Name = "StableVelocity"
+    bv.Velocity = Vector3.zero
+    bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+    bv.Parent = root
+
+    local bg = root:FindFirstChild("StableGyro") or Instance.new("BodyGyro")
+    bg.Name = "StableGyro"
+    bg.P = 300000 
+    bg.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+    bg.CFrame = CFrame.new() * CFrame.Angles(math.rad(-90), 0, 0)
+    bg.Parent = root
+end
+
 local function findNextCoin()
     local closest, dist = nil, math.huge
     local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -522,20 +510,18 @@ local function findNextCoin()
     return closest
 end
 
--- [[ 6. ระบบ Noclip (ทำงานเฉพาะตอนเกมเริ่มและเปิด AutoFarm) ]]
+-- [[ 6. ระบบ Noclip ]]
 RunService.Stepped:Connect(function()
-    if _G.AutoFarm and isGameStarted() and LocalPlayer.Character then
+    if _G.AutoFarm and not isInLobby() and LocalPlayer.Character then
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         if hum then hum:ChangeState(11) end
         for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = false
-            end
+            if part:IsA("BasePart") then part.CanCollide = false end
         end
     end
 end)
 
--- [[ 7. เพิ่มปุ่มเปิด/ปิดใน UI ]]
+-- [[ 7. UI Toggle ]]
 FarmTab:AddToggle("AutoFarmCoins", {
     Title = "Auto Farm Coins",
     Default = false,
@@ -543,49 +529,40 @@ FarmTab:AddToggle("AutoFarmCoins", {
         _G.AutoFarm = Value
         
         if Value then
-            -- เริ่มทำงาน Loop ฟาร์ม
             task.spawn(function()
                 local isFirstTime = true
                 while _G.AutoFarm do
-                    if isGameStarted() then
+                    if not isInLobby() then
                         local char = LocalPlayer.Character
                         local root = char and char:FindFirstChild("HumanoidRootPart")
-                        
                         if root then
                             setHorizontalFloat(root)
                             local target = findNextCoin()
-                            
                             if target then
                                 CollectedCoins[target] = true
                                 local targetCFrame = target.CFrame + HEIGHT_OFFSET
-                                
                                 if isFirstTime then
                                     root.CFrame = targetCFrame
                                     task.wait(FIRST_WAIT)
                                     isFirstTime = false
                                 else
-                                    local distance = (root.Position - target.Position).Magnitude
-                                    local tween = TweenService:Create(root, TweenInfo.new(distance/FLOAT_SPEED, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
+                                    local d = (root.Position - target.Position).Magnitude
+                                    local tween = TweenService:Create(root, TweenInfo.new(d/FLOAT_SPEED, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
                                     tween:Play()
                                     tween.Completed:Wait()
                                     task.wait(HOLD_TIME)
                                 end
-                            else
-                                task.wait(0.5) -- ไม่มีเหรียญ
-                            end
-                        else
-                            task.wait(1)
-                        end
+                            else task.wait(0.5) end
+                        else task.wait(1) end
                     else
-                        -- อยู่ที่ล็อบบี้: คืนค่าให้ยืนปกติและ Standby รอ
+                        -- ถ้าอยู่ล็อบบี้ ให้รีเซ็ตตัวละครและรอ
                         resetPhysics()
-                        isFirstTime = true -- รีเซ็ตเพื่อให้วาร์ปใหม่รอบหน้า
+                        isFirstTime = true
                         task.wait(2)
                     end
                 end
             end)
         else
-            -- ปิดสคริปต์: คืนค่าทุกอย่างทันที
             resetPhysics()
         end
     end
