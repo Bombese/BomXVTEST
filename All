@@ -824,7 +824,7 @@ SettingTab:AddSection("Translate Tools BETA")
 Window:SelectTab(1)
 
 -- ==============================
--- 💠 UI BUTTON (FELON AI) - IMAGE MODE
+-- 💠 UI BUTTON (FELON AI) - FIX CONTROL BUG
 -- ==============================
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -833,33 +833,35 @@ local VIM = game:GetService("VirtualInputManager")
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "FelonUIButton"
-ScreenGui.ResetOnSpawn = false -- ให้ปุ่มอยู่ตลอดแม้ตายแล้วเกิดใหม่
+ScreenGui.ResetOnSpawn = false
+-- ✅ ปิด IgnoreGuiInset เพื่อให้ปุ่มไม่ไปทับพื้นที่ระบบ (Optional)
+ScreenGui.IgnoreGuiInset = true 
 ScreenGui.Parent = (gethui and gethui()) or game:GetService("CoreGui") or game:GetService("Players").LocalPlayer.PlayerGui
 
--- 🔘 ตัวปุ่ม (เปลี่ยนเป็น ImageButton)
+-- 🔘 ตัวปุ่ม
 local ToggleBtn = Instance.new("ImageButton")
 ToggleBtn.Parent = ScreenGui
-ToggleBtn.Size = UDim2.new(0, 55, 0, 55) -- ปรับขนาดให้ใหญ่ขึ้นเล็กน้อยเพื่อให้เห็นภาพชัด
+ToggleBtn.Size = UDim2.new(0, 55, 0, 55)
 ToggleBtn.Position = UDim2.new(0, 20, 0.5, -25)
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 15) -- พื้นหลังมืด
-ToggleBtn.Image = "rbxassetid://99999562308968"  -- ✅ ใส่ Asset ID ของคุณที่นี่
-ToggleBtn.ScaleType = Enum.ScaleType.Fit -- ให้รูปภาพพอดีกับปุ่ม
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+ToggleBtn.Image = "rbxassetid://99999562308968"
+ToggleBtn.ScaleType = Enum.ScaleType.Fit
 ToggleBtn.ZIndex = 10
 ToggleBtn.Active = true
-ToggleBtn.Draggable = true 
+-- ❌ เลิกใช้ Draggable = true เพราะทำให้ปุ่มเดินหาย
+ToggleBtn.Draggable = false 
 
 -- 🟣 ขอบมน
 local Corner = Instance.new("UICorner")
 Corner.Parent = ToggleBtn
 Corner.CornerRadius = UDim.new(0, 12)
 
--- 🌈 ขอบ RGB (Stroke)
+-- 🌈 ขอบ RGB & Aura
 local Stroke = Instance.new("UIStroke")
 Stroke.Parent = ToggleBtn
 Stroke.Thickness = 2.5
 Stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
--- ✨ Aura (แสงเรืองรอบๆ)
 local Glow = Instance.new("ImageLabel")
 Glow.Parent = ToggleBtn
 Glow.Size = UDim2.new(1.8, 0, 1.8, 0)
@@ -869,7 +871,6 @@ Glow.Image = "rbxassetid://5028857084"
 Glow.ImageTransparency = 0.4
 Glow.ZIndex = 9
 
--- 🌈 ระบบ RGB วิ่ง
 RunService.RenderStepped:Connect(function()
     local t = tick()
     local color = Color3.fromHSV((t * 0.3) % 1, 0.7, 1)
@@ -878,21 +879,51 @@ RunService.RenderStepped:Connect(function()
 end)
 
 -- ==============================
+-- 🛠️ สคริปต์ระบบลาก (Manual Drag) - แก้บั๊กปุ่มเดินหาย
+-- ==============================
+local dragging, dragInput, dragStart, startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    ToggleBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+ToggleBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = ToggleBtn.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+ToggleBtn.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
+
+-- ==============================
 -- 💠 Animation & Toggle
 -- ==============================
-local function clickAnimation()
+ToggleBtn.MouseButton1Click:Connect(function()
     local info = TweenInfo.new(0.15, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-    
-    -- เอฟเฟกต์ยุบปุ่มเวลาคลิก
     TweenService:Create(ToggleBtn, info, {Size = UDim2.new(0, 48, 0, 48)}):Play()
     task.wait(0.1)
     TweenService:Create(ToggleBtn, info, {Size = UDim2.new(0, 55, 0, 55)}):Play()
-end
 
-ToggleBtn.MouseButton1Click:Connect(function()
-    task.spawn(clickAnimation)
-
-    -- ✅ จำลองกด LeftControl เพื่อเปิด/ปิดเมนู
+    -- ✅ จำลองกด LeftControl
     VIM:SendKeyEvent(true, Enum.KeyCode.LeftControl, false, game)
     task.wait(0.05)
     VIM:SendKeyEvent(false, Enum.KeyCode.LeftControl, false, game)
