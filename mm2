@@ -544,6 +544,124 @@ KillTab:AddToggle("AutoKillToggle", {
     end
 })
 
+-- [[ 1. ตัวแปรระบบ ]]
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+-- [[ 3. ตั้งค่าการทำงาน ]]
+_G.AutoShootMurder = false
+local SHOOT_DISTANCE = 1500 -- ระยะมองเห็นฆาตกร
+local KEEP_DISTANCE = 15     -- ระยะห่างที่จะรักษาระดับไว้ตอนยิง (ไม่จ่อตัวเกินไปกันโดนฟัน)
+local SHOOT_SPEED = 60       -- ความเร็วในการลอยตาม
+
+-- [[ 4. ฟังก์ชันเช็คปืนและถืออัตโนมัติ ]]
+local function equipGun()
+    local char = LocalPlayer.Character
+    if not char then return nil end
+
+    -- เช็คในมือ
+    local tool = char:FindFirstChildWhichIsA("Tool")
+    if tool and (tool.Name:lower():find("gun") or tool.Name:lower():find("revolver")) then
+        return tool
+    end
+
+    -- เช็คในกระเป๋า
+    local backpackTool = LocalPlayer.Backpack:FindFirstChildWhichIsA("Tool")
+    if backpackTool and (backpackTool.Name:lower():find("gun") or backpackTool.Name:lower():find("revolver")) then
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum:EquipTool(backpackTool)
+            return backpackTool
+        end
+    end
+    return nil
+end
+
+-- [[ 5. ฟังก์ชันระบุตัวฆาตกร (หาคนถือมีด) ]]
+local function findMurderer()
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            -- เช็คว่าถือมีดอยู่หรือไม่
+            local knife = p.Character:FindFirstChildWhichIsA("Tool")
+            if knife and (knife.Name:lower():find("knife") or knife.Name:lower():find("blade")) then
+                return p.Character
+            end
+            -- เช็คใน Backpack (บางเกมเก็บมีดไว้)
+            local bKnife = p.Backpack:FindFirstChildWhichIsA("Tool")
+            if bKnife and (bKnife.Name:lower():find("knife") or bKnife.Name:lower():find("blade")) then
+                return p.Character
+            end
+        end
+    end
+    return nil
+end
+
+-- [[ 6. ฟังก์ชันรีเซ็ต ]]
+local function stopFlying()
+    local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if root then
+        if root:FindFirstChild("ShootVelocity") then root.ShootVelocity:Destroy() end
+        if root:FindFirstChild("ShootGyro") then root.ShootGyro:Destroy() end
+    end
+end
+
+-- [[ 7. UI Toggle ]]
+KillTab:AddToggle("AutoKillMurder", {
+    Title = "Auto Kill Murderer",
+    Default = false,
+    Callback = function(Value)
+        _G.AutoShootMurder = Value
+        
+        if Value then
+            task.spawn(function()
+                while _G.AutoShootMurder do
+                    local gun = equipGun()
+                    local murdererChar = findMurderer()
+                    local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+
+                    if gun and murdererChar and myRoot then
+                        local mRoot = murdererChar:FindFirstChild("HumanoidRootPart")
+                        local mHum = murdererChar:FindFirstChildOfClass("Humanoid")
+
+                        if mRoot and mHum and mHum.Health > 0 then
+                            local dist = (myRoot.Position - mRoot.Position).Magnitude
+                            
+                            if dist <= SHOOT_DISTANCE then
+                                -- เปิดโหมดลอยตัว
+                                local bv = myRoot:FindFirstChild("ShootVelocity") or Instance.new("BodyVelocity")
+                                bv.Name = "ShootVelocity"
+                                bv.Velocity = Vector3.zero
+                                bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+                                bv.Parent = myRoot
+
+                                -- ลอยไปหาและรักษาระยะห่าง
+                                local targetPos = mRoot.Position + Vector3.new(0, 10, 0) -- ลอยเหนือหัวฆาตกร 10 เมตร (ปลอดภัย)
+                                myRoot.CFrame = CFrame.new(myRoot.Position, mRoot.Position) -- หันหน้าไปหาฆาตกร
+                                
+                                -- ขยับเข้าหา
+                                myRoot.CFrame = myRoot.CFrame:Lerp(CFrame.new(targetPos, mRoot.Position), 0.1)
+                                
+                                -- สั่งกดยิง (Activate Tool)
+                                gun:Activate()
+                            end
+                        else
+                            stopFlying()
+                        end
+                    else
+                        stopFlying()
+                    end
+                    task.wait() -- ทำงานถี่เพื่อให้ล็อคเป้าแม่น
+                end
+                stopFlying()
+            end)
+        else
+            stopFlying()
+        end
+    end
+})
+
 -- [[ 1. ประกาศตัวแปรระบบ ]]
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
