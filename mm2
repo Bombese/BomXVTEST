@@ -2,7 +2,7 @@ local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/
 
 local Window = Fluent:CreateWindow({
     Title = "Eclipse Mod HUB | murder mystery 2",
-    SubTitle = "V1.00 ",
+    SubTitle = "test version ",
     TabWidth = 160,
     Size = UDim2.fromOffset(450, 350),
     Acrylic = true,
