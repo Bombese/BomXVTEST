@@ -640,3 +640,25 @@ RunService.RenderStepped:Connect(function()
         end
     end)
 end)
+
+local ScriptTab = Window:AddTab({ Title = "Script HUB", Icon = "terminal" })
+
+ScriptTab:AddSection("Universal Scripts")
+
+-- 🔥 Infinite Yield
+ScriptTab:AddButton({
+    Title = "Run Infinite Yield",
+    Description = "Admin commands",
+    Callback = function()
+        loadstring(game:HttpGet(('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'), true))()
+    end
+})
+
+-- 🔥 Felon HUB
+ScriptTab:AddButton({
+    Title = "Run Felon HUB",
+    Description = "Evade / Doors / Solo Hunters (no key)",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/57Felon/FelonHUB/main/Felon_Script"))()
+    end
+})
