@@ -724,3 +724,47 @@ ScriptTab:AddButton({
         end
     end
 })
+
+local TeleportService = game:GetService("TeleportService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local SettingTab = Window:AddTab({ Title = "Setting", Icon = "settings" })
+
+SettingTab:AddSection("Server Tools")
+
+local ServerID = ""
+
+-- 📥 ช่องใส่ ID
+SettingTab:AddInput("ServerID_Input", {
+    Title = "Server ID",
+    Default = "",
+    Placeholder = "ใส่ JobId ที่นี่",
+    Callback = function(v)
+        ServerID = v
+    end
+})
+
+-- 🚀 ปุ่ม Join Server
+SettingTab:AddButton({
+    Title = "Join Server",
+    Description = "เข้าเซิร์ฟตาม ID",
+    Callback = function()
+        if ServerID ~= "" then
+            TeleportService:TeleportToPlaceInstance(game.PlaceId, ServerID, LocalPlayer)
+        else
+            warn("กรุณาใส่ Server ID ก่อน")
+        end
+    end
+})
+
+-- 📋 ปุ่มคัดลอก Server ID ปัจจุบัน
+SettingTab:AddButton({
+    Title = "Copy Current Server ID",
+    Description = "คัดลอก JobId",
+    Callback = function()
+        local id = game.JobId
+        setclipboard(id)
+        print("Copied Server ID:", id)
+    end
+})
