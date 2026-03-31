@@ -420,22 +420,24 @@ task.spawn(function()
     end
 end)
 
+-- [[ 1. ประกาศตัวแปรระบบ (System Services) ]]
+local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 
+-- [[ 2. สร้างหน้าต่างเมนู (Tabs) ]]
 local FarmTab = Window:AddTab({ Title = "Farm", Icon = "skull" })
 
--- [[ ตัวแปรควบคุม ]]
-_G.AutoFarm = false -- ตั้งเริ่มต้นเป็น false เพื่อความปลอดภัย
+-- [[ 3. ตัวแปรตั้งค่าฟาร์ม ]]
+_G.AutoFarm = false
 local CollectedCoins = {}
 local HEIGHT_OFFSET = Vector3.new(0, 1.5, 0)
 local FIRST_WAIT = 2.5
 local HOLD_TIME = 0.75
 local FLOAT_SPEED = 40
 
--- [[ ฟังก์ชันช่วยเหลือ ]]
+-- [[ 4. ฟังก์ชันช่วยเหลือ (Helper Functions) ]]
 
 -- ฟังก์ชันล็อคตัวละครให้นอนราบ
 local function setHorizontalFloat(root)
@@ -453,7 +455,7 @@ local function setHorizontalFloat(root)
     bg.Parent = root
 end
 
--- ฟังก์ชันหาเหรียญ
+-- ฟังก์ชันหาเหรียญตัวถัดไป
 local function findNextCoin()
     local closest, dist = nil, math.huge
     local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -473,11 +475,11 @@ local function findNextCoin()
     return closest
 end
 
--- [[ ระบบ Noclip (ทำงานเมื่อเปิด AutoFarm) ]]
+-- [[ 5. ระบบ Noclip & Physics State ]]
 RunService.Stepped:Connect(function()
     if _G.AutoFarm and LocalPlayer.Character then
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if hum then hum:ChangeState(11) end
+        if hum then hum:ChangeState(11) end -- ล็อคโหมดฟิสิกส์กันดีด
         for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
             if part:IsA("BasePart") then
                 part.CanCollide = false
@@ -486,15 +488,15 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- [[ เพิ่มปุ่มเปิด/ปิดใน UI ]]
+-- [[ 6. เพิ่มปุ่มเปิด/ปิดใน UI ]]
 FarmTab:AddToggle("AutoFarmCoins", {
-    Title = "Auto Farm Coins",
+    Title = "Auto Farm Coins BETA",
     Default = false,
     Callback = function(Value)
         _G.AutoFarm = Value
         
         if Value then
-            -- เริ่มทำงาน Loop
+            -- เริ่มทำงาน Loop ฟาร์ม
             task.spawn(function()
                 local isFirstTime = true
                 while _G.AutoFarm do
@@ -515,8 +517,7 @@ FarmTab:AddToggle("AutoFarmCoins", {
                                 isFirstTime = false
                             else
                                 local distance = (root.Position - target.Position).Magnitude
-                                local tweenInfo = TweenInfo.new(distance/FLOAT_SPEED, Enum.EasingStyle.Linear)
-                                local tween = TweenService:Create(root, tweenInfo, {CFrame = targetCFrame})
+                                local tween = TweenService:Create(root, TweenInfo.new(distance/FLOAT_SPEED, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
                                 tween:Play()
                                 tween.Completed:Wait()
                                 task.wait(HOLD_TIME)
@@ -528,18 +529,36 @@ FarmTab:AddToggle("AutoFarmCoins", {
                         task.wait(1)
                     end
                 end
-                
-                -- ลบ BodyObjects เมื่อปิดการทำงาน
-                local char = LocalPlayer.Character
-                local root = char and char:FindFirstChild("HumanoidRootPart")
-                if root then
-                    if root:FindFirstChild("StableVelocity") then root.StableVelocity:Destroy() end
-                    if root:FindFirstChild("StableGyro") then root.StableGyro:Destroy() end
-                end
             end)
+        else
+            -- [[ ส่วนแก้ไข: คืนค่าให้กลับมาเดิน/กระโดดได้ปกติเมื่อปิด ]]
+            local char = LocalPlayer.Character
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            local root = char and char:FindFirstChild("HumanoidRootPart")
+
+            if root then
+                if root:FindFirstChild("StableVelocity") then root.StableVelocity:Destroy() end
+                if root:FindFirstChild("StableGyro") then root.StableGyro:Destroy() end
+            end
+
+            if hum then
+                -- ปลดล็อคโหมดฟิสิกส์และคืนค่าสถานะวิ่ง/กระโดด
+                hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+                task.wait(0.1)
+                hum:ChangeState(Enum.HumanoidStateType.Running)
+            end
+
+            if char then
+                for _, part in ipairs(char:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = true -- คืนค่าให้ตัวละครไม่ทะลุพื้น
+                    end
+                end
+            end
         end
     end
 })
+
 
 local TeleportService = game:GetService("TeleportService")
 local Players = game:GetService("Players")
