@@ -818,3 +818,48 @@ SettingTab:AddButton({
         end
     end
 })
+
+-- ==============================
+-- 🎨 UI COLOR
+-- ==============================
+local SelectedColor = Color3.fromRGB(255, 0, 255)
+
+SettingTab:AddDropdown("UIColor", {
+    Title = "UI Color",
+    Values = {
+        "Purple",
+        "Red",
+        "Blue",
+        "Green",
+        "Yellow",
+        "White"
+    },
+    Multi = false,
+    Default = 1,
+    Callback = function(v)
+
+        if v == "Purple" then
+            SelectedColor = Color3.fromRGB(170, 0, 255)
+        elseif v == "Red" then
+            SelectedColor = Color3.fromRGB(255, 0, 0)
+        elseif v == "Blue" then
+            SelectedColor = Color3.fromRGB(0, 170, 255)
+        elseif v == "Green" then
+            SelectedColor = Color3.fromRGB(0, 255, 100)
+        elseif v == "Yellow" then
+            SelectedColor = Color3.fromRGB(255, 255, 0)
+        elseif v == "White" then
+            SelectedColor = Color3.fromRGB(255, 255, 255)
+        end
+
+        -- 🔥 เปลี่ยนสีทั้ง UI
+        for _, v in pairs(game.CoreGui:GetDescendants()) do
+            if v:IsA("Frame") or v:IsA("TextButton") or v:IsA("TextLabel") then
+                pcall(function()
+                    v.BackgroundColor3 = SelectedColor
+                end)
+            end
+        end
+
+    end
+})
