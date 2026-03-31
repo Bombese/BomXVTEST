@@ -2,7 +2,7 @@ local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/
 
 local Window = Fluent:CreateWindow({
     Title = "Eclipse Mod HUB | murder mystery 2",
-    SubTitle = "Version Apha",
+    SubTitle = "Version Apha1",
     TabWidth = 160,
     Size = UDim2.fromOffset(450, 350),
     Acrylic = true,
@@ -436,7 +436,7 @@ local HEIGHT_OFFSET = Vector3.new(0, 1.5, 0)
 local FIRST_WAIT = 2.5
 local HOLD_TIME = 0.75
 local FLOAT_SPEED = 40
-local LOBBY_DISTANCE = 50 -- ถ้ารัศมีใกล้จุดเกิดน้อยกว่า 50 เมตร ถือว่าอยู่ในล็อบบี้ (ปรับเลขนี้ได้)
+local LOBBY_DISTANCE = 450 -- ถ้ารัศมีใกล้จุดเกิดน้อยกว่า 50 เมตร ถือว่าอยู่ในล็อบบี้ (ปรับเลขนี้ได้)
 
 -- [[ 4. ฟังก์ชันเช็คว่าอยู่ล็อบบี้ไหม ]]
 local function isInLobby()
