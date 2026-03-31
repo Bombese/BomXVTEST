@@ -446,6 +446,8 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
+CombatTab:AddSection("Aimbot Settings BETA")
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
