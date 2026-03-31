@@ -878,3 +878,80 @@ SettingTab:AddParagraph({
         return OutputText ~= "" and OutputText or "..."
     end
 })
+
+Window:SelectTab(1)
+
+-- ==============================
+-- 💠 UI BUTTON (FELON AI) - IMAGE MODE
+-- ==============================
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local VIM = game:GetService("VirtualInputManager")
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "FelonUIButton"
+ScreenGui.ResetOnSpawn = false -- ให้ปุ่มอยู่ตลอดแม้ตายแล้วเกิดใหม่
+ScreenGui.Parent = (gethui and gethui()) or game:GetService("CoreGui") or game:GetService("Players").LocalPlayer.PlayerGui
+
+-- 🔘 ตัวปุ่ม (เปลี่ยนเป็น ImageButton)
+local ToggleBtn = Instance.new("ImageButton")
+ToggleBtn.Parent = ScreenGui
+ToggleBtn.Size = UDim2.new(0, 55, 0, 55) -- ปรับขนาดให้ใหญ่ขึ้นเล็กน้อยเพื่อให้เห็นภาพชัด
+ToggleBtn.Position = UDim2.new(0, 20, 0.5, -25)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 15) -- พื้นหลังมืด
+ToggleBtn.Image = "rbxassetid://129444837650395" -- ✅ ใส่ Asset ID ของคุณที่นี่
+ToggleBtn.ScaleType = Enum.ScaleType.Fit -- ให้รูปภาพพอดีกับปุ่ม
+ToggleBtn.ZIndex = 10
+ToggleBtn.Active = true
+ToggleBtn.Draggable = true 
+
+-- 🟣 ขอบมน
+local Corner = Instance.new("UICorner")
+Corner.Parent = ToggleBtn
+Corner.CornerRadius = UDim.new(0, 12)
+
+-- 🌈 ขอบ RGB (Stroke)
+local Stroke = Instance.new("UIStroke")
+Stroke.Parent = ToggleBtn
+Stroke.Thickness = 2.5
+Stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+-- ✨ Aura (แสงเรืองรอบๆ)
+local Glow = Instance.new("ImageLabel")
+Glow.Parent = ToggleBtn
+Glow.Size = UDim2.new(1.8, 0, 1.8, 0)
+Glow.Position = UDim2.new(-0.4, 0, -0.4, 0)
+Glow.BackgroundTransparency = 1
+Glow.Image = "rbxassetid://5028857084" 
+Glow.ImageTransparency = 0.4
+Glow.ZIndex = 9
+
+-- 🌈 ระบบ RGB วิ่ง
+RunService.RenderStepped:Connect(function()
+    local t = tick()
+    local color = Color3.fromHSV((t * 0.3) % 1, 0.7, 1)
+    Stroke.Color = color
+    Glow.ImageColor3 = color
+end)
+
+-- ==============================
+-- 💠 Animation & Toggle
+-- ==============================
+local function clickAnimation()
+    local info = TweenInfo.new(0.15, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+    
+    -- เอฟเฟกต์ยุบปุ่มเวลาคลิก
+    TweenService:Create(ToggleBtn, info, {Size = UDim2.new(0, 48, 0, 48)}):Play()
+    task.wait(0.1)
+    TweenService:Create(ToggleBtn, info, {Size = UDim2.new(0, 55, 0, 55)}):Play()
+end
+
+ToggleBtn.MouseButton1Click:Connect(function()
+    task.spawn(clickAnimation)
+
+    -- ✅ จำลองกด LeftControl เพื่อเปิด/ปิดเมนู
+    VIM:SendKeyEvent(true, Enum.KeyCode.LeftControl, false, game)
+    task.wait(0.05)
+    VIM:SendKeyEvent(false, Enum.KeyCode.LeftControl, false, game)
+end)
