@@ -9,3 +9,183 @@ local Window = Fluent:CreateWindow({
     Theme = "VSC Dark High Contrast",
     MinimizeKey = Enum.KeyCode.LeftControl
 })
+
+-- ==============================
+-- 👁️ ESP TAB
+-- ==============================
+local ESPTab = Window:AddTab({ Title = "ESP", Icon = "eye" })
+
+local ESPSheriff = false
+local ESPMurder = false
+local ESPGun = false
+
+local Tracers = {}
+local GunTracer = nil
+local Camera = workspace.CurrentCamera
+
+-- ==============================
+-- 🔍 หา Role
+-- ==============================
+local function getRole(player)
+    local backpack = player:FindFirstChild("Backpack")
+    local char = player.Character
+
+    if backpack and backpack:FindFirstChild("Gun") then
+        return "Sheriff"
+    elseif backpack and backpack:FindFirstChild("Knife") then
+        return "Murderer"
+    end
+
+    if char and char:FindFirstChild("Gun") then
+        return "Sheriff"
+    elseif char and char:FindFirstChild("Knife") then
+        return "Murderer"
+    end
+
+    return "Innocent"
+end
+
+-- ==============================
+-- 🌈 RGB
+-- ==============================
+local function getRGB()
+    local hue = tick() % 5 / 5
+    return Color3.fromHSV(hue, 1, 1)
+end
+
+-- ==============================
+-- 📏 PLAYER TRACER
+-- ==============================
+local function createTracer(player, color)
+    if Tracers[player] then return end
+
+    local line = Drawing.new("Line")
+    line.Thickness = 2
+    line.Color = color
+    line.Transparency = 1
+
+    Tracers[player] = line
+end
+
+local function removeTracer(player)
+    if Tracers[player] then
+        Tracers[player]:Remove()
+        Tracers[player] = nil
+    end
+end
+
+-- ==============================
+-- 🔫 GUN
+-- ==============================
+local function getGun()
+    local g = workspace:FindFirstChild("GunDrop")
+    if g and g:IsA("BasePart") then return g end
+    if g and g:FindFirstChild("Gun") then return g.Gun end
+end
+
+local function createGunTracer()
+    if GunTracer then return end
+
+    GunTracer = Drawing.new("Line")
+    GunTracer.Thickness = 3
+    GunTracer.Transparency = 1
+end
+
+local function removeGunTracer()
+    if GunTracer then
+        GunTracer:Remove()
+        GunTracer = nil
+    end
+end
+
+-- ==============================
+-- 🔘 TOGGLES
+-- ==============================
+ESPTab:AddToggle("SheriffESP", {
+    Title = "Sheriff (Blue)",
+    Callback = function(v)
+        ESPSheriff = v
+    end
+})
+
+ESPTab:AddToggle("MurderESP", {
+    Title = "Murderer (Red)",
+    Callback = function(v)
+        ESPMurder = v
+    end
+})
+
+ESPTab:AddToggle("GunESP", {
+    Title = "Gun (RGB)",
+    Callback = function(v)
+        ESPGun = v
+        if not v then removeGunTracer() end
+    end
+})
+
+-- ==============================
+-- 🔁 LOOP
+-- ==============================
+task.spawn(function()
+    while task.wait() do
+        pcall(function()
+
+            local center = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
+
+            -- 👤 PLAYER
+            for _, player in pairs(game.Players:GetPlayers()) do
+                if player ~= game.Players.LocalPlayer then
+
+                    local role = getRole(player)
+                    local char = player.Character
+                    local root = char and char:FindFirstChild("HumanoidRootPart")
+
+                    if root then
+                        local pos, onScreen = Camera:WorldToViewportPoint(root.Position)
+
+                        if ESPSheriff and role == "Sheriff" then
+                            createTracer(player, Color3.fromRGB(0,170,255))
+
+                        elseif ESPMurder and role == "Murderer" then
+                            createTracer(player, Color3.fromRGB(255,0,0))
+
+                        else
+                            removeTracer(player)
+                        end
+
+                        local line = Tracers[player]
+                        if line and onScreen then
+                            line.From = center
+                            line.To = Vector2.new(pos.X, pos.Y)
+                            line.Visible = true
+                        elseif line then
+                            line.Visible = false
+                        end
+                    end
+                end
+            end
+
+            -- 🔫 GUN
+            if ESPGun then
+                local gun = getGun()
+
+                if gun then
+                    local pos, onScreen = Camera:WorldToViewportPoint(gun.Position)
+                    createGunTracer()
+
+                    if GunTracer and onScreen then
+                        GunTracer.From = center
+                        GunTracer.To = Vector2.new(pos.X, pos.Y)
+                        GunTracer.Color = getRGB() -- 🌈 RGB
+                        GunTracer.Visible = true
+                    elseif GunTracer then
+                        GunTracer.Visible = false
+                    end
+                else
+                    removeGunTracer()
+                end
+            end
+
+        end)
+    end
+end)
