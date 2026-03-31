@@ -322,25 +322,27 @@ end)
 -- ================== COMBAT TAB ==================
 local CombatTab = Window:AddTab({ Title = "Combat", Icon = "crosshair" })
 
-CombatTab:AddSection("Target Teleport")
+CombatTab:AddSection("Floating Follow")
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
 local SelectedPlayer = nil
-local TPEnabled = false
+local FollowEnabled = false
 local TPMode = "Behind"
-local Distance = 7 -- 🔥 ค่าเริ่มต้น
+
+local Distance = 7
+local FollowSpeed = 0.2 -- 🔥 ความไว (ยิ่งมาก = ตามเร็ว)
 
 -- 📜 เลือกผู้เล่น
-local PlayerDropdown = CombatTab:AddDropdown("Combat_TP_Player", {
+local PlayerDropdown = CombatTab:AddDropdown("Follow_Player", {
     Title = "Select Target",
     Values = {},
     Multi = false
 })
 
--- 🔄 อัปเดตรายชื่อ (อัตโนมัติ)
+-- 🔄 อัปเดตรายชื่ออัตโนมัติ
 local function UpdatePlayers()
     local list = {}
 
@@ -352,7 +354,6 @@ local function UpdatePlayers()
 
     PlayerDropdown:SetValues(list)
 
-    -- ถ้าคนที่เลือกออก = รีเซ็ต
     if SelectedPlayer and not table.find(list, SelectedPlayer) then
         SelectedPlayer = nil
     end
@@ -366,8 +367,8 @@ PlayerDropdown:OnChanged(function(v)
     SelectedPlayer = v
 end)
 
--- 📍 เลือกตำแหน่ง
-local ModeDropdown = CombatTab:AddDropdown("Combat_TP_Mode", {
+-- 📍 ตำแหน่ง
+local ModeDropdown = CombatTab:AddDropdown("Follow_Mode", {
     Title = "Position",
     Values = {"Front", "Behind", "Above", "Below"},
     Default = "Behind",
@@ -378,10 +379,9 @@ ModeDropdown:OnChanged(function(v)
     TPMode = v
 end)
 
--- 🎚️ ระยะห่าง
-CombatTab:AddSlider("Combat_TP_Distance", {
+-- 🎚️ ระยะ
+CombatTab:AddSlider("Follow_Distance", {
     Title = "Distance",
-    Description = "ระยะห่างจากเป้าหมาย",
     Default = 7,
     Min = 3,
     Max = 25,
@@ -391,18 +391,31 @@ CombatTab:AddSlider("Combat_TP_Distance", {
     end
 })
 
--- 🔘 Toggle
-CombatTab:AddToggle("Combat_TP_Toggle", {
-    Title = "Enable Target TP",
-    Default = false,
+-- ⚡ ความไว (ใหม่)
+CombatTab:AddSlider("Follow_Speed", {
+    Title = "Follow Speed",
+    Description = "ความไวการลอย",
+    Default = 0.2,
+    Min = 0.05,
+    Max = 0.5,
+    Rounding = 2,
     Callback = function(v)
-        TPEnabled = v
+        FollowSpeed = v
     end
 })
 
--- 🚀 ระบบ
+-- 🔘 Toggle
+CombatTab:AddToggle("Follow_Toggle", {
+    Title = "Enable Floating Follow",
+    Default = false,
+    Callback = function(v)
+        FollowEnabled = v
+    end
+})
+
+-- 🚀 ระบบลอย
 RunService.RenderStepped:Connect(function()
-    if not TPEnabled then return end
+    if not FollowEnabled then return end
     if not SelectedPlayer then return end
 
     local target = Players:FindFirstChild(SelectedPlayer)
@@ -411,8 +424,8 @@ RunService.RenderStepped:Connect(function()
         local myChar = LocalPlayer.Character
         if not myChar or not myChar:FindFirstChild("HumanoidRootPart") then return end
 
+        local myHRP = myChar.HumanoidRootPart
         local hrp = target.Character.HumanoidRootPart
-        local pos = hrp.CFrame
 
         local offset
 
@@ -426,7 +439,10 @@ RunService.RenderStepped:Connect(function()
             offset = Vector3.new(0, -Distance, 0)
         end
 
-        myChar.HumanoidRootPart.CFrame = pos + offset
+        local targetPos = hrp.Position + offset
+
+        -- 🔥 ลอยค้าง + ปรับความไว
+        myHRP.CFrame = myHRP.CFrame:Lerp(CFrame.new(targetPos), FollowSpeed)
     end
 end)
 
