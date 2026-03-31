@@ -820,108 +820,59 @@ SettingTab:AddButton({
 })
 
 -- ==============================
--- 🎨 COLOR DATA
+-- 🌐 TRANSLATOR
 -- ==============================
-local Colors = {
-    ["Default"] = Color3.fromRGB(30, 30, 30),
-    ["Purple"] = Color3.fromRGB(170, 0, 255),
-    ["Red"] = Color3.fromRGB(255, 0, 0),
-    ["Blue"] = Color3.fromRGB(0, 170, 255),
-    ["Green"] = Color3.fromRGB(0, 255, 100),
-    ["Yellow"] = Color3.fromRGB(255, 255, 0),
-    ["Orange"] = Color3.fromRGB(255, 140, 0),
-    ["Pink"] = Color3.fromRGB(255, 0, 150),
-    ["Cyan"] = Color3.fromRGB(0, 255, 255),
-    ["White"] = Color3.fromRGB(255, 255, 255)
-}
+local HttpService = game:GetService("HttpService")
 
-local ColorNames = {}
-for name,_ in pairs(Colors) do table.insert(ColorNames, name) end
-table.sort(ColorNames)
+local InputText = ""
+local OutputText = ""
 
-local CurrentIndex = 1
-local RGBMode = false
-
--- ==============================
--- 🎨 APPLY COLOR
--- ==============================
-local function applyColor(color)
-    for _, obj in pairs(Window:GetDescendants()) do
-        if obj:IsA("Frame") or obj:IsA("TextButton") then
-            pcall(function()
-                obj.BackgroundColor3 = color
-            end)
-        end
+-- 📥 ช่องกรอกข้อความ
+SettingTab:AddInput("InputText", {
+    Title = "Text",
+    Default = "",
+    Placeholder = "Type here...",
+    Callback = function(v)
+        InputText = v
     end
-end
+})
 
--- ==============================
--- 📜 DROPDOWN
--- ==============================
-SettingTab:AddDropdown("UIColor", {
-    Title = "Select Color",
-    Values = ColorNames,
+-- 🌍 เลือกภาษา
+local TargetLang = "en"
+
+SettingTab:AddDropdown("Lang", {
+    Title = "Translate To",
+    Values = {"en","th","ja","zh-cn"},
     Default = 1,
     Callback = function(v)
-        RGBMode = false
-
-        for i,name in ipairs(ColorNames) do
-            if name == v then
-                CurrentIndex = i
-                break
-            end
-        end
-
-        applyColor(Colors[v])
+        TargetLang = v
     end
 })
 
--- ==============================
--- 🔘 NEXT COLOR
--- ==============================
+-- 🔘 ปุ่มแปล
 SettingTab:AddButton({
-    Title = "Next Color",
+    Title = "Translate",
     Callback = function()
-        RGBMode = false
+        pcall(function()
 
-        CurrentIndex += 1
-        if CurrentIndex > #ColorNames then
-            CurrentIndex = 1
-        end
+            local url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl="
+                .. TargetLang .. "&dt=t&q=" .. HttpService:UrlEncode(InputText)
 
-        local name = ColorNames[CurrentIndex]
-        applyColor(Colors[name])
+            local response = game:HttpGet(url)
+            local data = HttpService:JSONDecode(response)
+
+            OutputText = data[1][1][1]
+
+            print("Translated:", OutputText)
+
+        end)
     end
 })
 
--- ==============================
--- ♻️ RESET
--- ==============================
-SettingTab:AddButton({
-    Title = "Reset Default",
-    Callback = function()
-        RGBMode = false
-        applyColor(Colors["Default"])
+-- 📤 แสดงผล
+SettingTab:AddParagraph({
+    Title = "Result",
+    Content = function()
+        return OutputText ~= "" and OutputText or "..."
     end
 })
-
--- ==============================
--- 🌈 RGB MODE
--- ==============================
-SettingTab:AddToggle("RGBMode", {
-    Title = "RGB Mode",
-    Default = false,
-    Callback = function(v)
-        RGBMode = v
-    end
-})
-
-task.spawn(function()
-    while task.wait(0.05) do
-        if RGBMode then
-            local hue = tick() % 5 / 5
-            local color = Color3.fromHSV(hue, 1, 1)
-            applyColor(color)
-        end
-    end
-end)
