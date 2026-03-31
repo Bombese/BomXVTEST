@@ -2,7 +2,7 @@ local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/
 
 local Window = Fluent:CreateWindow({
     Title = "Eclipse Mod HUB | murder mystery 2",
-    SubTitle = "test version ",
+    SubTitle = "Version XX",
     TabWidth = 160,
     Size = UDim2.fromOffset(450, 350),
     Acrylic = true,
@@ -22,6 +22,9 @@ local ESPGun = false
 local Tracers = {}
 local GunTracer = nil
 local Camera = workspace.CurrentCamera
+
+-- 🔔 Notify State
+local GunSpawned = false
 
 -- ==============================
 -- 🔍 ROLE
@@ -67,7 +70,7 @@ local function createHighlight(char, color)
 end
 
 -- ==============================
--- 🏷️ NAME TAG
+-- 🏷️ NAME
 -- ==============================
 local function createBillboard(player, text, color)
     local char = player.Character
@@ -114,23 +117,22 @@ local function removeTracer(player)
 end
 
 -- ==============================
--- 🔫 GUN (FIXED 100%)
+-- 🔫 GUN (FIXED)
 -- ==============================
 local function getGun()
     for _, v in pairs(workspace:GetDescendants()) do
-        if v.Name == "Gun" then
+        if string.find(v.Name:lower(),"gun") then
+            
+            if v:IsA("BasePart") then
+                local parent = v.Parent
 
-            local parent = v.Parent
-            if parent and parent:FindFirstChild("Humanoid") then
-                continue -- ❌ อยู่กับคน
-            end
+                -- ❌ ไม่เอาปืนที่อยู่กับคน
+                if parent and parent:FindFirstChild("Humanoid") then
+                    continue
+                end
 
-            if v:IsA("Tool") then
-                return v:FindFirstChild("Handle") or v:FindFirstChildWhichIsA("BasePart")
-            elseif v:IsA("BasePart") then
                 return v
             end
-
         end
     end
 end
@@ -139,17 +141,17 @@ end
 -- 🔘 TOGGLES
 -- ==============================
 ESPTab:AddToggle("SheriffESP", {
-    Title = "Sheriff (Blue)",
+    Title = "Sheriff",
     Callback = function(v) ESPSheriff = v end
 })
 
 ESPTab:AddToggle("MurderESP", {
-    Title = "Murderer (Red)",
+    Title = "Murderer",
     Callback = function(v) ESPMurder = v end
 })
 
 ESPTab:AddToggle("GunESP", {
-    Title = "Gun (RGB)",
+    Title = "Gun + Notify",
     Callback = function(v) ESPGun = v end
 })
 
@@ -199,11 +201,21 @@ task.spawn(function()
                 end
             end
 
-            -- 🔫 GUN RGB + Highlight
+            -- 🔫 GUN
             if ESPGun then
                 local gun = getGun()
 
                 if gun then
+                    -- 🔔 แจ้งเตือนครั้งเดียว
+                    if not GunSpawned then
+                        GunSpawned = true
+                        game.StarterGui:SetCore("SendNotification", {
+                            Title = "🔫 Gun Spawned!",
+                            Text = "ปืนตกแล้ว ไปเก็บด่วน 💀",
+                            Duration = 5
+                        })
+                    end
+
                     local pos, onScreen = Camera:WorldToViewportPoint(gun.Position)
 
                     if not GunTracer then
@@ -231,6 +243,7 @@ task.spawn(function()
                     end
 
                 else
+                    GunSpawned = false -- รีเซ็ตให้แจ้งใหม่รอบหน้า
                     if GunTracer then
                         GunTracer.Visible = false
                     end
