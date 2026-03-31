@@ -662,3 +662,65 @@ ScriptTab:AddButton({
         loadstring(game:HttpGet("https://raw.githubusercontent.com/57Felon/FelonHUB/main/Felon_Script"))()
     end
 })
+
+ScriptTab:AddSection("Developer Tools")
+
+-- 🧠 Dex Explorer
+ScriptTab:AddButton({
+    Title = "Run Dex Explorer",
+    Description = "ดูโครงสร้างเกม",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/peyton2465/Dex/master/out.lua"))()
+    end
+})
+
+-- 📜 Simple Spy
+ScriptTab:AddButton({
+    Title = "Run Simple Spy",
+    Description = "ดู Remote / Event",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/exxtremestuffs/SimpleSpySource/master/SimpleSpy.lua"))()
+    end
+})
+
+-- 💻 Remote Executor (Mini UI)
+ScriptTab:AddSection("Remote Executor")
+
+local RemoteName = ""
+
+ScriptTab:AddInput("RemoteInput", {
+    Title = "Remote Name",
+    Default = "",
+    Placeholder = "เช่น RemoteEvent",
+    Callback = function(v)
+        RemoteName = v
+    end
+})
+
+ScriptTab:AddButton({
+    Title = "Fire Remote",
+    Description = "ยิง RemoteEvent",
+    Callback = function()
+        local remote = game:GetDescendants()
+        for _, v in pairs(remote) do
+            if v.Name == RemoteName and v:IsA("RemoteEvent") then
+                v:FireServer()
+                print("Fired:", v)
+            end
+        end
+    end
+})
+
+ScriptTab:AddButton({
+    Title = "Invoke Remote",
+    Description = "เรียก RemoteFunction",
+    Callback = function()
+        local remote = game:GetDescendants()
+        for _, v in pairs(remote) do
+            if v.Name == RemoteName and v:IsA("RemoteFunction") then
+                v:InvokeServer()
+                print("Invoked:", v)
+            end
+        end
+    end
+})
