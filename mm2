@@ -837,6 +837,68 @@ FarmTab:AddToggle("AutoFarmCoins", {
     end
 })
 
+-- [[ 1. ตั้งค่าระบบ Aimbot ]]
+local Camera = workspace.CurrentCamera
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+_G.AimbotEnabled = false
+_G.AimbotSmoothing = 0.15 -- ความสมูท (0.1 - 1.0) ยิ่งน้อยยิ่งดูเนียนเหมือนคนเล่นเอง
+_G.AimbotPart = "HumanoidRootPart" -- ตำแหน่งที่จะล็อค (Head หรือ HumanoidRootPart)
+
+-- [[ 2. ฟังก์ชันหาตัวฆาตกร ]]
+local function getMurderer()
+    for _, p in ipairs(game:GetService("Players"):GetPlayers()) do
+        if p ~= game:GetService("Players").LocalPlayer and p.Character then
+            local char = p.Character
+            -- เช็คว่าถือมีดอยู่หรือไม่
+            local knife = char:FindFirstChildWhichIsA("Tool")
+            if knife and (knife.Name:lower():find("knife") or knife.Name:lower():find("blade")) then
+                return char
+            end
+            -- เช็คในกระเป๋า
+            local bKnife = p.Backpack:FindFirstChildWhichIsA("Tool")
+            if bKnife and (bKnife.Name:lower():find("knife") or bKnife.Name:lower():find("blade")) then
+                return char
+            end
+        end
+    end
+    return nil
+end
+
+-- [[ 3. ระบบทำงานของ Aimbot ]]
+RunService.RenderStepped:Connect(function()
+    if _G.AimbotEnabled then
+        local targetChar = getMurderer()
+        if targetChar and targetChar:FindFirstChild(_G.AimbotPart) then
+            local targetPos = targetChar[_G.AimbotPart].Position
+            -- คำนวณมุมมองให้หันไปหาเป้าหมายแบบ Smooth
+            local lookAt = CFrame.new(Camera.CFrame.Position, targetPos)
+            Camera.CFrame = Camera.CFrame:Lerp(lookAt, _G.AimbotSmoothing)
+        end
+    end
+end)
+
+-- [[ เพิ่มปุ่มเปิด/ปิดใน UI ]]
+KillTab:AddToggle("SheriffAimbot", {
+    Title = "Sheriff Aimbot (Lock Murderer)",
+    Default = false,
+    Callback = function(Value)
+        _G.AimbotEnabled = Value
+    end
+})
+
+KillTab:AddSlider("AimbotSmooth", {
+    Title = "Aimbot Smoothness",
+    Min = 1,
+    Max = 10,
+    Default = 2,
+    Callback = function(Value)
+        _G.AimbotSmoothing = Value / 10 -- ปรับความหน่วงในการล็อค
+    end
+})
+
+
 local TeleportService = game:GetService("TeleportService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
