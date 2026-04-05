@@ -174,7 +174,7 @@ task.spawn(function()
                 moveTo(P3)
                 if not AutoFarmGold then return end
 
-                task.wait(5)
+                task.wait(15)
 
             end)
         end
