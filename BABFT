@@ -15,43 +15,77 @@ local Window = Fluent:CreateWindow({
 local MainTab = Window:AddTab({ Title = "Main", Icon = "home" })
 
 local AutoFarmGold = false
-local Speed = 200
+local Speed = 120
 
-local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 
 -- ==============================
--- 🧍 GET HRP
+-- 🧍 GET CHAR
 -- ==============================
-local function getHRP()
-    local char = game.Players.LocalPlayer.Character or game.Players.LocalPlayer.CharacterAdded:Wait()
-    return char:WaitForChild("HumanoidRootPart")
+local function getChar()
+    local plr = game.Players.LocalPlayer
+    local char = plr.Character or plr.CharacterAdded:Wait()
+    return char
 end
 
 -- ==============================
--- ✈️ FLY (Tween ลื่นๆ)
+-- ✈️ FLY CORE
 -- ==============================
-local function flyTo(cf)
-    local hrp = getHRP()
+local BV, BG
 
-    local distance = (hrp.Position - cf.Position).Magnitude
-    local time = distance / Speed
+local function startFly()
+    local char = getChar()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    local hum = char:WaitForChild("Humanoid")
 
-    local tween = TweenService:Create(
-        hrp,
-        TweenInfo.new(time, Enum.EasingStyle.Linear),
-        {CFrame = cf + Vector3.new(0, 10, 0)} -- ยกสูงกันตก
-    )
+    hum.PlatformStand = true -- 🔥 กันฟิสิกส์
 
-    tween:Play()
+    BV = Instance.new("BodyVelocity")
+    BV.MaxForce = Vector3.new(1e9,1e9,1e9)
+    BV.Velocity = Vector3.zero
+    BV.Parent = hrp
 
-    local done = false
-    tween.Completed:Connect(function()
-        done = true
-    end)
+    BG = Instance.new("BodyGyro")
+    BG.MaxTorque = Vector3.new(1e9,1e9,1e9)
+    BG.CFrame = hrp.CFrame
+    BG.Parent = hrp
+end
 
-    while not done and AutoFarmGold do
-        task.wait()
+local function stopFly()
+    local char = getChar()
+    local hum = char:FindFirstChild("Humanoid")
+
+    if hum then
+        hum.PlatformStand = false
     end
+
+    if BV then BV:Destroy() end
+    if BG then BG:Destroy() end
+end
+
+-- ==============================
+-- 🚀 MOVE TO
+-- ==============================
+local function moveTo(cf)
+    local hrp = getChar():WaitForChild("HumanoidRootPart")
+
+    repeat
+        if not AutoFarmGold then break end
+
+        local dir = (cf.Position - hrp.Position)
+        local dist = dir.Magnitude
+
+        if dist < 5 then break end
+
+        dir = dir.Unit
+
+        BV.Velocity = dir * Speed
+        BG.CFrame = CFrame.new(hrp.Position, cf.Position)
+
+        RunService.Heartbeat:Wait()
+    until false
+
+    BV.Velocity = Vector3.zero
 end
 
 -- ==============================
@@ -62,14 +96,20 @@ MainTab:AddToggle("AutoFarmGold", {
     Default = false,
     Callback = function(v)
         AutoFarmGold = v
+
+        if v then
+            startFly()
+        else
+            stopFly()
+        end
     end
 })
 
 MainTab:AddSlider("Speed", {
     Title = "Speed",
-    Default = 200,
+    Default = 120,
     Min = 50,
-    Max = 500,
+    Max = 300,
     Rounding = 0,
     Callback = function(v)
         Speed = v
@@ -91,14 +131,9 @@ task.spawn(function()
         if AutoFarmGold then
             pcall(function()
 
-                flyTo(P1)
-                if not AutoFarmGold then return end
-
-                flyTo(P2)
-                if not AutoFarmGold then return end
-
-                flyTo(P3)
-                if not AutoFarmGold then return end
+                moveTo(P1)
+                moveTo(P2)
+                moveTo(P3)
 
                 task.wait(5)
 
