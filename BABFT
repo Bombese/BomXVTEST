@@ -59,6 +59,7 @@ MainTab:AddSlider("SpeedSlider", {
     Default = 150,
     Min = 50,
     Max = 500,
+    Rounding = 0, -- 🔥 ตัวนี้แหละที่หาย
     Callback = function(v)
         Speed = v
     end
