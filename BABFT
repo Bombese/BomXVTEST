@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Eclipse Mod HUB | murder mystery 2",
+    Title = "Eclipse Mod HUB | Build A Boat For Treasure 2",
     SubTitle = "Version Apha 0.1",
     TabWidth = 160,
     Size = UDim2.fromOffset(450, 350),
