@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Eclipse Mod HUB | Build A Boat For Treasure 2",
+    Title = "Eclipse Mod HUB | Build A Boat For Treasure",
     SubTitle = "Version Apha 0.1",
     TabWidth = 160,
     Size = UDim2.fromOffset(450, 350),
@@ -9,3 +9,88 @@ local Window = Fluent:CreateWindow({
     Theme = "VSC Dark High Contrast",
     MinimizeKey = Enum.KeyCode.LeftControl
 })
+-- ==============================
+-- 📦 MAIN TAB
+-- ==============================
+local MainTab = Window:AddTab({ Title = "Main", Icon = "home" })
+
+local AutoFarmGold = false
+local Speed = 150 -- ค่าเริ่มต้น
+
+local RunService = game:GetService("RunService")
+
+-- ==============================
+-- 🧍 GET CHAR
+-- ==============================
+local function getChar()
+    local player = game.Players.LocalPlayer
+    local char = player.Character or player.CharacterAdded:Wait()
+    return char
+end
+
+-- ==============================
+-- ✈️ FLY SYSTEM (นุ่ม ไม่ตกน้ำ)
+-- ==============================
+local function flyTo(cf)
+    local char = getChar()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+
+    while (hrp.Position - cf.Position).Magnitude > 5 do
+        local dir = (cf.Position - hrp.Position).Unit
+        hrp.CFrame = hrp.CFrame + dir * Speed * RunService.Heartbeat:Wait()
+    end
+
+    hrp.CFrame = cf
+end
+
+-- ==============================
+-- 🎚️ UI
+-- ==============================
+MainTab:AddToggle("AutoFarmGold", {
+    Title = "Auto Farm Gold",
+    Default = false,
+    Callback = function(v)
+        AutoFarmGold = v
+    end
+})
+
+MainTab:AddSlider("SpeedSlider", {
+    Title = "Speed",
+    Default = 150,
+    Min = 50,
+    Max = 500,
+    Callback = function(v)
+        Speed = v
+    end
+})
+
+-- ==============================
+-- 📍 จุดฟาร์ม
+-- ==============================
+local P1 = CFrame.new(-42.61, 17.51, 256.25)
+local P2 = CFrame.new(-59.82, 61.90, 8530)
+local P3 = CFrame.new(-57.85, -353.76, 9486.17)
+
+-- ==============================
+-- 🔁 LOOP
+-- ==============================
+task.spawn(function()
+    while task.wait() do
+        if AutoFarmGold then
+            pcall(function()
+                
+                flyTo(P1)
+                if not AutoFarmGold then return end
+                
+                flyTo(P2)
+                if not AutoFarmGold then return end
+                
+                flyTo(P3)
+                if not AutoFarmGold then return end
+                
+                task.wait(5) -- ⏱️ รอ 5 วิ
+                
+            end)
+        end
+    end
+end)
