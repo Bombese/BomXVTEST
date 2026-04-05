@@ -15,32 +15,43 @@ local Window = Fluent:CreateWindow({
 local MainTab = Window:AddTab({ Title = "Main", Icon = "home" })
 
 local AutoFarmGold = false
-local Speed = 150 -- ค่าเริ่มต้น
+local Speed = 150
 
 local RunService = game:GetService("RunService")
 
 -- ==============================
 -- 🧍 GET CHAR
 -- ==============================
-local function getChar()
-    local player = game.Players.LocalPlayer
-    local char = player.Character or player.CharacterAdded:Wait()
-    return char
+local function getHRP()
+    local char = game.Players.LocalPlayer.Character or game.Players.LocalPlayer.CharacterAdded:Wait()
+    return char:WaitForChild("HumanoidRootPart")
 end
 
 -- ==============================
--- ✈️ FLY SYSTEM (นุ่ม ไม่ตกน้ำ)
+-- ✈️ LOCK FLY MOVE (ไม่ตกน้ำ)
 -- ==============================
 local function flyTo(cf)
-    local char = getChar()
-    local hrp = char:WaitForChild("HumanoidRootPart")
+    local hrp = getHRP()
 
-    while (hrp.Position - cf.Position).Magnitude > 5 do
-        local dir = (cf.Position - hrp.Position).Unit
-        hrp.CFrame = hrp.CFrame + dir * Speed * RunService.Heartbeat:Wait()
+    -- ล็อคสูงไว้กันตก
+    local targetY = cf.Y + 10
+
+    while AutoFarmGold and (hrp.Position - cf.Position).Magnitude > 5 do
+        local pos = hrp.Position
+        local target = Vector3.new(cf.X, targetY, cf.Z)
+
+        local dir = (target - pos).Unit
+        hrp.Velocity = Vector3.zero -- กันตก
+
+        hrp.CFrame = CFrame.new(pos + dir * Speed * RunService.Heartbeat:Wait())
+
+        -- ล็อคความสูงตลอด
+        hrp.CFrame = CFrame.new(hrp.Position.X, targetY, hrp.Position.Z)
     end
 
-    hrp.CFrame = cf
+    if AutoFarmGold then
+        hrp.CFrame = CFrame.new(cf.X, targetY, cf.Z)
+    end
 end
 
 -- ==============================
@@ -54,12 +65,12 @@ MainTab:AddToggle("AutoFarmGold", {
     end
 })
 
-MainTab:AddSlider("SpeedSlider", {
+MainTab:AddSlider("Speed", {
     Title = "Speed",
     Default = 150,
     Min = 50,
     Max = 500,
-    Rounding = 0, -- 🔥 ตัวนี้แหละที่หาย
+    Rounding = 0,
     Callback = function(v)
         Speed = v
     end
@@ -79,18 +90,18 @@ task.spawn(function()
     while task.wait() do
         if AutoFarmGold then
             pcall(function()
-                
+
                 flyTo(P1)
                 if not AutoFarmGold then return end
-                
+
                 flyTo(P2)
                 if not AutoFarmGold then return end
-                
+
                 flyTo(P3)
                 if not AutoFarmGold then return end
-                
+
                 task.wait(5) -- ⏱️ รอ 5 วิ
-                
+
             end)
         end
     end
