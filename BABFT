@@ -15,12 +15,12 @@ local Window = Fluent:CreateWindow({
 local MainTab = Window:AddTab({ Title = "Main", Icon = "home" })
 
 local AutoFarmGold = false
-local Speed = 150
+local Speed = 200
 
-local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 
 -- ==============================
--- 🧍 GET CHAR
+-- 🧍 GET HRP
 -- ==============================
 local function getHRP()
     local char = game.Players.LocalPlayer.Character or game.Players.LocalPlayer.CharacterAdded:Wait()
@@ -28,29 +28,29 @@ local function getHRP()
 end
 
 -- ==============================
--- ✈️ LOCK FLY MOVE (ไม่ตกน้ำ)
+-- ✈️ FLY (Tween ลื่นๆ)
 -- ==============================
 local function flyTo(cf)
     local hrp = getHRP()
 
-    -- ล็อคสูงไว้กันตก
-    local targetY = cf.Y + 10
+    local distance = (hrp.Position - cf.Position).Magnitude
+    local time = distance / Speed
 
-    while AutoFarmGold and (hrp.Position - cf.Position).Magnitude > 5 do
-        local pos = hrp.Position
-        local target = Vector3.new(cf.X, targetY, cf.Z)
+    local tween = TweenService:Create(
+        hrp,
+        TweenInfo.new(time, Enum.EasingStyle.Linear),
+        {CFrame = cf + Vector3.new(0, 10, 0)} -- ยกสูงกันตก
+    )
 
-        local dir = (target - pos).Unit
-        hrp.Velocity = Vector3.zero -- กันตก
+    tween:Play()
 
-        hrp.CFrame = CFrame.new(pos + dir * Speed * RunService.Heartbeat:Wait())
+    local done = false
+    tween.Completed:Connect(function()
+        done = true
+    end)
 
-        -- ล็อคความสูงตลอด
-        hrp.CFrame = CFrame.new(hrp.Position.X, targetY, hrp.Position.Z)
-    end
-
-    if AutoFarmGold then
-        hrp.CFrame = CFrame.new(cf.X, targetY, cf.Z)
+    while not done and AutoFarmGold do
+        task.wait()
     end
 end
 
@@ -67,7 +67,7 @@ MainTab:AddToggle("AutoFarmGold", {
 
 MainTab:AddSlider("Speed", {
     Title = "Speed",
-    Default = 150,
+    Default = 200,
     Min = 50,
     Max = 500,
     Rounding = 0,
@@ -77,7 +77,7 @@ MainTab:AddSlider("Speed", {
 })
 
 -- ==============================
--- 📍 จุดฟาร์ม
+-- 📍 จุด
 -- ==============================
 local P1 = CFrame.new(-42.61, 17.51, 256.25)
 local P2 = CFrame.new(-59.82, 61.90, 8530)
@@ -100,7 +100,7 @@ task.spawn(function()
                 flyTo(P3)
                 if not AutoFarmGold then return end
 
-                task.wait(5) -- ⏱️ รอ 5 วิ
+                task.wait(5)
 
             end)
         end
