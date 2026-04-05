@@ -17,11 +17,10 @@ local MainTab = Window:AddTab({ Title = "Main", Icon = "home" })
 local AutoFarmGold = false
 local Speed = 120
 
-local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 
-local BV, BG
-local NoclipConn
+local BV, BG, NoclipConn
 
 -- ==============================
 -- 🧍 GET CHAR
@@ -36,8 +35,7 @@ end
 -- ==============================
 local function startNoclip()
     NoclipConn = RunService.Stepped:Connect(function()
-        local char = getChar()
-        for _, v in pairs(char:GetDescendants()) do
+        for _, v in pairs(getChar():GetDescendants()) do
             if v:IsA("BasePart") then
                 v.CanCollide = false
             end
@@ -49,14 +47,6 @@ local function stopNoclip()
     if NoclipConn then
         NoclipConn:Disconnect()
         NoclipConn = nil
-    end
-
-    -- คืนค่า collide
-    local char = getChar()
-    for _, v in pairs(char:GetDescendants()) do
-        if v:IsA("BasePart") then
-            v.CanCollide = true
-        end
     end
 end
 
@@ -72,12 +62,10 @@ local function startFly()
 
     BV = Instance.new("BodyVelocity")
     BV.MaxForce = Vector3.new(1e9,1e9,1e9)
-    BV.Velocity = Vector3.zero
     BV.Parent = hrp
 
     BG = Instance.new("BodyGyro")
     BG.MaxTorque = Vector3.new(1e9,1e9,1e9)
-    BG.CFrame = hrp.CFrame
     BG.Parent = hrp
 end
 
@@ -85,10 +73,7 @@ local function stopFly()
     local char = getChar()
     local hum = char:FindFirstChild("Humanoid")
 
-    if hum then
-        hum.PlatformStand = false
-    end
-
+    if hum then hum.PlatformStand = false end
     if BV then BV:Destroy() BV = nil end
     if BG then BG:Destroy() BG = nil end
 end
@@ -103,13 +88,9 @@ local function moveTo(cf)
         if not AutoFarmGold then break end
 
         local dir = (cf.Position - hrp.Position)
-        local dist = dir.Magnitude
+        if dir.Magnitude < 5 then break end
 
-        if dist < 5 then break end
-
-        dir = dir.Unit
-
-        BV.Velocity = dir * Speed
+        BV.Velocity = dir.Unit * Speed
         BG.CFrame = CFrame.new(hrp.Position, cf.Position)
 
         RunService.Heartbeat:Wait()
@@ -165,16 +146,19 @@ task.spawn(function()
         if AutoFarmGold then
             pcall(function()
 
+                -- 🛫 บินครบ
                 moveTo(P1)
-                if not AutoFarmGold then return end
-
                 moveTo(P2)
-                if not AutoFarmGold then return end
-
                 moveTo(P3)
-                if not AutoFarmGold then return end
 
-                task.wait(15)
+                -- 🛑 หยุดก่อนรอเกิดใหม่
+                if BV then BV.Velocity = Vector3.zero end
+
+                -- ⏳ รอ "ตัวละครเกิดใหม่"
+                local plr = Players.LocalPlayer
+                plr.CharacterAdded:Wait()
+
+                -- ▶️ เริ่มใหม่ (ระบบจะวนเอง)
 
             end)
         end
