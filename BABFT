@@ -2,7 +2,7 @@ local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/
 
 local Window = Fluent:CreateWindow({
     Title = "Eclipse Mod HUB | Build A Boat For Treasure",
-    SubTitle = "Version Apha 0.1",
+    SubTitle = "Version XX",
     TabWidth = 160,
     Size = UDim2.fromOffset(450, 350),
     Acrylic = true,
