@@ -18,27 +18,57 @@ local AutoFarmGold = false
 local Speed = 120
 
 local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+
+local BV, BG
+local NoclipConn
 
 -- ==============================
 -- 🧍 GET CHAR
 -- ==============================
 local function getChar()
-    local plr = game.Players.LocalPlayer
-    local char = plr.Character or plr.CharacterAdded:Wait()
-    return char
+    local plr = Players.LocalPlayer
+    return plr.Character or plr.CharacterAdded:Wait()
 end
 
 -- ==============================
--- ✈️ FLY CORE
+-- 🧱 NOCLIP
 -- ==============================
-local BV, BG
+local function startNoclip()
+    NoclipConn = RunService.Stepped:Connect(function()
+        local char = getChar()
+        for _, v in pairs(char:GetDescendants()) do
+            if v:IsA("BasePart") then
+                v.CanCollide = false
+            end
+        end
+    end)
+end
 
+local function stopNoclip()
+    if NoclipConn then
+        NoclipConn:Disconnect()
+        NoclipConn = nil
+    end
+
+    -- คืนค่า collide
+    local char = getChar()
+    for _, v in pairs(char:GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.CanCollide = true
+        end
+    end
+end
+
+-- ==============================
+-- ✈️ FLY
+-- ==============================
 local function startFly()
     local char = getChar()
     local hrp = char:WaitForChild("HumanoidRootPart")
     local hum = char:WaitForChild("Humanoid")
 
-    hum.PlatformStand = true -- 🔥 กันฟิสิกส์
+    hum.PlatformStand = true
 
     BV = Instance.new("BodyVelocity")
     BV.MaxForce = Vector3.new(1e9,1e9,1e9)
@@ -59,12 +89,12 @@ local function stopFly()
         hum.PlatformStand = false
     end
 
-    if BV then BV:Destroy() end
-    if BG then BG:Destroy() end
+    if BV then BV:Destroy() BV = nil end
+    if BG then BG:Destroy() BG = nil end
 end
 
 -- ==============================
--- 🚀 MOVE TO
+-- 🚀 MOVE
 -- ==============================
 local function moveTo(cf)
     local hrp = getChar():WaitForChild("HumanoidRootPart")
@@ -85,7 +115,9 @@ local function moveTo(cf)
         RunService.Heartbeat:Wait()
     until false
 
-    BV.Velocity = Vector3.zero
+    if BV then
+        BV.Velocity = Vector3.zero
+    end
 end
 
 -- ==============================
@@ -99,8 +131,10 @@ MainTab:AddToggle("AutoFarmGold", {
 
         if v then
             startFly()
+            startNoclip()
         else
             stopFly()
+            stopNoclip()
         end
     end
 })
@@ -132,8 +166,13 @@ task.spawn(function()
             pcall(function()
 
                 moveTo(P1)
+                if not AutoFarmGold then return end
+
                 moveTo(P2)
+                if not AutoFarmGold then return end
+
                 moveTo(P3)
+                if not AutoFarmGold then return end
 
                 task.wait(5)
 
