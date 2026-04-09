@@ -21,7 +21,7 @@ MainTab:AddSlider("SpeedSlider", {
     Title = "TP Walk Speed",
     Description = "ปรับความเร็ว TP Walk",
     Default = 24,
-    Min = 24,
+    Min = 15,
     Max = 50,
     Rounding = 0,
     Callback = function(Value)
