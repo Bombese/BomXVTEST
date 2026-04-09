@@ -12,6 +12,8 @@ local Window = Fluent:CreateWindow({
 
 local MainTab = Window:AddTab({ Title = "Main", Icon = "home" })
 
+MainTab:AddSection("Settings Player")
+
 -- ตัวแปร
 local speed = 24
 local tpwalk = false
@@ -50,6 +52,26 @@ game:GetService("RunService").Heartbeat:Connect(function()
         end
     end
 end)
+
+local infJumpEnabled = false
+
+game:GetService("UserInputService").JumpRequest:Connect(function()
+    if infJumpEnabled then
+        local char = game.Players.LocalPlayer.Character
+        local hum = char and char:FindFirstChild("Humanoid")
+        if hum then
+            hum:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
+
+MainTab:AddToggle("InfJump", {
+    Title = "Infinite Jump",
+    Default = false,
+    Callback = function(v)
+        infJumpEnabled = v
+    end
+})
 
 MainTab:AddSection("Auto Farming ")
 
