@@ -73,7 +73,76 @@ MainTab:AddToggle("InfJump", {
     end
 })
 
-MainTab:AddSection("Auto Farming ")
+MainTab:AddSection("Help player Settings ")
+
+-- =========================
+-- VARIABLES
+-- =========================
+local autoCarryEnabled = false
+local autoCarryConnection = nil
+
+-- =========================
+-- SERVICES
+-- =========================
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local localPlayer = Players.LocalPlayer
+
+-- =========================
+-- AUTO CARRY CORE
+-- =========================
+local function startAutoCarry()
+    if autoCarryConnection then return end
+
+    autoCarryConnection = RunService.Heartbeat:Connect(function()
+        if not autoCarryEnabled then return end
+
+        local char = localPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr ~= localPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                local otherHRP = plr.Character.HumanoidRootPart
+                local dist = (hrp.Position - otherHRP.Position).Magnitude
+
+                if dist <= 20 then
+                    pcall(function()
+                        ReplicatedStorage.Events.Character.Interact
+                            :FireServer("Carry", nil, plr.Name)
+                    end)
+                    task.wait(0.05)
+                end
+            end
+        end
+    end)
+end
+
+local function stopAutoCarry()
+    if autoCarryConnection then
+        autoCarryConnection:Disconnect()
+        autoCarryConnection = nil
+    end
+end
+
+-- =========================
+-- TOGGLE (ใส่ใน MainTab)
+-- =========================
+MainTab:AddToggle("AutoCarry", {
+    Title = "Auto Carry",
+    Description = "อุ้มผู้เล่นอัตโนมัติ",
+    Default = false,
+    Callback = function(state)
+        autoCarryEnabled = state
+
+        if state then
+            startAutoCarry()
+        else
+            stopAutoCarry()
+        end
+    end
+})
 
 local autoReviveEnabled = false
 local afkMoneyEnabled = false
@@ -157,7 +226,7 @@ local function startAFKMoney()
 end
 
 MainTab:AddToggle("AutoRevive", {
-    Title = "ออโต้ชุบ",
+    Title = "Auto Revive",
     Default = false,
     Callback = function(v)
         autoReviveEnabled = v
@@ -165,8 +234,10 @@ MainTab:AddToggle("AutoRevive", {
     end
 })
 
+MainTab:AddSection("Auto Farming ")
+
 MainTab:AddToggle("AFKMoney", {
-    Title = "AFK Money",
+    Title = "AFK Money BETA",
     Default = false,
     Callback = function(v)
         afkMoneyEnabled = v
