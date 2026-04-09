@@ -356,3 +356,119 @@ ESPTab:AddToggle("NextbotESP", {
     end
 })
 
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+local ESPEnabled = false
+local ESPContainer = {}
+
+-- ฟังก์ชันสร้าง ESP
+local function CreateESP(player)
+    if player == LocalPlayer then return end
+
+    local esp = {}
+
+    -- Highlight สีฟ้า
+    local highlight = Instance.new("Highlight")
+    highlight.FillColor = Color3.fromRGB(0, 170, 255)
+    highlight.OutlineColor = Color3.fromRGB(0, 170, 255)
+    highlight.FillTransparency = 0.7
+    highlight.OutlineTransparency = 0
+    highlight.Parent = game.CoreGui
+    esp.Highlight = highlight
+
+    -- BillboardGui (ตัวหนังสือ)
+    local billboard = Instance.new("BillboardGui")
+    billboard.Size = UDim2.new(0, 120, 0, 40)
+    billboard.StudsOffset = Vector3.new(0, 2, 0)
+    billboard.AlwaysOnTop = true
+
+    local text = Instance.new("TextLabel")
+    text.Size = UDim2.new(1, 0, 1, 0)
+    text.BackgroundTransparency = 1
+    text.TextColor3 = Color3.fromRGB(0, 255, 255)
+    text.TextStrokeTransparency = 0.5
+    text.TextScaled = false
+    text.TextSize = 12 -- 🔹 ตัวเล็ก
+    text.Font = Enum.Font.SourceSansBold
+    text.Parent = billboard
+
+    billboard.Parent = game.CoreGui
+
+    esp.Billboard = billboard
+    esp.Text = text
+
+    ESPContainer[player] = esp
+end
+
+-- ลบ ESP
+local function RemoveESP(player)
+    if ESPContainer[player] then
+        for _, v in pairs(ESPContainer[player]) do
+            if v then v:Destroy() end
+        end
+        ESPContainer[player] = nil
+    end
+end
+
+-- อัปเดต ESP
+RunService.RenderStepped:Connect(function()
+    if not ESPEnabled then return end
+
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            local char = player.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+
+            if hrp and hum then
+                if not ESPContainer[player] then
+                    CreateESP(player)
+                end
+
+                local esp = ESPContainer[player]
+
+                -- ระยะ
+                local distance = (LocalPlayer.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
+                distance = math.floor(distance)
+
+                -- อัปเดตข้อความ
+                esp.Text.Text = player.Name .. " | " .. math.floor(hum.Health) .. "HP | " .. distance .. "m"
+
+                -- ติดตามตัว
+                esp.Billboard.Adornee = hrp
+                esp.Highlight.Adornee = char
+            end
+        end
+    end
+end)
+
+-- ปุ่มเปิด/ปิด ESP
+ESPTab:AddToggle("ESP_Toggle", {
+    Title = "ESP Player",
+    Default = false,
+    Callback = function(state)
+        ESPEnabled = state
+
+        if not state then
+            -- ปิด = ลบทั้งหมด
+            for player, _ in pairs(ESPContainer) do
+                RemoveESP(player)
+            end
+        end
+    end
+})
+
+-- คนเข้า
+Players.PlayerAdded:Connect(function(player)
+    if ESPEnabled then
+        CreateESP(player)
+    end
+end)
+
+-- คนออก
+Players.PlayerRemoving:Connect(function(player)
+    RemoveESP(player)
+end)
