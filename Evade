@@ -50,3 +50,102 @@ game:GetService("RunService").Heartbeat:Connect(function()
         end
     end
 end)
+
+local autoReviveEnabled = false
+local afkMoneyEnabled = false
+
+local reviveLoop, afkLoop, afkPart
+
+local function isDowned(plr)
+    local char = plr.Character
+    return char and char:GetAttribute("Downed") == true
+end
+
+local function createAFKPart()
+    if afkPart then return end
+    afkPart = Instance.new("Part")
+    afkPart.Size = Vector3.new(25,2,25)
+    afkPart.Anchored = true
+    afkPart.Position = Vector3.new(0,1200,0)
+    afkPart.Parent = workspace
+end
+
+local function startAutoRevive()
+    if reviveLoop then return end
+    reviveLoop = task.spawn(function()
+        while autoReviveEnabled do
+            local char = game.Players.LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+
+            if hrp then
+                for _,pl in ipairs(game.Players:GetPlayers()) do
+                    if pl ~= game.Players.LocalPlayer and isDowned(pl) then
+                        local pHrp = pl.Character and pl.Character:FindFirstChild("HumanoidRootPart")
+                        if pHrp and (hrp.Position - pHrp.Position).Magnitude <= 15 then
+                            pcall(function()
+                                game.ReplicatedStorage.Events.Character.Interact:FireServer("Revive", true, pl.Name)
+                            end)
+                        end
+                    end
+                end
+            end
+            task.wait(0.3)
+        end
+        reviveLoop = nil
+    end)
+end
+
+local function startAFKMoney()
+    if afkLoop then return end
+    createAFKPart()
+
+    afkLoop = task.spawn(function()
+        while afkMoneyEnabled do
+            local char = game.Players.LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+
+            if hrp then
+                local found = false
+
+                for _,pl in ipairs(game.Players:GetPlayers()) do
+                    if pl ~= game.Players.LocalPlayer and isDowned(pl) then
+                        local pHrp = pl.Character and pl.Character:FindFirstChild("HumanoidRootPart")
+                        if pHrp then
+                            found = true
+                            repeat
+                                hrp.CFrame = pHrp.CFrame + Vector3.new(0,3,0)
+                                game.ReplicatedStorage.Events.Character.Interact:FireServer("Revive", true, pl.Name)
+                                task.wait(0.4)
+                            until not isDowned(pl) or not afkMoneyEnabled
+                        end
+                    end
+                end
+
+                if not found and afkPart then
+                    hrp.CFrame = afkPart.CFrame + Vector3.new(0,3,0)
+                end
+            end
+
+            task.wait(1.5)
+        end
+        afkLoop = nil
+    end)
+end
+
+MainTab:AddToggle("AutoRevive", {
+    Title = "ออโต้ชุบ",
+    Default = false,
+    Callback = function(v)
+        autoReviveEnabled = v
+        if v then startAutoRevive() end
+    end
+})
+
+MainTab:AddToggle("AFKMoney", {
+    Title = "AFK Money",
+    Default = false,
+    Callback = function(v)
+        afkMoneyEnabled = v
+        if v then startAFKMoney() end
+    end
+})
