@@ -9,3 +9,44 @@ local Window = Fluent:CreateWindow({
     Theme = "VSC Dark High Contrast",
     MinimizeKey = Enum.KeyCode.LeftControl
 })
+
+local MainTab = Window:AddTab({ Title = "Main", Icon = "home" })
+
+-- ตัวแปร
+local speed = 24
+local tpwalk = false
+
+-- Slider ปรับความเร็ว
+MainTab:AddSlider("SpeedSlider", {
+    Title = "TP Walk Speed",
+    Description = "ปรับความเร็ว TP Walk",
+    Default = 24,
+    Min = 24,
+    Max = 50,
+    Rounding = 0,
+    Callback = function(Value)
+        speed = Value
+    end
+})
+
+-- Toggle เปิด/ปิด TP Walk
+MainTab:AddToggle("TPWalkToggle", {
+    Title = "TP Walk",
+    Default = false,
+    Callback = function(Value)
+        tpwalk = Value
+    end
+})
+
+-- ระบบ TP Walk
+game:GetService("RunService").Heartbeat:Connect(function()
+    if tpwalk then
+        local player = game.Players.LocalPlayer
+        local char = player.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            local hrp = char.HumanoidRootPart
+            local move = char.Humanoid.MoveDirection
+            hrp.CFrame = hrp.CFrame + (move * speed * 0.1)
+        end
+    end
+end)
