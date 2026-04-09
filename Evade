@@ -244,3 +244,115 @@ MainTab:AddToggle("AFKMoney", {
         if v then startAFKMoney() end
     end
 })
+
+local ESPTab = Window:AddTab({ Title = "ESP", Icon = "eye" })
+
+ESPTab:AddToggle("NextbotESP", {
+    Title = "ESP Nextbot",
+    Description = "มองเห็น Nextbot + ระยะ",
+    Default = false,
+    Callback = function(state)
+
+        local Players = game:GetService("Players")
+        local LocalPlayer = Players.LocalPlayer
+
+        _G.NextbotESPEnabled = state
+
+        if not state then
+            -- ปิด ESP
+            if _G.NextbotESPThread and coroutine.status(_G.NextbotESPThread) ~= "dead" then
+                coroutine.close(_G.NextbotESPThread)
+                _G.NextbotESPThread = nil
+            end
+
+            local folder = workspace:FindFirstChild("Game")
+                and workspace.Game:FindFirstChild("Players")
+
+            if folder then
+                for _, npc in ipairs(folder:GetChildren()) do
+                    local part =
+                        npc:FindFirstChild("Root")
+                        or npc:FindFirstChild("Head")
+                        or npc:FindFirstChild("HumanoidRootPart")
+                        or npc:FindFirstChildWhichIsA("BasePart")
+
+                    if part then
+                        local esp = part:FindFirstChild("NextbotESP")
+                        if esp then esp:Destroy() end
+                    end
+                end
+            end
+
+        else
+            -- เปิด ESP
+            _G.NextbotESPThread = coroutine.create(function()
+                while _G.NextbotESPEnabled do
+                    local folder = workspace:FindFirstChild("Game")
+                        and workspace.Game:FindFirstChild("Players")
+
+                    if folder then
+                        for _, npc in ipairs(folder:GetChildren()) do
+                            if npc:GetAttribute("Team") == "Nextbot" then
+
+                                local part =
+                                    npc:FindFirstChild("Root")
+                                    or npc:FindFirstChild("Head")
+                                    or npc:FindFirstChild("HumanoidRootPart")
+                                    or npc:FindFirstChildWhichIsA("BasePart")
+
+                                if part then
+                                    local billboard = part:FindFirstChild("NextbotESP")
+
+                                    if not billboard then
+                                        billboard = Instance.new("BillboardGui")
+                                        billboard.Name = "NextbotESP"
+                                        billboard.Adornee = part
+                                        billboard.Size = UDim2.new(0, 180, 0, 25)
+                                        billboard.StudsOffset = Vector3.new(0, 3.2, 0)
+                                        billboard.AlwaysOnTop = true
+                                        billboard.Parent = part
+
+                                        local label = Instance.new("TextLabel")
+                                        label.Size = UDim2.new(1,0,1,0)
+                                        label.BackgroundTransparency = 1
+                                        label.TextScaled = true
+                                        label.Font = Enum.Font.GothamSemibold
+                                        label.TextColor3 = Color3.fromRGB(255,255,255)
+                                        label.TextStrokeTransparency = 0.25
+                                        label.Parent = billboard
+                                    end
+
+                                    local label = billboard:FindFirstChildOfClass("TextLabel")
+                                    if label then
+                                        local hrp = LocalPlayer.Character
+                                            and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+
+                                        if hrp then
+                                            local dist = (part.Position - hrp.Position).Magnitude
+                                            label.Text = npc.Name .. " [" .. math.floor(dist) .. "]"
+
+                                            if dist < 15 then
+                                                label.TextColor3 = Color3.fromRGB(255,0,0)
+                                            elseif dist < 50 then
+                                                label.TextColor3 = Color3.fromRGB(255,170,0)
+                                            else
+                                                label.TextColor3 = Color3.fromRGB(200,150,255)
+                                            end
+                                        else
+                                            label.Text = npc.Name
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+
+                    task.wait(0.5)
+                end
+            end)
+
+            coroutine.resume(_G.NextbotESPThread)
+        end
+    end
+})
+
