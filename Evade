@@ -1,0 +1,11 @@
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+
+local Window = Fluent:CreateWindow({
+    Title = "Core Force X | Evade",
+    SubTitle = "V1.00 ",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(450, 350),
+    Acrylic = true,
+    Theme = "VSC Dark High Contrast",
+    MinimizeKey = Enum.KeyCode.LeftControl
+})
