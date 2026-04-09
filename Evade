@@ -570,7 +570,7 @@ local LocalPlayer = Players.LocalPlayer
 
 local SelectedPlayer = nil
 
-local Dropdown = MainTab:AddDropdown("PlayerDropdown", {
+local Dropdown = TPTab:AddDropdown("PlayerDropdown", {
     Title = "Select Player",
     Values = {},
     Multi = false,
