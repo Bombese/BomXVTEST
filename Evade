@@ -472,3 +472,93 @@ end)
 Players.PlayerRemoving:Connect(function(player)
     RemoveESP(player)
 end)
+
+ESPTab:AddToggle("DownedESP", {
+    Title = "ESP คนล้ม",
+    Description = "แสดงผู้เล่นที่ล้ม + ระยะ",
+    Default = false,
+    Callback = function(state)
+
+        local Players = game:GetService("Players")
+        local LocalPlayer = Players.LocalPlayer
+
+        _G.DownedESPEnabled = state
+
+        if not state then
+            -- ลบ ESP
+            for _, plr in ipairs(Players:GetPlayers()) do
+                local char = plr.Character
+                if char then
+                    local hrp = char:FindFirstChild("HumanoidRootPart")
+                    if hrp then
+                        local esp = hrp:FindFirstChild("DownedESP")
+                        if esp then esp:Destroy() end
+                    end
+                end
+            end
+            return
+        end
+
+        -- สร้าง ESP
+        task.spawn(function()
+            while _G.DownedESPEnabled do
+                for _, plr in ipairs(Players:GetPlayers()) do
+                    if plr ~= LocalPlayer and plr.Character then
+                        local char = plr.Character
+
+                        -- เช็คว่าล้ม
+                        if char:GetAttribute("Downed") == true then
+                            local hrp = char:FindFirstChild("HumanoidRootPart")
+
+                            if hrp then
+                                local esp = hrp:FindFirstChild("DownedESP")
+
+                                if not esp then
+                                    esp = Instance.new("BillboardGui")
+                                    esp.Name = "DownedESP"
+                                    esp.Adornee = hrp
+                                    esp.Size = UDim2.new(0, 180, 0, 40)
+                                    esp.StudsOffset = Vector3.new(0, 3, 0)
+                                    esp.AlwaysOnTop = true
+                                    esp.Parent = hrp
+
+                                    local label = Instance.new("TextLabel")
+                                    label.Size = UDim2.new(1,0,1,0)
+                                    label.BackgroundTransparency = 1
+                                    label.TextScaled = true
+                                    label.Font = Enum.Font.GothamBold
+                                    label.TextColor3 = Color3.fromRGB(255, 0, 0)
+                                    label.TextStrokeTransparency = 0.2
+                                    label.Parent = esp
+                                end
+
+                                local label = esp:FindFirstChildOfClass("TextLabel")
+                                if label then
+                                    local myChar = LocalPlayer.Character
+                                    local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
+
+                                    if myHrp then
+                                        local dist = (hrp.Position - myHrp.Position).Magnitude
+                                        label.Text = "🆘 " .. plr.Name .. "\n" .. math.floor(dist) .. " studs"
+                                    else
+                                        label.Text = "🆘 " .. plr.Name
+                                    end
+                                end
+                            end
+                        else
+                            -- ถ้าไม่ล้ม ลบ ESP
+                            local char = plr.Character
+                            local hrp = char:FindFirstChild("HumanoidRootPart")
+                            if hrp then
+                                local esp = hrp:FindFirstChild("DownedESP")
+                                if esp then esp:Destroy() end
+                            end
+                        end
+                    end
+                end
+
+                task.wait(0.5)
+            end
+        end)
+    end
+})
