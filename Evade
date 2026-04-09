@@ -562,3 +562,5 @@ ESPTab:AddToggle("DownedESP", {
         end)
     end
 })
+
+local TPTab = Window:AddTab({ Title = "Teleport", Icon = "Star" })
