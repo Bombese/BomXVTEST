@@ -46,7 +46,7 @@ game:GetService("RunService").Heartbeat:Connect(function()
         if char and char:FindFirstChild("HumanoidRootPart") then
             local hrp = char.HumanoidRootPart
             local move = char.Humanoid.MoveDirection
-            hrp.CFrame = hrp.CFrame + (move * speed * 0.1)
+            hrp.CFrame = hrp.CFrame + (move * speed * 0.02)
         end
     end
 end)
