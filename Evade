@@ -51,6 +51,8 @@ game:GetService("RunService").Heartbeat:Connect(function()
     end
 end)
 
+MainTab:AddSection("Auto Farming ")
+
 local autoReviveEnabled = false
 local afkMoneyEnabled = false
 
