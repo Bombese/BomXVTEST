@@ -864,7 +864,7 @@ UICorner.Parent = OpenBtn
 
 -- 🔷 ขอบ
 local UIStroke = Instance.new("UIStroke")
-UIStroke.Color = Color3.fromRGB(0,170,255)
+UIStroke.Color = Color3.fromRGB(85,255,127)
 UIStroke.Thickness = 2
 UIStroke.Parent = OpenBtn
 
