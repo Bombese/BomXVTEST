@@ -1522,6 +1522,147 @@ EmoteTab:AddButton({
     end
 })
 
+-- =========================
+-- 🎭 FAKE EMOTE SYSTEM
+-- =========================
+
+local player = game.Players.LocalPlayer
+
+local FakeEmotes = {
+    ["Griddy"] = 5917459365,
+    ["Orange Justice"] = 3262592866,
+    ["Floss"] = 248263260,
+    ["Groove"] = 507776720,
+    ["Stylish"] = 507777826,
+    ["Lean"] = 3152375249,
+    ["Hero"] = 507770239,
+    ["Zombie Walk"] = 616006778,
+    ["Sit"] = 2506281703,
+    ["Sleep"] = 507766666,
+    ["Sigma"] = 913402848,
+    ["God"] = 52155728,
+}
+
+local currentTrack = nil
+local selectedFake = ""
+
+-- =========================
+-- ▶️ PLAY FUNCTION
+-- =========================
+local function playFakeEmote(id)
+    local char = player.Character
+    if not char then return end
+
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if not hum then return end
+
+    if currentTrack then
+        currentTrack:Stop()
+        currentTrack = nil
+    end
+
+    local anim = Instance.new("Animation")
+    anim.AnimationId = "rbxassetid://"..id
+
+    local track = hum:LoadAnimation(anim)
+    track:Play()
+
+    currentTrack = track
+end
+
+-- =========================
+-- 📜 เตรียม list ให้ dropdown
+-- =========================
+local FakeNames = {}
+for name,_ in pairs(FakeEmotes) do
+    table.insert(FakeNames, name)
+end
+
+-- =========================
+-- 🔍 SEARCH
+-- =========================
+local filteredList = FakeNames
+
+local FakeDropdown -- ต้องประกาศก่อน
+
+EmoteTab:AddInput("SearchFake", {
+    Title = "🔍 ค้นหา Fake Emote",
+    Placeholder = "พิมพ์ชื่อท่า...",
+    Callback = function(text)
+        text = string.lower(text or "")
+        filteredList = {}
+
+        for _, name in ipairs(FakeNames) do
+            if string.find(string.lower(name), text) then
+                table.insert(filteredList, name)
+            end
+        end
+
+        if FakeDropdown then
+            FakeDropdown:SetValues(filteredList)
+        end
+    end
+})
+
+-- =========================
+-- 📜 DROPDOWN
+-- =========================
+FakeDropdown = EmoteTab:AddDropdown("FakeSelect", {
+    Title = "เลือก Fake Emote",
+    Values = filteredList,
+    Multi = false,
+    Default = nil,
+    Callback = function(val)
+        selectedFake = val
+    end
+})
+
+-- =========================
+-- 🎮 PLAY BUTTON
+-- =========================
+EmoteTab:AddButton({
+    Title = "▶️ เล่น Fake Emote",
+    Description = "เล่นท่าที่เลือก",
+    Callback = function()
+        if selectedFake == "" then
+            warn("ยังไม่ได้เลือกท่า")
+            return
+        end
+
+        playFakeEmote(FakeEmotes[selectedFake])
+    end
+})
+
+-- =========================
+-- ⛔ STOP BUTTON
+-- =========================
+EmoteTab:AddButton({
+    Title = "⛔ หยุด Emote",
+    Callback = function()
+        if currentTrack then
+            currentTrack:Stop()
+            currentTrack = nil
+        end
+    end
+})
+
+-- =========================
+-- 🎲 RANDOM
+-- =========================
+EmoteTab:AddButton({
+    Title = "🎲 สุ่ม Emote",
+    Callback = function()
+        local keys = {}
+        for k,_ in pairs(FakeEmotes) do
+            table.insert(keys, k)
+        end
+
+        local rand = keys[math.random(1,#keys)]
+        selectedFake = rand
+        playFakeEmote(FakeEmotes[rand])
+    end
+})
+
 Window:SelectTab(1)
 
 -- 🔒 LOCK กันรันซ้ำ
