@@ -1352,6 +1352,176 @@ UpdatePlayerList()
 Players.PlayerAdded:Connect(UpdatePlayerList)
 Players.PlayerRemoving:Connect(UpdatePlayerList)
 
+-- =========================
+-- EMOTE SYSTEM (ORIGINAL)
+-- =========================
+
+-- Services
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local player = Players.LocalPlayer
+
+-- Events
+local Events = ReplicatedStorage:WaitForChild("Events", 10)
+local CharacterFolder = Events and Events:WaitForChild("Character", 10)
+local EmoteRemote = CharacterFolder and CharacterFolder:WaitForChild("Emote", 10)
+local PassCharacterInfo = CharacterFolder and CharacterFolder:WaitForChild("PassCharacterInfo", 10)
+local remoteSignal = PassCharacterInfo and PassCharacterInfo.OnClientEvent
+
+-- Variables
+local currentEmote = ""
+local selectEmote = ""
+local emoteEnabled = false
+local pendingSlot = nil
+local currentTag = nil
+local blockOriginalEmote = false
+
+-- =========================
+-- FUNCTIONS (เดิมล้วน)
+-- =========================
+local function readTagFromFolder(f)
+    if not f then return nil end
+    local a = f:GetAttribute("Tag")
+    if a ~= nil then return a end
+    local o = f:FindFirstChild("Tag")
+    if o and o:IsA("ValueBase") then return o.Value end
+    return nil
+end
+
+local function onRespawn()
+    currentTag = nil
+    pendingSlot = nil
+
+    task.spawn(function()
+        local startTime = tick()
+        while tick() - startTime < 10 do
+            if workspace:FindFirstChild("Game") and workspace.Game:FindFirstChild("Players") then
+                local pf = workspace.Game.Players:FindFirstChild(player.Name)
+                if pf then
+                    currentTag = readTagFromFolder(pf)
+                    if currentTag then
+                        local b = tonumber(currentTag)
+                        if b and b >= 0 and b <= 255 then
+                            break
+                        else
+                            currentTag = nil
+                        end
+                    end
+                end
+            end
+            task.wait(0.5)
+        end
+    end)
+end
+
+local function fireSelect()
+    if not currentTag then return end
+    local b = tonumber(currentTag)
+    if not b or b < 0 or b > 255 then return end
+    if not selectEmote or selectEmote == "" then return end
+
+    local buf = buffer.create(2)
+    buffer.writeu8(buf, 0, b)
+    buffer.writeu8(buf, 1, 17)
+
+    if remoteSignal then
+        firesignal(remoteSignal, buf, { selectEmote })
+    end
+end
+
+-- =========================
+-- HOOK (เดิม)
+-- =========================
+if EmoteRemote and PassCharacterInfo then
+    local success, oldNamecall
+    success, oldNamecall = pcall(function()
+        return hookmetamethod(game, "__namecall", function(self, ...)
+            local m = getnamecallmethod()
+            local a = { ... }
+
+            if m == "FireServer" and self == EmoteRemote and type(a[1]) == "string" then
+                if emoteEnabled and a[1] == currentEmote then
+                    pendingSlot = 1
+                    blockOriginalEmote = true
+
+                    task.spawn(function()
+                        task.wait(0.1)
+                        blockOriginalEmote = false
+                        if pendingSlot == 1 then
+                            pendingSlot = nil
+                            fireSelect()
+                        end
+                    end)
+
+                    if blockOriginalEmote then
+                        return nil
+                    end
+                end
+            end
+
+            return oldNamecall(self, ...)
+        end)
+    end)
+
+    if player.Character then
+        task.spawn(onRespawn)
+    end
+
+    player.CharacterAdded:Connect(function()
+        task.wait(1)
+        onRespawn()
+    end)
+end
+
+-- =========================
+-- 🎮 FLUENT UI (เพิ่มเข้าไป)
+-- =========================
+
+local EmoteTab = Window:AddTab({
+    Title = "Emote",
+    Icon = "smile"
+})
+
+-- เปิด / ปิดระบบ
+EmoteTab:AddToggle("EnableEmote", {
+    Title = "Enable Emote",
+    Description = "เปิดระบบเปลี่ยน Emote",
+    Default = false,
+    Callback = function(v)
+        emoteEnabled = v
+    end
+})
+
+-- ช่องใส่ Emote ที่จะ Hook
+EmoteTab:AddInput("CurrentEmote", {
+    Title = "Current Emote",
+    Default = "",
+    Placeholder = "เช่น dance",
+    Callback = function(text)
+        currentEmote = text
+    end
+})
+
+-- ช่อง Emote ที่จะเปลี่ยนไป
+EmoteTab:AddInput("SelectEmote", {
+    Title = "Replace Emote",
+    Default = "",
+    Placeholder = "เช่น ninja_run",
+    Callback = function(text)
+        selectEmote = text
+    end
+})
+
+-- ปุ่มทดสอบ
+EmoteTab:AddButton({
+    Title = "Test Emote",
+    Description = "ยิง emote ที่เลือกทันที",
+    Callback = function()
+        fireSelect()
+    end
+})
+
 Window:SelectTab(1)
 
 -- 🔒 LOCK กันรันซ้ำ
