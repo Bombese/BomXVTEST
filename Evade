@@ -237,12 +237,11 @@ MainTab:AddToggle("AutoRevive", {
 MainTab:AddSection("Settings Inf Slide And Dash ")
 
 -- =========================
--- Infinite Slide (MainTab + Floating)
+-- Infinite Slide (MainTab + FIX STOP)
 -- =========================
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
-local TweenService = game:GetService("TweenService")
 
 -- =========================
 -- VARIABLES
@@ -252,10 +251,9 @@ local slideFrictionValue = -8
 local cachedTables
 local plrModel
 local slideConnection
-local floatingSlideButton
 
 -- =========================
--- FUNCTIONS (ต้นฉบับมึง)
+-- FUNCTIONS
 -- =========================
 local keys = {
     "Friction","AirStrafeAcceleration","JumpHeight","RunDeaccel",
@@ -315,6 +313,9 @@ local function onHeartbeat()
     end
 end
 
+-- =========================
+-- 🛑 STOP FIX (กันเด้ง)
+-- =========================
 local function stopInfiniteSlide()
     infiniteSlideEnabled = false
 
@@ -335,6 +336,9 @@ local function stopInfiniteSlide()
     plrModel = nil
 end
 
+-- =========================
+-- 🔁 TOGGLE
+-- =========================
 local function toggleInfiniteSlide()
     if infiniteSlideEnabled then
         stopInfiniteSlide()
@@ -342,7 +346,6 @@ local function toggleInfiniteSlide()
     end
 
     infiniteSlideEnabled = true
-
     cachedTables = {}
 
     for _, obj in ipairs(getgc(true)) do
@@ -364,23 +367,11 @@ local function toggleInfiniteSlide()
     end)
 end
 
-    -- อัปเดตปุ่มลอย
-    if floatingSlideButton then
-        floatingSlideButton.BackgroundColor3 =
-            infiniteSlideEnabled and Color3.fromRGB(0,200,0)
-            or Color3.fromRGB(200,0,0)
-
-        floatingSlideButton.Text =
-            infiniteSlideEnabled and "Infinite Slide: ON"
-            or "Infinite Slide: OFF"
-    end
-end
-
 -- =========================
--- ✅ UI (Fluent FIX)
+-- ✅ UI (Fluent)
 -- =========================
 MainTab:AddToggle("InfiniteSlide", {
-    Title = "Infinite Slide",
+    Title = "อินฟีนีตี้สไลด์",
     Default = false,
     Callback = function()
         toggleInfiniteSlide()
