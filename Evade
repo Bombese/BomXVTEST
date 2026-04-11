@@ -234,6 +234,82 @@ MainTab:AddToggle("AutoRevive", {
     end
 })
 
+-- =========================
+-- VARIABLES
+-- =========================
+local autoBhop = false
+local autoBounce = false
+local bouncePower = 150
+
+local player = game.Players.LocalPlayer
+local RunService = game:GetService("RunService")
+
+-- =========================
+-- AUTO BHOP
+-- =========================
+MainTab:AddToggle("AutoBhop", {
+    Title = "Auto Jump (Bhop)",
+    Description = "กระโดดอัตโนมัติเมื่อแตะพื้น",
+    Default = false,
+    Callback = function(v)
+        autoBhop = v
+    end
+})
+
+-- =========================
+-- AUTO BOUNCE
+-- =========================
+MainTab:AddToggle("AutoBounce", {
+    Title = "Auto Bounce",
+    Description = "เด้งอัตโนมัติเมื่อกำลังตก",
+    Default = false,
+    Callback = function(v)
+        autoBounce = v
+    end
+})
+
+MainTab:AddSlider("BouncePower", {
+    Title = "แรงเด้ง",
+    Description = "ปรับความสูงการเด้ง",
+    Min = 50,
+    Max = 300,
+    Default = 150,
+    Rounding = 0,
+    Callback = function(v)
+        bouncePower = v
+    end
+})
+
+-- =========================
+-- LOOP SYSTEM
+-- =========================
+RunService.Heartbeat:Connect(function()
+
+    local char = player.Character
+    if not char then return end
+
+    local humanoid = char:FindFirstChildOfClass("Humanoid")
+    local root = char:FindFirstChild("HumanoidRootPart")
+
+    if not humanoid or not root then return end
+
+    -- AUTO BHOP
+    if autoBhop then
+        local ray = workspace:Raycast(root.Position, Vector3.new(0,-4,0))
+        if ray then
+            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+
+    -- AUTO BOUNCE
+    if autoBounce then
+        if root.Velocity.Y < -5 then
+            root.Velocity = Vector3.new(root.Velocity.X, bouncePower, root.Velocity.Z)
+        end
+    end
+
+end)
+
 MainTab:AddSection("Auto Farming ")
 
 MainTab:AddToggle("AFKMoney", {
