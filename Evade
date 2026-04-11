@@ -315,39 +315,54 @@ local function onHeartbeat()
     end
 end
 
-local function toggleInfiniteSlide()
-    infiniteSlideEnabled = not infiniteSlideEnabled
+local function stopInfiniteSlide()
+    infiniteSlideEnabled = false
 
     if slideConnection then
         slideConnection:Disconnect()
         slideConnection = nil
     end
 
-    if infiniteSlideEnabled then
-        cachedTables = {}
-
-        for _, obj in ipairs(getgc(true)) do
-            local success, result = pcall(function()
-                if hasAll(obj) then return obj end
+    if cachedTables then
+        for _, t in ipairs(cachedTables) do
+            pcall(function()
+                t.Friction = 5
             end)
-            if success and result then
-                table.insert(cachedTables, result)
-            end
         end
-
-        updatePlayerModel()
-
-        slideConnection = RunService.Heartbeat:Connect(onHeartbeat)
-
-        player.CharacterAdded:Connect(function()
-            task.wait(0.1)
-            updatePlayerModel()
-        end)
-    else
-        cachedTables = nil
-        plrModel = nil
-        setFriction(5)
     end
+
+    cachedTables = nil
+    plrModel = nil
+end
+
+local function toggleInfiniteSlide()
+    if infiniteSlideEnabled then
+        stopInfiniteSlide()
+        return
+    end
+
+    infiniteSlideEnabled = true
+
+    cachedTables = {}
+
+    for _, obj in ipairs(getgc(true)) do
+        local success, result = pcall(function()
+            if hasAll(obj) then return obj end
+        end)
+        if success and result then
+            table.insert(cachedTables, result)
+        end
+    end
+
+    updatePlayerModel()
+
+    slideConnection = RunService.Heartbeat:Connect(onHeartbeat)
+
+    player.CharacterAdded:Connect(function()
+        task.wait(0.1)
+        updatePlayerModel()
+    end)
+end
 
     -- อัปเดตปุ่มลอย
     if floatingSlideButton then
