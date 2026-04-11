@@ -237,11 +237,12 @@ MainTab:AddToggle("AutoRevive", {
 MainTab:AddSection("Settings Inf Slide And Dash ")
 
 -- =========================
--- Infinite Slide (MainTab + FIX STOP)
+-- Infinite Slide (MainTab + Floating + Sync)
 -- =========================
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
+local TweenService = game:GetService("TweenService")
 
 -- =========================
 -- VARIABLES
@@ -251,9 +252,10 @@ local slideFrictionValue = -8
 local cachedTables
 local plrModel
 local slideConnection
+local floatingSlideButton
 
 -- =========================
--- FUNCTIONS
+-- CORE
 -- =========================
 local keys = {
     "Friction","AirStrafeAcceleration","JumpHeight","RunDeaccel",
@@ -314,7 +316,7 @@ local function onHeartbeat()
 end
 
 -- =========================
--- 🛑 STOP FIX (กันเด้ง)
+-- 🛑 STOP FIX
 -- =========================
 local function stopInfiniteSlide()
     infiniteSlideEnabled = false
@@ -337,38 +339,55 @@ local function stopInfiniteSlide()
 end
 
 -- =========================
+-- 🎯 SYNC UI
+-- =========================
+local function updateSlideUI()
+    if floatingSlideButton then
+        floatingSlideButton.Text =
+            infiniteSlideEnabled and "Infinite Slide: ON"
+            or "Infinite Slide: OFF"
+
+        floatingSlideButton.BackgroundColor3 =
+            infiniteSlideEnabled and Color3.fromRGB(0,200,0)
+            or Color3.fromRGB(200,0,0)
+    end
+end
+
+-- =========================
 -- 🔁 TOGGLE
 -- =========================
 local function toggleInfiniteSlide()
     if infiniteSlideEnabled then
         stopInfiniteSlide()
-        return
-    end
+    else
+        infiniteSlideEnabled = true
+        cachedTables = {}
 
-    infiniteSlideEnabled = true
-    cachedTables = {}
-
-    for _, obj in ipairs(getgc(true)) do
-        local success, result = pcall(function()
-            if hasAll(obj) then return obj end
-        end)
-        if success and result then
-            table.insert(cachedTables, result)
+        for _, obj in ipairs(getgc(true)) do
+            local success, result = pcall(function()
+                if hasAll(obj) then return obj end
+            end)
+            if success and result then
+                table.insert(cachedTables, result)
+            end
         end
+
+        updatePlayerModel()
+
+        slideConnection = RunService.Heartbeat:Connect(onHeartbeat)
+
+        player.CharacterAdded:Connect(function()
+            task.wait(0.1)
+            updatePlayerModel()
+        end)
     end
 
-    updatePlayerModel()
-
-    slideConnection = RunService.Heartbeat:Connect(onHeartbeat)
-
-    player.CharacterAdded:Connect(function()
-        task.wait(0.1)
-        updatePlayerModel()
-    end)
+    -- 🔥 sync UI
+    updateSlideUI()
 end
 
 -- =========================
--- ✅ UI (Fluent)
+-- ✅ FLUENT UI
 -- =========================
 MainTab:AddToggle("InfiniteSlide", {
     Title = "อินฟีนีตี้สไลด์",
@@ -401,13 +420,7 @@ local function createFloatingSlideButton()
     btn.Size = UDim2.new(0,140,0,52)
     btn.Position = UDim2.new(0.5,-70,0.4,0)
     btn.AnchorPoint = Vector2.new(0.5,0)
-    btn.BackgroundColor3 =
-        infiniteSlideEnabled and Color3.fromRGB(0,200,0)
-        or Color3.fromRGB(200,0,0)
     btn.TextColor3 = Color3.new(1,1,1)
-    btn.Text =
-        infiniteSlideEnabled and "Infinite Slide: ON"
-        or "Infinite Slide: OFF"
     btn.Font = Enum.Font.GothamBold
     btn.TextSize = 14
     btn.Active = true
@@ -421,6 +434,7 @@ local function createFloatingSlideButton()
     stroke.Thickness = 2.5
     stroke.Color = Color3.fromRGB(0,120,255)
 
+    -- ไล่สีขอบ
     task.spawn(function()
         while btn.Parent do
             TweenService:Create(
@@ -439,16 +453,21 @@ local function createFloatingSlideButton()
         end
     end)
 
-    btn.MouseButton1Click:Connect(toggleInfiniteSlide)
+    btn.MouseButton1Click:Connect(function()
+        toggleInfiniteSlide()
+    end)
 
     floatingSlideButton = btn
+
+    -- 🔥 sync ตอนสร้าง
+    updateSlideUI()
 end
 
 -- =========================
--- BUTTON (Fluent FIX)
+-- BUTTON (Fluent)
 -- =========================
 MainTab:AddButton({
-    Title = " Infinite Slide Bottom ",
+    Title = "ปุ่มลอย Infinite Slide",
     Callback = createFloatingSlideButton
 })
 
