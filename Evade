@@ -395,52 +395,36 @@ MainTab:AddInput("DashSpeed", {
 -- =========================
 -- FLOAT BUTTON
 -- =========================
-local debounce = false
+local floatingDashButton = nil
+local dashEnabled = false
 
 local function createDashFloatingButton()
     if floatingDashButton then return end
 
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0,150,0,55)
-    btn.Position = UDim2.new(0.5,-75,0.75,0)
-    btn.AnchorPoint = Vector2.new(0.5,0)
-    btn.BackgroundColor3 = Color3.fromRGB(120,180,255)
-    btn.BackgroundTransparency = 0.2
-    btn.Text = "⚡ Dash: OFF"
-    btn.TextColor3 = Color3.fromRGB(255,255,255)
-    btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 15
-    btn.AutoButtonColor = false
-    btn.ZIndex = 50
+    btn.Size = UDim2.new(0,140,0,52)
+    btn.Position = UDim2.new(0.25,0,0.8,0)
+    btn.BackgroundColor3 = Color3.fromRGB(0,170,255)
+    btn.Text = "Dash: OFF"
     btn.Parent = FloatingGui
 
     makeDraggable(btn)
-
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,20)
-
-    local stroke = Instance.new("UIStroke", btn)
-    stroke.Thickness = 3
-    stroke.Color = Color3.fromRGB(0,140,255)
+    styleButton(btn, Color3.fromRGB(0,120,255), Color3.fromRGB(160,230,255))
 
     btn.MouseButton1Click:Connect(function()
-        if debounce then return end
-        debounce = true
-
         dashEnabled = not dashEnabled
 
-        btn.Text = dashEnabled and "⚡ Dash: ON" or "⚡ Dash: OFF"
+        btn.Text = dashEnabled and "Dash: ON" or "Dash: OFF"
         btn.BackgroundColor3 = dashEnabled
             and Color3.fromRGB(0,200,100)
-            or Color3.fromRGB(120,180,255)
+            or Color3.fromRGB(0,170,255)
 
+        -- เรียกระบบ dash ของคุณ
         if dashEnabled then
             startDash()
         else
             resetDash()
         end
-
-        task.wait(0.15)
-        debounce = false
     end)
 
     floatingDashButton = btn
