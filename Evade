@@ -237,20 +237,26 @@ MainTab:AddToggle("AutoRevive", {
 MainTab:AddSection("Settings Inf Slide And Dash ")
 
 -- =========================
--- Infinite Slide FUNCTION
+-- Infinite Slide (MainTab + Floating)
 -- =========================
-
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
-
 local player = Players.LocalPlayer
+local TweenService = game:GetService("TweenService")
 
-local enabled = false
-local slideFriction = -8
-local cachedTables = {}
+-- =========================
+-- VARIABLES (เดิมมึง)
+-- =========================
+local infiniteSlideEnabled = false
+local slideFrictionValue = -8
+local cachedTables
 local plrModel
-local connection
+local slideConnection
+local floatingSlideButton
 
+-- =========================
+-- CORE (ของมึงล้วน ๆ ไม่แตะ)
+-- =========================
 local keys = {
     "Friction","AirStrafeAcceleration","JumpHeight","RunDeaccel",
     "JumpSpeedMultiplier","JumpCap","SprintCap","WalkSpeedMultiplier",
@@ -259,185 +265,127 @@ local keys = {
 
 local function hasAll(tbl)
     if type(tbl) ~= "table" then return false end
-    for _, k in ipairs(keys) do
-        if rawget(tbl, k) == nil then
-            return false
-        end
-    end
+    for _, k in ipairs(keys) do if rawget(tbl, k) == nil then return false end end
     return true
 end
 
-local function setFriction(v)
+local function setFriction(value)
+    if not cachedTables then return end
     for _, t in ipairs(cachedTables) do
-        pcall(function()
-            t.Friction = v
-        end)
+        pcall(function() t.Friction = value end)
     end
 end
 
-local function updateModel()
-    local folder = workspace:FindFirstChild("Game")
-        and workspace.Game:FindFirstChild("Players")
-
-    plrModel = folder and folder:FindFirstChild(player.Name)
-end
-
-local function loop()
-    if not plrModel then
-        setFriction(5)
-        return
-    end
-
-    local state = plrModel:GetAttribute("State")
-
-    if state == "Slide" then
-        plrModel:SetAttribute("State", "EmotingSlide")
-    elseif state == "EmotingSlide" then
-        setFriction(slideFriction)
+local function updatePlayerModel()
+    local GameFolder = workspace:FindFirstChild("Game")
+    local PlayersFolder = GameFolder and GameFolder:FindFirstChild("Players")
+    if PlayersFolder then
+        plrModel = PlayersFolder:FindFirstChild(player.Name)
     else
-        setFriction(5)
+        plrModel = nil
     end
 end
 
-local function startSlide()
-    if connection then return end
-
-    cachedTables = {}
-
-    for _, obj in ipairs(getgc(true)) do
-        local ok, res = pcall(function()
-            if hasAll(obj) then return obj end
-        end)
-
-        if ok and res then
-            table.insert(cachedTables, res)
+local function onHeartbeat()
+    if not plrModel then setFriction(5); return end
+    local success, currentState = pcall(function() return plrModel:GetAttribute("State") end)
+    if success and currentState then
+        if currentState == "Slide" then
+            pcall(function() plrModel:SetAttribute("State", "EmotingSlide") end)
+        elseif currentState == "EmotingSlide" then
+            setFriction(slideFrictionValue)
+        else
+            setFriction(5)
         end
-    end
-
-    updateModel()
-
-    connection = RunService.Heartbeat:Connect(loop)
-
-    player.CharacterAdded:Connect(function()
-        task.wait(0.1)
-        updateModel()
-    end)
-end
-
-local function stopSlide()
-    if connection then
-        connection:Disconnect()
-        connection = nil
-    end
-
-    setFriction(5)
-    cachedTables = {}
-    plrModel = nil
-end
-
-function ToggleInfiniteSlide()
-    enabled = not enabled
-
-    if enabled then
-        startSlide()
     else
-        stopSlide()
+        setFriction(5)
+    end
+end
+
+local function toggleInfiniteSlide()
+    infiniteSlideEnabled = not infiniteSlideEnabled
+
+    if slideConnection then slideConnection:Disconnect(); slideConnection=nil end
+
+    if infiniteSlideEnabled then
+        cachedTables = {}
+        for _, obj in ipairs(getgc(true)) do
+            local success, result = pcall(function() if hasAll(obj) then return obj end end)
+            if success and result then table.insert(cachedTables, result) end
+        end
+        updatePlayerModel()
+        slideConnection = RunService.Heartbeat:Connect(onHeartbeat)
+        player.CharacterAdded:Connect(function() task.wait(0.1); updatePlayerModel() end)
+    else
+        cachedTables = nil
+        plrModel = nil
+        setFriction(5)
+    end
+
+    if floatingSlideButton then
+        floatingSlideButton.BackgroundColor3 =
+            infiniteSlideEnabled and Color3.fromRGB(0,200,0) or Color3.fromRGB(200,0,0)
+        floatingSlideButton.Text =
+            infiniteSlideEnabled and "Infinite Slide: ON" or "Infinite Slide: OFF"
     end
 end
 
 -- =========================
--- UI ONLY
+-- 🔥 FIX UI FLUENT
 -- =========================
 
--- Toggle
-MainTab:AddToggle("InfiniteSlideUI", {
-    Title = "Infinite Slide",
+-- ❌ ของเดิมมึง CreateToggle = ใช้ไม่ได้กับ Fluent
+-- ✅ ต้องใช้ AddToggle
+
+MainTab:AddToggle("InfiniteSlide", {
+    Title = "อินฟีนีตี้สไลด์",
     Default = false,
     Callback = function()
-        ToggleInfiniteSlide()
+        toggleInfiniteSlide()
     end
 })
 
--- ปุ่มลอย
-local player = game.Players.LocalPlayer
-local TweenService = game:GetService("TweenService")
-
-local floatingBtn
-
+-- =========================
+-- FLOATING GUI
+-- =========================
 local PlayerGui = player:WaitForChild("PlayerGui")
 
-local FloatingGui = PlayerGui:FindFirstChild("SlideUI")
+local FloatingGui = PlayerGui:FindFirstChild("EvadeFloatingGui")
 if not FloatingGui then
     FloatingGui = Instance.new("ScreenGui")
-    FloatingGui.Name = "SlideUI"
+    FloatingGui.Name = "EvadeFloatingGui"
     FloatingGui.ResetOnSpawn = false
     FloatingGui.Parent = PlayerGui
 end
 
--- ลากได้
-local function makeDraggable(guiObject)
-    local UIS = game:GetService("UserInputService")
-    local dragging, dragInput, startPos, startInputPos
-
-    guiObject.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            startInputPos = input.Position
-            startPos = guiObject.Position
-        end
-    end)
-
-    guiObject.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement then
-            dragInput = input
-        end
-    end)
-
-    UIS.InputChanged:Connect(function(input)
-        if input == dragInput and dragging then
-            local delta = input.Position - startInputPos
-            guiObject.Position = UDim2.new(
-                startPos.X.Scale,
-                startPos.X.Offset + delta.X,
-                startPos.Y.Scale,
-                startPos.Y.Offset + delta.Y
-            )
-        end
-    end)
-
-    UIS.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-end
-
--- สร้างปุ่ม
-local function createSlideButton()
-    if floatingBtn then return end
+-- =========================
+-- FLOAT BUTTON
+-- =========================
+local function createFloatingSlideButton()
+    if floatingSlideButton then return end
 
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0,150,0,55)
-    btn.Position = UDim2.new(0.5,-75,0.4,0)
-    btn.BackgroundColor3 = Color3.fromRGB(200,0,0)
+    btn.Size = UDim2.new(0,140,0,52)
+    btn.Position = UDim2.new(0.5,-70,0.4,0)
+    btn.AnchorPoint = Vector2.new(0.5,0)
+    btn.BackgroundColor3 = infiniteSlideEnabled and Color3.fromRGB(0,200,0) or Color3.fromRGB(200,0,0)
     btn.TextColor3 = Color3.new(1,1,1)
-    btn.Text = "Infinite Slide"
+    btn.Text = infiniteSlideEnabled and "Infinite Slide: ON" or "Infinite Slide: OFF"
     btn.Font = Enum.Font.GothamBold
     btn.TextSize = 14
     btn.Parent = FloatingGui
 
-    makeDraggable(btn)
+    btn.MouseButton1Click:Connect(toggleInfiniteSlide)
 
-    btn.MouseButton1Click:Connect(function()
-        ToggleInfiniteSlide()
-    end)
-
-    floatingBtn = btn
+    floatingSlideButton = btn
 end
 
+-- ❌ ของเดิม CreateButton
+-- ✅ Fluent ใช้ AddButton
+
 MainTab:AddButton({
-    Title = "สร้างปุ่มลอย",
-    Callback = createSlideButton
+    Title = "ปุ่มลอย Infinite Slide",
+    Callback = createFloatingSlideButton
 })
 
 -- =========================
