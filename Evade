@@ -246,6 +246,7 @@ local floatingBounceButton
 
 local player = game.Players.LocalPlayer
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 
 -- =========================
 -- DRAG FUNCTION
@@ -293,6 +294,35 @@ local function makeDraggable(guiObject)
 end
 
 -- =========================
+-- BUTTON STYLE (ต้นฉบับ)
+-- =========================
+local function styleButton(btn, color1, color2)
+    btn.BackgroundTransparency = 0.35
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 14
+    btn.Active = true
+
+    local corner = Instance.new("UICorner", btn)
+    corner.CornerRadius = UDim.new(0,18)
+
+    local stroke = Instance.new("UIStroke", btn)
+    stroke.Thickness = 2.5
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Color = color1
+
+    -- ไล่สี
+    task.spawn(function()
+        while btn.Parent do
+            TweenService:Create(stroke, TweenInfo.new(0.8), {Color = color1}):Play()
+            task.wait(0.8)
+            TweenService:Create(stroke, TweenInfo.new(0.8), {Color = color2}):Play()
+            task.wait(0.8)
+        end
+    end)
+end
+
+-- =========================
 -- FLOATING GUI
 -- =========================
 local PlayerGui = player:WaitForChild("PlayerGui")
@@ -312,20 +342,19 @@ local function createBhopFloatingButton()
     if floatingBhopButton then return end
 
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0,140,0,50)
+    btn.Size = UDim2.new(0,140,0,52)
     btn.Position = UDim2.new(0.25,0,0.8,0)
     btn.BackgroundColor3 = Color3.fromRGB(0,170,255)
-    btn.TextColor3 = Color3.new(1,1,1)
     btn.Text = "Auto Jump: OFF"
-    btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 14
     btn.Parent = FloatingGui
 
     makeDraggable(btn)
+    styleButton(btn, Color3.fromRGB(0,120,255), Color3.fromRGB(160,230,255))
 
     btn.MouseButton1Click:Connect(function()
         autoBhop = not autoBhop
         btn.Text = autoBhop and "Auto Jump: ON" or "Auto Jump: OFF"
+        btn.BackgroundColor3 = autoBhop and Color3.fromRGB(0,200,0) or Color3.fromRGB(0,170,255)
     end)
 
     floatingBhopButton = btn
@@ -345,20 +374,19 @@ local function createBounceFloatingButton()
     if floatingBounceButton then return end
 
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0,140,0,50)
+    btn.Size = UDim2.new(0,140,0,52)
     btn.Position = UDim2.new(0.55,0,0.8,0)
     btn.BackgroundColor3 = Color3.fromRGB(255,120,0)
-    btn.TextColor3 = Color3.new(1,1,1)
     btn.Text = "Bounce: OFF"
-    btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 14
     btn.Parent = FloatingGui
 
     makeDraggable(btn)
+    styleButton(btn, Color3.fromRGB(255,120,0), Color3.fromRGB(255,200,120))
 
     btn.MouseButton1Click:Connect(function()
         autoBounce = not autoBounce
         btn.Text = autoBounce and "Bounce: ON" or "Bounce: OFF"
+        btn.BackgroundColor3 = autoBounce and Color3.fromRGB(0,200,0) or Color3.fromRGB(255,120,0)
     end)
 
     floatingBounceButton = btn
