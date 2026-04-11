@@ -395,31 +395,56 @@ MainTab:AddInput("DashSpeed", {
 -- =========================
 -- FLOAT BUTTON
 -- =========================
-local floatingDashButton = nil
-local dashEnabled = false
-
 local function createDashFloatingButton()
     if floatingDashButton then return end
 
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(0,140,0,52)
-    btn.Position = UDim2.new(0.25,0,0.8,0)
-    btn.BackgroundColor3 = Color3.fromRGB(0,170,255)
-    btn.Text = "Dash: OFF"
+    btn.Position = UDim2.new(0.5,-70,0.75,0)
+    btn.AnchorPoint = Vector2.new(0.5,0)
+    btn.BackgroundColor3 = Color3.fromRGB(180,220,255)
+    btn.BackgroundTransparency = 0.35
+    btn.TextColor3 = Color3.fromRGB(0,70,150)
+    btn.Text = dashEnabled and "Dash: ON" or "Dash: OFF"
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 14
     btn.Parent = FloatingGui
+    btn.Active = true
+    btn.Draggable = true
 
-    makeDraggable(btn)
-    styleButton(btn, Color3.fromRGB(0,120,255), Color3.fromRGB(160,230,255))
+    -- มุมโค้ง
+    local corner = Instance.new("UICorner", btn)
+    corner.CornerRadius = UDim.new(0,18)
 
+    -- ขอบ
+    local stroke = Instance.new("UIStroke", btn)
+    stroke.Thickness = 2.5
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Color = Color3.fromRGB(0,120,255)
+
+    -- ไล่สี
+    task.spawn(function()
+        while btn.Parent do
+            TweenService:Create(
+                stroke,
+                TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+                {Color = Color3.fromRGB(0,80,255)}
+            ):Play()
+            task.wait(0.8)
+            TweenService:Create(
+                stroke,
+                TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+                {Color = Color3.fromRGB(160,230,255)}
+            ):Play()
+            task.wait(0.8)
+        end
+    end)
+
+    -- กดปุ่ม (Toggle จริง)
     btn.MouseButton1Click:Connect(function()
         dashEnabled = not dashEnabled
-
         btn.Text = dashEnabled and "Dash: ON" or "Dash: OFF"
-        btn.BackgroundColor3 = dashEnabled
-            and Color3.fromRGB(0,200,100)
-            or Color3.fromRGB(0,170,255)
 
-        -- เรียกระบบ dash ของคุณ
         if dashEnabled then
             startDash()
         else
