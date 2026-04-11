@@ -243,25 +243,96 @@ local bouncePower = 150
 
 local player = game.Players.LocalPlayer
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+
+local floatingBhopButton
+local floatingBounceButton
 
 -- =========================
--- AUTO BHOP
+-- FLOATING GUI
+-- =========================
+local FloatingGui = game:GetService("CoreGui"):FindFirstChild("MyFloatingGui")
+if not FloatingGui then
+    FloatingGui = Instance.new("ScreenGui")
+    FloatingGui.Name = "MyFloatingGui"
+    FloatingGui.Parent = game:GetService("CoreGui")
+end
+
+-- =========================
+-- FLOAT BTN (BHOP)
+-- =========================
+local function createBhopFloatingButton()
+    if floatingBhopButton then return end
+
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0,140,0,50)
+    btn.Position = UDim2.new(0.3,0,0.8,0)
+    btn.BackgroundColor3 = Color3.fromRGB(0,170,255)
+    btn.Text = "Bhop: OFF"
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Parent = FloatingGui
+    btn.Active = true
+    btn.Draggable = true
+
+    btn.MouseButton1Click:Connect(function()
+        autoBhop = not autoBhop
+        btn.Text = autoBhop and "Bhop: ON" or "Bhop: OFF"
+    end)
+
+    floatingBhopButton = btn
+end
+
+local function removeBhopFloatingButton()
+    if floatingBhopButton then
+        floatingBhopButton:Destroy()
+        floatingBhopButton = nil
+    end
+end
+
+-- =========================
+-- FLOAT BTN (BOUNCE)
+-- =========================
+local function createBounceFloatingButton()
+    if floatingBounceButton then return end
+
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0,140,0,50)
+    btn.Position = UDim2.new(0.5,0,0.8,0)
+    btn.BackgroundColor3 = Color3.fromRGB(255,120,0)
+    btn.Text = "Bounce: OFF"
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Parent = FloatingGui
+    btn.Active = true
+    btn.Draggable = true
+
+    btn.MouseButton1Click:Connect(function()
+        autoBounce = not autoBounce
+        btn.Text = autoBounce and "Bounce: ON" or "Bounce: OFF"
+    end)
+
+    floatingBounceButton = btn
+end
+
+local function removeBounceFloatingButton()
+    if floatingBounceButton then
+        floatingBounceButton:Destroy()
+        floatingBounceButton = nil
+    end
+end
+
+-- =========================
+-- FLUENT UI
 -- =========================
 MainTab:AddToggle("AutoBhop", {
-    Title = "Auto Jump (Bhop)",
-    Description = "กระโดดอัตโนมัติเมื่อแตะพื้น",
+    Title = "Auto Bhop",
     Default = false,
     Callback = function(v)
         autoBhop = v
     end
 })
 
--- =========================
--- AUTO BOUNCE
--- =========================
 MainTab:AddToggle("AutoBounce", {
     Title = "Auto Bounce",
-    Description = "เด้งอัตโนมัติเมื่อกำลังตก",
     Default = false,
     Callback = function(v)
         autoBounce = v
@@ -270,13 +341,36 @@ MainTab:AddToggle("AutoBounce", {
 
 MainTab:AddSlider("BouncePower", {
     Title = "แรงเด้ง",
-    Description = "ปรับความสูงการเด้ง",
     Min = 50,
     Max = 300,
     Default = 150,
-    Rounding = 0,
     Callback = function(v)
         bouncePower = v
+    end
+})
+
+-- Toggle ปุ่มลอย
+MainTab:AddToggle("FloatBhop", {
+    Title = "ปุ่มลอย Bhop",
+    Default = false,
+    Callback = function(v)
+        if v then
+            createBhopFloatingButton()
+        else
+            removeBhopFloatingButton()
+        end
+    end
+})
+
+MainTab:AddToggle("FloatBounce", {
+    Title = "ปุ่มลอย Bounce",
+    Default = false,
+    Callback = function(v)
+        if v then
+            createBounceFloatingButton()
+        else
+            removeBounceFloatingButton()
+        end
     end
 })
 
@@ -293,7 +387,7 @@ RunService.Heartbeat:Connect(function()
 
     if not humanoid or not root then return end
 
-    -- AUTO BHOP
+    -- BHOP
     if autoBhop then
         local ray = workspace:Raycast(root.Position, Vector3.new(0,-4,0))
         if ray then
@@ -301,7 +395,7 @@ RunService.Heartbeat:Connect(function()
         end
     end
 
-    -- AUTO BOUNCE
+    -- BOUNCE
     if autoBounce then
         if root.Velocity.Y < -5 then
             root.Velocity = Vector3.new(root.Velocity.X, bouncePower, root.Velocity.Z)
