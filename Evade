@@ -235,7 +235,7 @@ MainTab:AddToggle("AutoRevive", {
 })
 
 -- =========================
--- DASH SMOOTH (FIXED)
+-- DASH SMOOTH (UPGRADED FULL)
 -- =========================
 local dashEnabled = false
 local dashSpeed = 80
@@ -244,36 +244,53 @@ local floatingDashButton = nil
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
+local UIS = game:GetService("UserInputService")
+
 local player = Players.LocalPlayer
+local PlayerGui = player:WaitForChild("PlayerGui")
 
 -- =========================
--- DRAG FUNCTION (ต้องใช้)
+-- FLOATING GUI (FIX)
+-- =========================
+local FloatingGui = PlayerGui:FindFirstChild("FloatingGui")
+if not FloatingGui then
+    FloatingGui = Instance.new("ScreenGui")
+    FloatingGui.Name = "FloatingGui"
+    FloatingGui.ResetOnSpawn = false
+    FloatingGui.IgnoreGuiInset = true
+    FloatingGui.Parent = PlayerGui
+end
+
+-- =========================
+-- DRAG (FIXED STABLE)
 -- =========================
 local function makeDraggable(guiObject)
-    local UIS = game:GetService("UserInputService")
-
     local dragging = false
-    local dragInput, startPos, startInputPos
+    local dragStart
+    local startPos
 
     guiObject.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 
+        if input.UserInputType == Enum.UserInputType.MouseButton1
         or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
-            startInputPos = input.Position
+            dragStart = input.Position
             startPos = guiObject.Position
         end
     end)
 
-    guiObject.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement 
+    guiObject.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
         or input.UserInputType == Enum.UserInputType.Touch then
-            dragInput = input
+            dragging = false
         end
     end)
 
     UIS.InputChanged:Connect(function(input)
-        if input == dragInput and dragging then
-            local delta = input.Position - startInputPos
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
+        or input.UserInputType == Enum.UserInputType.Touch) then
+
+            local delta = input.Position - dragStart
+
             guiObject.Position = UDim2.new(
                 startPos.X.Scale,
                 startPos.X.Offset + delta.X,
@@ -282,17 +299,10 @@ local function makeDraggable(guiObject)
             )
         end
     end)
-
-    UIS.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 
-        or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
-        end
-    end)
 end
 
 -- =========================
--- RESET
+-- RESET (FULL SAFE)
 -- =========================
 local function resetDash()
     dashEnabled = false
@@ -304,7 +314,11 @@ local function resetDash()
 end
 
 player.CharacterAdded:Connect(function()
-    task.wait(0.3)
+    task.wait(0.2)
+    resetDash()
+end)
+
+player.CharacterRemoving:Connect(function()
     resetDash()
 end)
 
@@ -331,6 +345,10 @@ local function startDash()
             local cam = workspace.CurrentCamera
 
             if not char or not cam then break end
+            if not char:FindFirstChild("Humanoid") then
+                resetDash()
+                break
+            end
 
             local root = char:FindFirstChild("HumanoidRootPart")
             if not root then break end
@@ -346,15 +364,12 @@ local function startDash()
             task.wait(0.03)
         end
 
-        if dashVelocity then
-            dashVelocity:Destroy()
-            dashVelocity = nil
-        end
+        resetDash()
     end)
 end
 
 -- =========================
--- FLUENT UI
+-- UI (Fluent)
 -- =========================
 MainTab:AddToggle("DashSmooth", {
     Title = "Dash Smooth",
@@ -368,7 +383,7 @@ MainTab:AddToggle("DashSmooth", {
 MainTab:AddInput("DashSpeed", {
     Title = "Dash Speed",
     Default = "80",
-    Placeholder = "ใส่ความเร็ว",
+    Placeholder = "speed",
     Callback = function(txt)
         local num = tonumber(txt)
         if num then
@@ -378,8 +393,10 @@ MainTab:AddInput("DashSpeed", {
 })
 
 -- =========================
--- DASH FLOAT UI (PRO)
+-- FLOAT BUTTON
 -- =========================
+local debounce = false
+
 local function createDashFloatingButton()
     if floatingDashButton then return end
 
@@ -388,84 +405,42 @@ local function createDashFloatingButton()
     btn.Position = UDim2.new(0.5,-75,0.75,0)
     btn.AnchorPoint = Vector2.new(0.5,0)
     btn.BackgroundColor3 = Color3.fromRGB(120,180,255)
-    btn.BackgroundTransparency = 0.25
-    btn.Text = dashEnabled and "⚡ Dash: ON" or "⚡ Dash: OFF"
+    btn.BackgroundTransparency = 0.2
+    btn.Text = "⚡ Dash: OFF"
     btn.TextColor3 = Color3.fromRGB(255,255,255)
     btn.Font = Enum.Font.GothamBold
     btn.TextSize = 15
+    btn.AutoButtonColor = false
+    btn.ZIndex = 50
     btn.Parent = FloatingGui
-    btn.ZIndex = 10
 
-    -- ลากได้
     makeDraggable(btn)
 
-    -- มุมโค้ง
-    local corner = Instance.new("UICorner", btn)
-    corner.CornerRadius = UDim.new(0,20)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,20)
 
-    -- ขอบเรือง
     local stroke = Instance.new("UIStroke", btn)
     stroke.Thickness = 3
     stroke.Color = Color3.fromRGB(0,140,255)
 
-    -- เงา
-    local shadow = Instance.new("ImageLabel")
-    shadow.Size = UDim2.new(1,20,1,20)
-    shadow.Position = UDim2.new(0,-10,0,-10)
-    shadow.BackgroundTransparency = 1
-    shadow.Image = "rbxassetid://1316045217"
-    shadow.ImageTransparency = 0.6
-    shadow.ZIndex = 0
-    shadow.Parent = btn
-
-    -- Gradient (เท่ๆ)
-    local gradient = Instance.new("UIGradient", btn)
-    gradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(0,120,255)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(120,200,255))
-    })
-    gradient.Rotation = 45
-
-    -- ไล่สีขอบ
-    task.spawn(function()
-        while btn.Parent do
-            TweenService:Create(stroke, TweenInfo.new(0.8), {
-                Color = Color3.fromRGB(0,80,255)
-            }):Play()
-            task.wait(0.8)
-
-            TweenService:Create(stroke, TweenInfo.new(0.8), {
-                Color = Color3.fromRGB(160,230,255)
-            }):Play()
-            task.wait(0.8)
-        end
-    end)
-
-    -- เอฟเฟกต์กด
-    btn.MouseButton1Down:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.1), {
-            Size = UDim2.new(0,140,0,50)
-        }):Play()
-    end)
-
-    btn.MouseButton1Up:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.1), {
-            Size = UDim2.new(0,150,0,55)
-        }):Play()
-    end)
-
-    -- กดเปิด/ปิด Dash
     btn.MouseButton1Click:Connect(function()
+        if debounce then return end
+        debounce = true
+
         dashEnabled = not dashEnabled
 
         btn.Text = dashEnabled and "⚡ Dash: ON" or "⚡ Dash: OFF"
-        btn.BackgroundColor3 = dashEnabled and Color3.fromRGB(0,200,100) or Color3.fromRGB(120,180,255)
+        btn.BackgroundColor3 = dashEnabled
+            and Color3.fromRGB(0,200,100)
+            or Color3.fromRGB(120,180,255)
 
         if dashEnabled then
             startDash()
         else
             resetDash()
         end
+
+        task.wait(0.15)
+        debounce = false
     end)
 
     floatingDashButton = btn
@@ -479,7 +454,7 @@ local function removeDashFloatingButton()
 end
 
 -- =========================
--- TOGGLE FLOAT BUTTON
+-- FLOAT TOGGLE
 -- =========================
 MainTab:AddToggle("DashFloat", {
     Title = "Dash Floating Button",
