@@ -2,7 +2,7 @@ local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/
 
 local Window = Fluent:CreateWindow({
     Title = "Core Force X | Evade",
-    SubTitle = "test version ",
+    SubTitle = "test X version ",
     TabWidth = 160,
     Size = UDim2.fromOffset(450, 350),
     Acrylic = true,
@@ -242,28 +242,29 @@ local autoBounce = false
 local bouncePower = 150
 
 local player = game.Players.LocalPlayer
+local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 
 local floatingBhopButton
 local floatingBounceButton
 
 -- =========================
--- GUI (ปุ่มลอย)
+-- GUI
 -- =========================
 local PlayerGui = player:WaitForChild("PlayerGui")
 
-local FloatingGui = PlayerGui:FindFirstChild("FloatUI")
+local FloatingGui = PlayerGui:FindFirstChild("FloatingGui")
 if not FloatingGui then
     FloatingGui = Instance.new("ScreenGui")
-    FloatingGui.Name = "FloatUI"
+    FloatingGui.Name = "FloatingGui"
     FloatingGui.ResetOnSpawn = false
     FloatingGui.Parent = PlayerGui
 end
 
 -- =========================
--- DRAG FUNCTION
+-- DRAG (แทน Draggable)
 -- =========================
-local function makeDraggable(btn)
+local function dragify(btn)
     local UIS = game:GetService("UserInputService")
     local dragging, startPos, startInput
 
@@ -295,34 +296,50 @@ local function makeDraggable(btn)
 end
 
 -- =========================
--- FLOAT BTN BHOP
+-- FLOAT BUTTON BHOP
 -- =========================
-local function createBhopFloating()
+local function createBhopFloatingButton()
     if floatingBhopButton then return end
 
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0,130,0,45)
-    btn.Position = UDim2.new(0.3,0,0.8,0)
-    btn.TextColor3 = Color3.new(1,1,1)
-    btn.BackgroundColor3 = Color3.fromRGB(0,170,255)
+    btn.Size = UDim2.new(0,140,0,52)
+    btn.Position = UDim2.new(0.3,-70,0.8,0)
+    btn.AnchorPoint = Vector2.new(0.5,0)
+    btn.BackgroundColor3 = Color3.fromRGB(180,220,255)
+    btn.BackgroundTransparency = 0.35
+    btn.TextColor3 = Color3.fromRGB(0,70,150)
+    btn.Text = "Auto Bhop: OFF"
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 14
     btn.Parent = FloatingGui
 
-    makeDraggable(btn)
+    dragify(btn)
 
-    local function update()
-        btn.Text = autoBhop and "Bhop: ON" or "Bhop: OFF"
-    end
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,18)
+
+    local stroke = Instance.new("UIStroke", btn)
+    stroke.Thickness = 2.5
+    stroke.Color = Color3.fromRGB(0,120,255)
+
+    -- animation
+    task.spawn(function()
+        while btn.Parent do
+            TweenService:Create(stroke, TweenInfo.new(0.8), {Color = Color3.fromRGB(0,80,255)}):Play()
+            task.wait(0.8)
+            TweenService:Create(stroke, TweenInfo.new(0.8), {Color = Color3.fromRGB(160,230,255)}):Play()
+            task.wait(0.8)
+        end
+    end)
 
     btn.MouseButton1Click:Connect(function()
         autoBhop = not autoBhop
-        update()
+        btn.Text = autoBhop and "Auto Bhop: ON" or "Auto Bhop: OFF"
     end)
 
-    update()
     floatingBhopButton = btn
 end
 
-local function removeBhopFloating()
+local function removeBhopFloatingButton()
     if floatingBhopButton then
         floatingBhopButton:Destroy()
         floatingBhopButton = nil
@@ -330,34 +347,49 @@ local function removeBhopFloating()
 end
 
 -- =========================
--- FLOAT BTN BOUNCE
+-- FLOAT BUTTON BOUNCE
 -- =========================
-local function createBounceFloating()
+local function createBounceFloatingButton()
     if floatingBounceButton then return end
 
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0,130,0,45)
-    btn.Position = UDim2.new(0.5,0,0.8,0)
-    btn.TextColor3 = Color3.new(1,1,1)
-    btn.BackgroundColor3 = Color3.fromRGB(255,120,0)
+    btn.Size = UDim2.new(0,140,0,52)
+    btn.Position = UDim2.new(0.5,-70,0.8,0)
+    btn.AnchorPoint = Vector2.new(0.5,0)
+    btn.BackgroundColor3 = Color3.fromRGB(180,220,255)
+    btn.BackgroundTransparency = 0.35
+    btn.TextColor3 = Color3.fromRGB(0,70,150)
+    btn.Text = "Auto Bounce: OFF"
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 14
     btn.Parent = FloatingGui
 
-    makeDraggable(btn)
+    dragify(btn)
 
-    local function update()
-        btn.Text = autoBounce and "Bounce: ON" or "Bounce: OFF"
-    end
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,18)
+
+    local stroke = Instance.new("UIStroke", btn)
+    stroke.Thickness = 2.5
+    stroke.Color = Color3.fromRGB(0,120,255)
+
+    task.spawn(function()
+        while btn.Parent do
+            TweenService:Create(stroke, TweenInfo.new(0.8), {Color = Color3.fromRGB(0,80,255)}):Play()
+            task.wait(0.8)
+            TweenService:Create(stroke, TweenInfo.new(0.8), {Color = Color3.fromRGB(160,230,255)}):Play()
+            task.wait(0.8)
+        end
+    end)
 
     btn.MouseButton1Click:Connect(function()
         autoBounce = not autoBounce
-        update()
+        btn.Text = autoBounce and "Auto Bounce: ON" or "Auto Bounce: OFF"
     end)
 
-    update()
     floatingBounceButton = btn
 end
 
-local function removeBounceFloating()
+local function removeBounceFloatingButton()
     if floatingBounceButton then
         floatingBounceButton:Destroy()
         floatingBounceButton = nil
@@ -365,42 +397,40 @@ local function removeBounceFloating()
 end
 
 -- =========================
--- MAIN TAB BUTTONS
+-- FLUENT TOGGLE (เหมือนต้นฉบับ)
 -- =========================
-MainTab:AddButton({
-    Title = "Toggle Bhop",
-    Callback = function()
-        autoBhop = not autoBhop
-        print("Bhop:", autoBhop)
-    end
-})
-
-MainTab:AddButton({
-    Title = "Toggle Bounce",
-    Callback = function()
-        autoBounce = not autoBounce
-        print("Bounce:", autoBounce)
-    end
-})
-
--- ปุ่มเปิด/ปิดปุ่มลอย
-MainTab:AddToggle("FloatBhop", {
-    Title = "ปุ่มลอย Bhop",
+MainTab:AddToggle("AutoBhop", {
+    Title = "Auto Jump",
     Default = false,
     Callback = function(v)
-        if v then createBhopFloating() else removeBhopFloating() end
+        autoBhop = v
+    end
+})
+
+MainTab:AddToggle("FloatBhop", {
+    Title = "Auto Jump (Floating Button)",
+    Default = false,
+    Callback = function(v)
+        if v then createBhopFloatingButton() else removeBhopFloatingButton() end
+    end
+})
+
+MainTab:AddToggle("AutoBounce", {
+    Title = "Auto Bounce",
+    Default = false,
+    Callback = function(v)
+        autoBounce = v
     end
 })
 
 MainTab:AddToggle("FloatBounce", {
-    Title = "ปุ่มลอย Bounce",
+    Title = "Auto Bounce (Floating Button)",
     Default = false,
     Callback = function(v)
-        if v then createBounceFloating() else removeBounceFloating() end
+        if v then createBounceFloatingButton() else removeBounceFloatingButton() end
     end
 })
 
--- Slider
 MainTab:AddSlider("BouncePower", {
     Title = "แรงเด้ง",
     Min = 50,
@@ -412,27 +442,25 @@ MainTab:AddSlider("BouncePower", {
 })
 
 -- =========================
--- LOOP SYSTEM
+-- LOOP
 -- =========================
 RunService.Heartbeat:Connect(function()
 
     local char = player.Character
     if not char then return end
 
-    local humanoid = char:FindFirstChildOfClass("Humanoid")
+    local hum = char:FindFirstChildOfClass("Humanoid")
     local root = char:FindFirstChild("HumanoidRootPart")
 
-    if not humanoid or not root then return end
+    if not hum or not root then return end
 
-    -- BHOP
     if autoBhop then
         local ray = workspace:Raycast(root.Position, Vector3.new(0,-4,0))
         if ray then
-            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            hum:ChangeState(Enum.HumanoidStateType.Jumping)
         end
     end
 
-    -- BOUNCE
     if autoBounce then
         if root.AssemblyLinearVelocity.Y < -5 then
             root.AssemblyLinearVelocity = Vector3.new(
