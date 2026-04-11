@@ -378,47 +378,88 @@ MainTab:AddInput("DashSpeed", {
 })
 
 -- =========================
--- FLOATING BUTTON
+-- DASH FLOAT UI (PRO)
 -- =========================
 local function createDashFloatingButton()
     if floatingDashButton then return end
 
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0,140,0,52)
-    btn.Position = UDim2.new(0.5,-70,0.75,0)
+    btn.Size = UDim2.new(0,150,0,55)
+    btn.Position = UDim2.new(0.5,-75,0.75,0)
     btn.AnchorPoint = Vector2.new(0.5,0)
-    btn.BackgroundColor3 = Color3.fromRGB(180,220,255)
-    btn.BackgroundTransparency = 0.35
-    btn.TextColor3 = Color3.fromRGB(0,70,150)
-    btn.Text = dashEnabled and "Dash: ON" or "Dash: OFF"
+    btn.BackgroundColor3 = Color3.fromRGB(120,180,255)
+    btn.BackgroundTransparency = 0.25
+    btn.Text = dashEnabled and "⚡ Dash: ON" or "⚡ Dash: OFF"
+    btn.TextColor3 = Color3.fromRGB(255,255,255)
     btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 14
+    btn.TextSize = 15
     btn.Parent = FloatingGui
+    btn.ZIndex = 10
 
-    makeDraggable(btn) -- 🔥 ใช้แทน Draggable=true
+    -- ลากได้
+    makeDraggable(btn)
 
     -- มุมโค้ง
     local corner = Instance.new("UICorner", btn)
-    corner.CornerRadius = UDim.new(0,18)
+    corner.CornerRadius = UDim.new(0,20)
 
-    -- ขอบ
+    -- ขอบเรือง
     local stroke = Instance.new("UIStroke", btn)
-    stroke.Thickness = 2.5
-    stroke.Color = Color3.fromRGB(0,120,255)
+    stroke.Thickness = 3
+    stroke.Color = Color3.fromRGB(0,140,255)
 
-    -- ไล่สี
+    -- เงา
+    local shadow = Instance.new("ImageLabel")
+    shadow.Size = UDim2.new(1,20,1,20)
+    shadow.Position = UDim2.new(0,-10,0,-10)
+    shadow.BackgroundTransparency = 1
+    shadow.Image = "rbxassetid://1316045217"
+    shadow.ImageTransparency = 0.6
+    shadow.ZIndex = 0
+    shadow.Parent = btn
+
+    -- Gradient (เท่ๆ)
+    local gradient = Instance.new("UIGradient", btn)
+    gradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(0,120,255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(120,200,255))
+    })
+    gradient.Rotation = 45
+
+    -- ไล่สีขอบ
     task.spawn(function()
         while btn.Parent do
-            TweenService:Create(stroke, TweenInfo.new(0.8), {Color = Color3.fromRGB(0,80,255)}):Play()
+            TweenService:Create(stroke, TweenInfo.new(0.8), {
+                Color = Color3.fromRGB(0,80,255)
+            }):Play()
             task.wait(0.8)
-            TweenService:Create(stroke, TweenInfo.new(0.8), {Color = Color3.fromRGB(160,230,255)}):Play()
+
+            TweenService:Create(stroke, TweenInfo.new(0.8), {
+                Color = Color3.fromRGB(160,230,255)
+            }):Play()
             task.wait(0.8)
         end
     end)
 
+    -- เอฟเฟกต์กด
+    btn.MouseButton1Down:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.1), {
+            Size = UDim2.new(0,140,0,50)
+        }):Play()
+    end)
+
+    btn.MouseButton1Up:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.1), {
+            Size = UDim2.new(0,150,0,55)
+        }):Play()
+    end)
+
+    -- กดเปิด/ปิด Dash
     btn.MouseButton1Click:Connect(function()
         dashEnabled = not dashEnabled
-        btn.Text = dashEnabled and "Dash: ON" or "Dash: OFF"
+
+        btn.Text = dashEnabled and "⚡ Dash: ON" or "⚡ Dash: OFF"
+        btn.BackgroundColor3 = dashEnabled and Color3.fromRGB(0,200,100) or Color3.fromRGB(120,180,255)
 
         if dashEnabled then
             startDash()
