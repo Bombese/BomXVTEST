@@ -235,6 +235,224 @@ MainTab:AddToggle("AutoRevive", {
 })
 
 -- =========================
+-- DASH SMOOTH (FIXED)
+-- =========================
+local dashEnabled = false
+local dashSpeed = 80
+local dashVelocity = nil
+local floatingDashButton = nil
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local player = Players.LocalPlayer
+
+-- =========================
+-- DRAG FUNCTION (ต้องใช้)
+-- =========================
+local function makeDraggable(guiObject)
+    local UIS = game:GetService("UserInputService")
+
+    local dragging = false
+    local dragInput, startPos, startInputPos
+
+    guiObject.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 
+        or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            startInputPos = input.Position
+            startPos = guiObject.Position
+        end
+    end)
+
+    guiObject.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement 
+        or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+
+    UIS.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - startInputPos
+            guiObject.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+
+    UIS.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 
+        or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+end
+
+-- =========================
+-- RESET
+-- =========================
+local function resetDash()
+    dashEnabled = false
+
+    if dashVelocity then
+        dashVelocity:Destroy()
+        dashVelocity = nil
+    end
+end
+
+player.CharacterAdded:Connect(function()
+    task.wait(0.3)
+    resetDash()
+end)
+
+-- =========================
+-- START DASH
+-- =========================
+local function startDash()
+    if dashVelocity then return end
+
+    local char = player.Character
+    if not char then return end
+
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    dashVelocity = Instance.new("BodyVelocity")
+    dashVelocity.MaxForce = Vector3.new(999999,0,999999)
+    dashVelocity.P = 1250
+    dashVelocity.Parent = root
+
+    task.spawn(function()
+        while dashEnabled do
+            local char = player.Character
+            local cam = workspace.CurrentCamera
+
+            if not char or not cam then break end
+
+            local root = char:FindFirstChild("HumanoidRootPart")
+            if not root then break end
+
+            local dir = cam.CFrame.LookVector
+            dir = Vector3.new(dir.X,0,dir.Z)
+
+            if dir.Magnitude > 0 then
+                dir = dir.Unit
+            end
+
+            dashVelocity.Velocity = dir * dashSpeed
+            task.wait(0.03)
+        end
+
+        if dashVelocity then
+            dashVelocity:Destroy()
+            dashVelocity = nil
+        end
+    end)
+end
+
+-- =========================
+-- FLUENT UI
+-- =========================
+MainTab:AddToggle("DashSmooth", {
+    Title = "Dash Smooth",
+    Default = false,
+    Callback = function(state)
+        dashEnabled = state
+        if state then startDash() else resetDash() end
+    end
+})
+
+MainTab:AddInput("DashSpeed", {
+    Title = "Dash Speed",
+    Default = "80",
+    Placeholder = "ใส่ความเร็ว",
+    Callback = function(txt)
+        local num = tonumber(txt)
+        if num then
+            dashSpeed = num
+        end
+    end
+})
+
+-- =========================
+-- FLOATING BUTTON
+-- =========================
+local function createDashFloatingButton()
+    if floatingDashButton then return end
+
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0,140,0,52)
+    btn.Position = UDim2.new(0.5,-70,0.75,0)
+    btn.AnchorPoint = Vector2.new(0.5,0)
+    btn.BackgroundColor3 = Color3.fromRGB(180,220,255)
+    btn.BackgroundTransparency = 0.35
+    btn.TextColor3 = Color3.fromRGB(0,70,150)
+    btn.Text = dashEnabled and "Dash: ON" or "Dash: OFF"
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 14
+    btn.Parent = FloatingGui
+
+    makeDraggable(btn) -- 🔥 ใช้แทน Draggable=true
+
+    -- มุมโค้ง
+    local corner = Instance.new("UICorner", btn)
+    corner.CornerRadius = UDim.new(0,18)
+
+    -- ขอบ
+    local stroke = Instance.new("UIStroke", btn)
+    stroke.Thickness = 2.5
+    stroke.Color = Color3.fromRGB(0,120,255)
+
+    -- ไล่สี
+    task.spawn(function()
+        while btn.Parent do
+            TweenService:Create(stroke, TweenInfo.new(0.8), {Color = Color3.fromRGB(0,80,255)}):Play()
+            task.wait(0.8)
+            TweenService:Create(stroke, TweenInfo.new(0.8), {Color = Color3.fromRGB(160,230,255)}):Play()
+            task.wait(0.8)
+        end
+    end)
+
+    btn.MouseButton1Click:Connect(function()
+        dashEnabled = not dashEnabled
+        btn.Text = dashEnabled and "Dash: ON" or "Dash: OFF"
+
+        if dashEnabled then
+            startDash()
+        else
+            resetDash()
+        end
+    end)
+
+    floatingDashButton = btn
+end
+
+local function removeDashFloatingButton()
+    if floatingDashButton then
+        floatingDashButton:Destroy()
+        floatingDashButton = nil
+    end
+end
+
+-- =========================
+-- TOGGLE FLOAT BUTTON
+-- =========================
+MainTab:AddToggle("DashFloat", {
+    Title = "Dash Floating Button",
+    Default = false,
+    Callback = function(state)
+        if state then
+            createDashFloatingButton()
+        else
+            removeDashFloatingButton()
+        end
+    end
+})
+
+-- =========================
 -- VARIABLES
 -- =========================
 local autoBhop = false
@@ -398,6 +616,8 @@ local function removeBounceFloatingButton()
         floatingBounceButton = nil
     end
 end
+
+MainTab:AddSection("Auto Jump And Bounce ")
 
 -- =========================
 -- FLUENT UI
