@@ -563,7 +563,7 @@ ESPTab:AddToggle("DownedESP", {
     end
 })
 
-local TPTab = Window:AddTab({ Title = "Teleport", Icon = "Star" })
+local TPTab = Window:AddTab({ Title = "Teleport", Icon = "map" })
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
