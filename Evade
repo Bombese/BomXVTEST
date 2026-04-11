@@ -241,51 +241,41 @@ local autoBhop = false
 local autoBounce = false
 local bouncePower = 150
 
-local player = game.Players.LocalPlayer
-local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
-
 local floatingBhopButton
 local floatingBounceButton
 
--- =========================
--- GUI
--- =========================
-local PlayerGui = player:WaitForChild("PlayerGui")
-
-local FloatingGui = PlayerGui:FindFirstChild("FloatingGui")
-if not FloatingGui then
-    FloatingGui = Instance.new("ScreenGui")
-    FloatingGui.Name = "FloatingGui"
-    FloatingGui.ResetOnSpawn = false
-    FloatingGui.Parent = PlayerGui
-end
+local player = game.Players.LocalPlayer
+local RunService = game:GetService("RunService")
 
 -- =========================
--- DRAG (แทน Draggable)
+-- DRAG FUNCTION
 -- =========================
-local function dragify(btn)
+local function makeDraggable(guiObject)
     local UIS = game:GetService("UserInputService")
-    local dragging, startPos, startInput
 
-    btn.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+    local dragging = false
+    local dragInput, startPos, startInputPos
+
+    guiObject.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 
+        or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
-            startInput = input.Position
-            startPos = btn.Position
+            startInputPos = input.Position
+            startPos = guiObject.Position
         end
     end)
 
-    btn.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
+    guiObject.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement 
+        or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
         end
     end)
 
     UIS.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local delta = input.Position - startInput
-            btn.Position = UDim2.new(
+        if input == dragInput and dragging then
+            local delta = input.Position - startInputPos
+            guiObject.Position = UDim2.new(
                 startPos.X.Scale,
                 startPos.X.Offset + delta.X,
                 startPos.Y.Scale,
@@ -293,47 +283,49 @@ local function dragify(btn)
             )
         end
     end)
+
+    UIS.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 
+        or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
 end
 
 -- =========================
--- FLOAT BUTTON BHOP
+-- FLOATING GUI
+-- =========================
+local PlayerGui = player:WaitForChild("PlayerGui")
+
+local FloatingGui = PlayerGui:FindFirstChild("MovementUI")
+if not FloatingGui then
+    FloatingGui = Instance.new("ScreenGui")
+    FloatingGui.Name = "MovementUI"
+    FloatingGui.ResetOnSpawn = false
+    FloatingGui.Parent = PlayerGui
+end
+
+-- =========================
+-- FLOAT BUTTON : AUTO JUMP
 -- =========================
 local function createBhopFloatingButton()
     if floatingBhopButton then return end
 
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0,140,0,52)
-    btn.Position = UDim2.new(0.3,-70,0.8,0)
-    btn.AnchorPoint = Vector2.new(0.5,0)
-    btn.BackgroundColor3 = Color3.fromRGB(180,220,255)
-    btn.BackgroundTransparency = 0.35
-    btn.TextColor3 = Color3.fromRGB(0,70,150)
-    btn.Text = "Auto Bhop: OFF"
+    btn.Size = UDim2.new(0,140,0,50)
+    btn.Position = UDim2.new(0.25,0,0.8,0)
+    btn.BackgroundColor3 = Color3.fromRGB(0,170,255)
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Text = "Auto Jump: OFF"
     btn.Font = Enum.Font.GothamBold
     btn.TextSize = 14
     btn.Parent = FloatingGui
 
-    dragify(btn)
-
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,18)
-
-    local stroke = Instance.new("UIStroke", btn)
-    stroke.Thickness = 2.5
-    stroke.Color = Color3.fromRGB(0,120,255)
-
-    -- animation
-    task.spawn(function()
-        while btn.Parent do
-            TweenService:Create(stroke, TweenInfo.new(0.8), {Color = Color3.fromRGB(0,80,255)}):Play()
-            task.wait(0.8)
-            TweenService:Create(stroke, TweenInfo.new(0.8), {Color = Color3.fromRGB(160,230,255)}):Play()
-            task.wait(0.8)
-        end
-    end)
+    makeDraggable(btn)
 
     btn.MouseButton1Click:Connect(function()
         autoBhop = not autoBhop
-        btn.Text = autoBhop and "Auto Bhop: ON" or "Auto Bhop: OFF"
+        btn.Text = autoBhop and "Auto Jump: ON" or "Auto Jump: OFF"
     end)
 
     floatingBhopButton = btn
@@ -347,43 +339,26 @@ local function removeBhopFloatingButton()
 end
 
 -- =========================
--- FLOAT BUTTON BOUNCE
+-- FLOAT BUTTON : BOUNCE
 -- =========================
 local function createBounceFloatingButton()
     if floatingBounceButton then return end
 
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0,140,0,52)
-    btn.Position = UDim2.new(0.5,-70,0.8,0)
-    btn.AnchorPoint = Vector2.new(0.5,0)
-    btn.BackgroundColor3 = Color3.fromRGB(180,220,255)
-    btn.BackgroundTransparency = 0.35
-    btn.TextColor3 = Color3.fromRGB(0,70,150)
-    btn.Text = "Auto Bounce: OFF"
+    btn.Size = UDim2.new(0,140,0,50)
+    btn.Position = UDim2.new(0.55,0,0.8,0)
+    btn.BackgroundColor3 = Color3.fromRGB(255,120,0)
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Text = "Bounce: OFF"
     btn.Font = Enum.Font.GothamBold
     btn.TextSize = 14
     btn.Parent = FloatingGui
 
-    dragify(btn)
-
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,18)
-
-    local stroke = Instance.new("UIStroke", btn)
-    stroke.Thickness = 2.5
-    stroke.Color = Color3.fromRGB(0,120,255)
-
-    task.spawn(function()
-        while btn.Parent do
-            TweenService:Create(stroke, TweenInfo.new(0.8), {Color = Color3.fromRGB(0,80,255)}):Play()
-            task.wait(0.8)
-            TweenService:Create(stroke, TweenInfo.new(0.8), {Color = Color3.fromRGB(160,230,255)}):Play()
-            task.wait(0.8)
-        end
-    end)
+    makeDraggable(btn)
 
     btn.MouseButton1Click:Connect(function()
         autoBounce = not autoBounce
-        btn.Text = autoBounce and "Auto Bounce: ON" or "Auto Bounce: OFF"
+        btn.Text = autoBounce and "Bounce: ON" or "Bounce: OFF"
     end)
 
     floatingBounceButton = btn
@@ -397,7 +372,7 @@ local function removeBounceFloatingButton()
 end
 
 -- =========================
--- FLUENT TOGGLE (เหมือนต้นฉบับ)
+-- FLUENT UI
 -- =========================
 MainTab:AddToggle("AutoBhop", {
     Title = "Auto Jump",
@@ -408,10 +383,11 @@ MainTab:AddToggle("AutoBhop", {
 })
 
 MainTab:AddToggle("FloatBhop", {
-    Title = "Auto Jump (Floating Button)",
+    Title = "ปุ่มลอย Auto Jump",
     Default = false,
     Callback = function(v)
-        if v then createBhopFloatingButton() else removeBhopFloatingButton() end
+        if v then createBhopFloatingButton()
+        else removeBhopFloatingButton() end
     end
 })
 
@@ -424,25 +400,27 @@ MainTab:AddToggle("AutoBounce", {
 })
 
 MainTab:AddToggle("FloatBounce", {
-    Title = "Auto Bounce (Floating Button)",
+    Title = "ปุ่มลอย Bounce",
     Default = false,
     Callback = function(v)
-        if v then createBounceFloatingButton() else removeBounceFloatingButton() end
+        if v then createBounceFloatingButton()
+        else removeBounceFloatingButton() end
     end
 })
 
 MainTab:AddSlider("BouncePower", {
     Title = "แรงเด้ง",
+    Default = 150,
     Min = 50,
     Max = 300,
-    Default = 150,
+    Rounding = 0,
     Callback = function(v)
         bouncePower = v
     end
 })
 
 -- =========================
--- LOOP
+-- SYSTEM LOOP
 -- =========================
 RunService.Heartbeat:Connect(function()
 
@@ -454,14 +432,14 @@ RunService.Heartbeat:Connect(function()
 
     if not hum or not root then return end
 
-    -- ✅ BHOP FIX (ใช้ FloorMaterial แทน Raycast)
+    -- AUTO JUMP
     if autoBhop then
         if hum.FloorMaterial ~= Enum.Material.Air then
             hum:ChangeState(Enum.HumanoidStateType.Jumping)
         end
     end
 
-    -- ✅ BOUNCE FIX (ใช้ AssemblyLinearVelocity + เช็คตกจริง)
+    -- AUTO BOUNCE
     if autoBounce then
         if root.AssemblyLinearVelocity.Y < -2 then
             root.AssemblyLinearVelocity = Vector3.new(
