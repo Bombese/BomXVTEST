@@ -234,6 +234,265 @@ MainTab:AddToggle("AutoRevive", {
     end
 })
 
+MainTab:AddSection("Settings Inf Slide And Dash ")
+
+-- =========================
+-- Infinite Slide (FULL FIX)
+-- =========================
+
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+
+local player = Players.LocalPlayer
+
+-- =========================
+-- VARIABLES
+-- =========================
+local infiniteSlideEnabled = false
+local slideFrictionValue = -8
+local cachedTables
+local plrModel
+local slideConnection
+local floatingSlideButton
+
+-- =========================
+-- DRAG FUNCTION
+-- =========================
+local function makeDraggable(guiObject)
+    local UIS = game:GetService("UserInputService")
+
+    local dragging = false
+    local dragInput, startPos, startInputPos
+
+    guiObject.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 
+        or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            startInputPos = input.Position
+            startPos = guiObject.Position
+        end
+    end)
+
+    guiObject.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement 
+        or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+
+    UIS.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - startInputPos
+            guiObject.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+
+    UIS.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 
+        or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+end
+
+-- =========================
+-- CORE
+-- =========================
+local keys = {
+    "Friction","AirStrafeAcceleration","JumpHeight","RunDeaccel",
+    "JumpSpeedMultiplier","JumpCap","SprintCap","WalkSpeedMultiplier",
+    "BhopEnabled","Speed","AirAcceleration","RunAccel","SprintAcceleration"
+}
+
+local function hasAll(tbl)
+    if type(tbl) ~= "table" then return false end
+    for _, k in ipairs(keys) do
+        if rawget(tbl, k) == nil then return false end
+    end
+    return true
+end
+
+local function setFriction(value)
+    if not cachedTables then return end
+    for _, t in ipairs(cachedTables) do
+        pcall(function() t.Friction = value end)
+    end
+end
+
+local function updatePlayerModel()
+    local GameFolder = workspace:FindFirstChild("Game")
+    local PlayersFolder = GameFolder and GameFolder:FindFirstChild("Players")
+    if PlayersFolder then
+        plrModel = PlayersFolder:FindFirstChild(player.Name)
+    else
+        plrModel = nil
+    end
+end
+
+local function onHeartbeat()
+    if not plrModel then
+        setFriction(5)
+        return
+    end
+
+    local success, currentState = pcall(function()
+        return plrModel:GetAttribute("State")
+    end)
+
+    if success and currentState then
+        if currentState == "Slide" then
+            pcall(function()
+                plrModel:SetAttribute("State", "EmotingSlide")
+            end)
+        elseif currentState == "EmotingSlide" then
+            setFriction(slideFrictionValue)
+        else
+            setFriction(5)
+        end
+    else
+        setFriction(5)
+    end
+end
+
+-- =========================
+-- TOGGLE FUNCTION
+-- =========================
+local function toggleInfiniteSlide()
+    infiniteSlideEnabled = not infiniteSlideEnabled
+
+    if slideConnection then
+        slideConnection:Disconnect()
+        slideConnection = nil
+    end
+
+    if infiniteSlideEnabled then
+        cachedTables = {}
+
+        for _, obj in ipairs(getgc(true)) do
+            local success, result = pcall(function()
+                if hasAll(obj) then return obj end
+            end)
+            if success and result then
+                table.insert(cachedTables, result)
+            end
+        end
+
+        updatePlayerModel()
+
+        slideConnection = RunService.Heartbeat:Connect(onHeartbeat)
+
+        player.CharacterAdded:Connect(function()
+            task.wait(0.1)
+            updatePlayerModel()
+        end)
+
+    else
+        cachedTables = nil
+        plrModel = nil
+        setFriction(5)
+    end
+
+    -- อัปเดต UI ปุ่มลอย
+    if floatingSlideButton then
+        floatingSlideButton.BackgroundColor3 =
+            infiniteSlideEnabled and Color3.fromRGB(0,200,0)
+            or Color3.fromRGB(200,0,0)
+
+        floatingSlideButton.Text =
+            infiniteSlideEnabled and "Infinite Slide: ON"
+            or "Infinite Slide: OFF"
+    end
+end
+
+-- =========================
+-- FLUENT UI
+-- =========================
+MainTab:AddToggle("InfiniteSlide", {
+    Title = "อินฟีนีตี้สไลด์",
+    Default = false,
+    Callback = function()
+        toggleInfiniteSlide()
+    end
+})
+
+MainTab:AddButton({
+    Title = "ปุ่มลอย Infinite Slide",
+    Callback = function()
+        createFloatingSlideButton()
+    end
+})
+
+-- =========================
+-- FLOATING GUI
+-- =========================
+local PlayerGui = player:WaitForChild("PlayerGui")
+
+local FloatingGui = PlayerGui:FindFirstChild("SlideUI")
+if not FloatingGui then
+    FloatingGui = Instance.new("ScreenGui")
+    FloatingGui.Name = "SlideUI"
+    FloatingGui.ResetOnSpawn = false
+    FloatingGui.Parent = PlayerGui
+end
+
+-- =========================
+-- FLOAT BUTTON
+-- =========================
+function createFloatingSlideButton()
+    if floatingSlideButton then return end
+
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0,150,0,55)
+    btn.Position = UDim2.new(0.5,-75,0.4,0)
+    btn.AnchorPoint = Vector2.new(0.5,0)
+    btn.BackgroundColor3 =
+        infiniteSlideEnabled and Color3.fromRGB(0,200,0)
+        or Color3.fromRGB(200,0,0)
+
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Text =
+        infiniteSlideEnabled and "Infinite Slide: ON"
+        or "Infinite Slide: OFF"
+
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 14
+    btn.Parent = FloatingGui
+
+    makeDraggable(btn)
+
+    local corner = Instance.new("UICorner", btn)
+    corner.CornerRadius = UDim.new(0,18)
+
+    local stroke = Instance.new("UIStroke", btn)
+    stroke.Thickness = 2.5
+    stroke.Color = Color3.fromRGB(0,120,255)
+
+    -- animation
+    task.spawn(function()
+        while btn.Parent do
+            TweenService:Create(stroke, TweenInfo.new(0.8), {
+                Color = Color3.fromRGB(0,80,255)
+            }):Play()
+            task.wait(0.8)
+
+            TweenService:Create(stroke, TweenInfo.new(0.8), {
+                Color = Color3.fromRGB(160,230,255)
+            }):Play()
+            task.wait(0.8)
+        end
+    end)
+
+    btn.MouseButton1Click:Connect(toggleInfiniteSlide)
+
+    floatingSlideButton = btn
+end
+
 -- =========================
 -- DASH SMOOTH (UPGRADED FULL)
 -- =========================
