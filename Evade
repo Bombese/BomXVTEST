@@ -454,15 +454,16 @@ RunService.Heartbeat:Connect(function()
 
     if not hum or not root then return end
 
+    -- ✅ BHOP FIX (ใช้ FloorMaterial แทน Raycast)
     if autoBhop then
-        local ray = workspace:Raycast(root.Position, Vector3.new(0,-4,0))
-        if ray then
+        if hum.FloorMaterial ~= Enum.Material.Air then
             hum:ChangeState(Enum.HumanoidStateType.Jumping)
         end
     end
 
+    -- ✅ BOUNCE FIX (ใช้ AssemblyLinearVelocity + เช็คตกจริง)
     if autoBounce then
-        if root.AssemblyLinearVelocity.Y < -5 then
+        if root.AssemblyLinearVelocity.Y < -2 then
             root.AssemblyLinearVelocity = Vector3.new(
                 root.AssemblyLinearVelocity.X,
                 bouncePower,
