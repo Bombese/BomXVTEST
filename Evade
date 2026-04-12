@@ -72,7 +72,7 @@ end
 -- =========================
 -- 🔘 TOGGLE เปิด/ปิด
 -- =========================
-MainTab:CreateToggle({
+MainTab:AddToggle({
     Name = "Custom Movement",
     CurrentValue = false,
     Callback = function(state)
@@ -87,7 +87,7 @@ MainTab:CreateToggle({
 -- =========================
 -- 🔢 INPUT SPEED
 -- =========================
-MainTab:CreateInput({
+MainTab:AddInput({
     Name = "Speed",
     PlaceholderText = "1500 - 5000",
     RemoveTextAfterFocusLost = false,
@@ -103,7 +103,7 @@ MainTab:CreateInput({
 -- =========================
 -- 🔢 INPUT JUMPCAP
 -- =========================
-MainTab:CreateInput({
+MainTab:AddInput({
     Name = "Jump Cap",
     PlaceholderText = "1 - 5000",
     RemoveTextAfterFocusLost = false,
@@ -119,7 +119,7 @@ MainTab:CreateInput({
 -- =========================
 -- 🔢 INPUT AIR STRAFE
 -- =========================
-MainTab:CreateInput({
+MainTab:AddInput({
     Name = "Air Strafe",
     PlaceholderText = "187",
     RemoveTextAfterFocusLost = false,
