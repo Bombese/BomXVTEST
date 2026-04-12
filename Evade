@@ -18,15 +18,12 @@ MainTab:AddSection("Settings Player")
 -- VARIABLES
 -- =========================
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
-local currentSettings = {
-    Speed = 1500,
-    JumpCap = 1,
-    AirStrafeAcceleration = 187
-}
-
+local speedValue = 1500
 local enabled = false
+local loopConnection
 
 -- =========================
 -- TABLE SCAN
@@ -54,17 +51,13 @@ local function getMatchingTables()
 end
 
 -- =========================
--- APPLY
+-- APPLY SPEED
 -- =========================
-local function applyToTables()
-    if not enabled then return end
-
+local function applySpeed()
     local tables = getMatchingTables()
     for _, tbl in ipairs(tables) do
         pcall(function()
-            tbl.Speed = currentSettings.Speed
-            tbl.JumpCap = currentSettings.JumpCap
-            tbl.AirStrafeAcceleration = currentSettings.AirStrafeAcceleration
+            tbl.Speed = speedValue
         end)
     end
 end
@@ -72,14 +65,23 @@ end
 -- =========================
 -- 🔘 TOGGLE (Fluent)
 -- =========================
-MainTab:AddToggle("CustomMovement", {
-    Title = "Custom Movement",
+MainTab:AddToggle("SpeedToggle", {
+    Title = "Custom Speed",
     Default = false,
     Callback = function(state)
         enabled = state
 
+        -- ปิด loop เก่าก่อน
+        if loopConnection then
+            loopConnection:Disconnect()
+            loopConnection = nil
+        end
+
         if state then
-            applyToTables()
+            -- loop apply ตลอด
+            loopConnection = RunService.Heartbeat:Connect(function()
+                applySpeed()
+            end)
         end
     end
 })
@@ -96,44 +98,7 @@ MainTab:AddInput("SpeedInput", {
     Callback = function(txt)
         local num = tonumber(txt)
         if num then
-            currentSettings.Speed = num
-            applyToTables()
-        end
-    end
-})
-
--- =========================
--- 🔢 INPUT JUMPCAP
--- =========================
-MainTab:AddInput("JumpCapInput", {
-    Title = "Jump Cap",
-    Default = "1",
-    Placeholder = "1 - 5000",
-    Numeric = true,
-    Finished = true,
-    Callback = function(txt)
-        local num = tonumber(txt)
-        if num then
-            currentSettings.JumpCap = num
-            applyToTables()
-        end
-    end
-})
-
--- =========================
--- 🔢 INPUT AIR STRAFE
--- =========================
-MainTab:AddInput("AirStrafeInput", {
-    Title = "Air Strafe",
-    Default = "187",
-    Placeholder = "187",
-    Numeric = true,
-    Finished = true,
-    Callback = function(txt)
-        local num = tonumber(txt)
-        if num then
-            currentSettings.AirStrafeAcceleration = num
-            applyToTables()
+            speedValue = num
         end
     end
 })
