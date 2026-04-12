@@ -70,11 +70,11 @@ local function applyToTables()
 end
 
 -- =========================
--- 🔘 TOGGLE เปิด/ปิด
+-- 🔘 TOGGLE (Fluent)
 -- =========================
-MainTab:AddToggle({
-    Name = "Custom Movement",
-    CurrentValue = false,
+MainTab:AddToggle("CustomMovement", {
+    Title = "Custom Movement",
+    Default = false,
     Callback = function(state)
         enabled = state
 
@@ -87,10 +87,12 @@ MainTab:AddToggle({
 -- =========================
 -- 🔢 INPUT SPEED
 -- =========================
-MainTab:AddInput({
-    Name = "Speed",
-    PlaceholderText = "1500 - 5000",
-    RemoveTextAfterFocusLost = false,
+MainTab:AddInput("SpeedInput", {
+    Title = "Speed",
+    Default = "1500",
+    Placeholder = "1500 - 5000",
+    Numeric = true,
+    Finished = true,
     Callback = function(txt)
         local num = tonumber(txt)
         if num then
@@ -103,10 +105,12 @@ MainTab:AddInput({
 -- =========================
 -- 🔢 INPUT JUMPCAP
 -- =========================
-MainTab:AddInput({
-    Name = "Jump Cap",
-    PlaceholderText = "1 - 5000",
-    RemoveTextAfterFocusLost = false,
+MainTab:AddInput("JumpCapInput", {
+    Title = "Jump Cap",
+    Default = "1",
+    Placeholder = "1 - 5000",
+    Numeric = true,
+    Finished = true,
     Callback = function(txt)
         local num = tonumber(txt)
         if num then
@@ -119,10 +123,12 @@ MainTab:AddInput({
 -- =========================
 -- 🔢 INPUT AIR STRAFE
 -- =========================
-MainTab:AddInput({
-    Name = "Air Strafe",
-    PlaceholderText = "187",
-    RemoveTextAfterFocusLost = false,
+MainTab:AddInput("AirStrafeInput", {
+    Title = "Air Strafe",
+    Default = "187",
+    Placeholder = "187",
+    Numeric = true,
+    Finished = true,
     Callback = function(txt)
         local num = tonumber(txt)
         if num then
