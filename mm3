@@ -1,0 +1,2770 @@
+local WindUI = loadstring(game:HttpGet(
+"https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"
+))()
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local workspace = game:GetService("Workspace")
+
+local player = Players.LocalPlayer
+
+-- =========================
+-- VARIABLES
+-- =========================
+
+local enabled = false
+local gunDropEnabled = false
+
+-- =========================
+-- WINDOW
+-- =========================
+
+local Window = WindUI:CreateWindow({
+Title = "CoreForce X",
+Icon = "cpu",
+Author = "Developer",
+Folder = "TEST",
+
+Size = UDim2.fromOffset(580,460),
+MinSize = Vector2.new(560,350),
+MaxSize = Vector2.new(850,560),
+
+Transparent = true,
+Theme = "Dark",
+Resizable = true,
+SideBarWidth = 200,
+BackgroundImageTransparency = 0.42,
+HideSearchBar = true,
+ScrollBarEnabled = false,
+})
+
+-- =========================
+-- TABS
+-- =========================
+
+local SettingsTab = Window:Tab({
+Title="เมนูหลัก",
+Icon="settings"
+})
+
+local MainTab = Window:Tab({
+Title="มองผู้อื่น",
+Icon="eye"
+})
+
+local TeleportTab = Window:Tab({
+Title="วาร์ป",
+Icon="navigation"
+})
+
+local VisualsTab = Window:Tab({
+Title="กวนตีนคนในเซิฟ",
+Icon="skull"
+})
+
+local MurderTab = Window:Tab({
+Title="หมวดหมู่ฆาตกร",
+Icon="knife"
+})
+
+local FPSTab = Window:Tab({
+Title="อีเว้น",
+Icon="zap"
+})
+
+local MapTab = Window:Tab({
+Title="ฟามเงิน",
+Icon="coins"
+})
+
+local GunTab = Window:Tab({
+Title="เกี่ยวกับนายอำเภอ",
+Icon="gun"
+})
+
+-- =========================
+-- AUTO GUN DROP
+-- =========================
+
+local autoGunDrop = false
+local teleporting = false
+
+local function findGunDrop()
+
+	for _,v in pairs(workspace:GetDescendants()) do
+		if v.Name == "GunDrop" and v:IsA("BasePart") then
+			return v
+		end
+	end
+
+end
+
+SettingsTab:Toggle({
+Title="ออโต้วาร์ปไปเก็บปืน",
+Default=false,
+Callback=function(state)
+	autoGunDrop = state
+end
+})
+
+RunService.Heartbeat:Connect(function()
+
+	if not autoGunDrop then return end
+	if teleporting then return end
+
+	local char = player.Character
+	if not char then return end
+
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+
+	local gunDrop = findGunDrop()
+
+	if gunDrop then
+
+		teleporting = true
+
+		local oldPos = root.CFrame
+
+		root.CFrame = gunDrop.CFrame + Vector3.new(0,2,0)
+
+		task.wait(0.5)
+
+		if root then
+			root.CFrame = oldPos
+		end
+
+		task.wait(0.3)
+
+		teleporting = false
+
+	end
+
+end)
+
+-- =========================
+-- ITEM CHECK
+-- =========================
+
+local function hasItem(plr,item)
+
+local backpack = plr:FindFirstChild("Backpack")
+local char = plr.Character
+
+if backpack and backpack:FindFirstChild(item) then
+return true
+end
+
+if char and char:FindFirstChild(item) then
+return true
+end
+
+return false
+
+end
+
+-- =========================
+-- ROLE CHECK
+-- =========================
+
+local function getRole(plr)
+
+local hasGun = hasItem(plr,"Gun")
+local hasKnife = hasItem(plr,"Knife")
+
+if hasGun then
+return "Gun"
+elseif hasKnife then
+return "Knife"
+else
+return "Good"
+end
+
+end
+
+-- =========================
+-- ROLE COLOR
+-- =========================
+
+local function getColor(role)
+
+if role == "Gun" then
+return Color3.fromRGB(0,150,255)
+elseif role == "Knife" then
+return Color3.fromRGB(255,0,0)
+elseif role == "Good" then
+return Color3.fromRGB(0,255,0)
+end
+
+end
+
+-- =========================
+-- ROLE TEXT
+-- =========================
+
+local function getText(role)
+
+if role == "Gun" then
+return "ผู้ปราบชั่ว"
+elseif role == "Knife" then
+return "ไอ้ชั่ว"
+elseif role == "Good" then
+return "คนดี"
+end
+
+end
+
+-- =========================
+-- REMOVE ESP
+-- =========================
+
+local function removeESP(char)
+
+local esp = char:FindFirstChild("RoleESP")
+if esp then esp:Destroy() end
+
+local tag = char:FindFirstChild("RoleTag")
+if tag then tag:Destroy() end
+
+end
+
+-- =========================
+-- CREATE ESP
+-- =========================
+
+local function createESP(plr)
+
+local char = plr.Character
+if not char then return end
+
+removeESP(char)
+
+local role = getRole(plr)
+local color = getColor(role)
+local text = getText(role)
+
+local highlight = Instance.new("Highlight")
+highlight.Name = "RoleESP"
+highlight.FillTransparency = 1
+highlight.OutlineColor = color
+highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+highlight.Parent = char
+
+local billboard = Instance.new("BillboardGui")
+billboard.Name = "RoleTag"
+billboard.Size = UDim2.new(0,200,0,40)
+billboard.StudsOffset = Vector3.new(0,2,0)
+billboard.AlwaysOnTop = true
+billboard.Adornee = char:FindFirstChild("Head")
+billboard.Parent = char
+
+local label = Instance.new("TextLabel")
+label.Size = UDim2.new(1,0,1,0)
+label.BackgroundTransparency = 1
+label.TextScaled = true
+label.Text = text
+label.TextColor3 = color
+label.Parent = billboard
+
+end
+
+-- =========================
+-- GUNDROP ESP
+-- =========================
+
+local function updateGunDrop()
+
+for _,obj in pairs(workspace:GetDescendants()) do
+
+if obj.Name == "GunDrop" and obj:IsA("BasePart") then
+
+if gunDropEnabled then
+
+if not obj:FindFirstChild("GunDropESP") then
+
+local hl = Instance.new("Highlight")
+hl.Name = "GunDropESP"
+hl.FillTransparency = 1
+hl.OutlineColor = Color3.fromRGB(255,255,0)
+hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+hl.Parent = obj
+
+local billboard = Instance.new("BillboardGui")
+billboard.Name = "GunDropText"
+billboard.Size = UDim2.new(0,200,0,40)
+billboard.StudsOffset = Vector3.new(0,2,0)
+billboard.AlwaysOnTop = true
+billboard.Adornee = obj
+billboard.Parent = obj
+
+local label = Instance.new("TextLabel")
+label.Size = UDim2.new(1,0,1,0)
+label.BackgroundTransparency = 1
+label.TextScaled = true
+label.Text = "ปืนปราบคนชั่ว"
+label.TextColor3 = Color3.fromRGB(255,255,0)
+label.Parent = billboard
+
+end
+
+else
+
+local hl = obj:FindFirstChild("GunDropESP")
+if hl then hl:Destroy() end
+
+local text = obj:FindFirstChild("GunDropText")
+if text then text:Destroy() end
+
+end
+
+end
+
+end
+
+end
+
+-- =========================
+-- UPDATE PLAYERS
+-- =========================
+
+local function updatePlayers()
+
+for _,plr in pairs(Players:GetPlayers()) do
+
+if plr ~= player and plr.Character then
+
+if enabled then
+createESP(plr)
+else
+removeESP(plr.Character)
+end
+
+end
+
+end
+
+end
+
+-- =========================
+-- WINDUI BUTTONS
+-- =========================
+
+MainTab:Toggle({
+Title="มองหาผู้เล่น",
+Default=false,
+Callback=function(state)
+
+enabled = state
+updatePlayers()
+
+end
+})
+
+MainTab:Toggle({
+Title="มองหาปืน",
+Default=false,
+Callback=function(state)
+
+gunDropEnabled = state
+updateGunDrop()
+
+end
+})
+
+-- =========================
+-- LOOP
+-- =========================
+
+task.spawn(function()
+
+while true do
+task.wait(0.5)
+
+if enabled then
+updatePlayers()
+end
+
+if gunDropEnabled then
+updateGunDrop()
+end
+
+end
+
+end)
+
+Players.PlayerAdded:Connect(function(plr)
+
+plr.CharacterAdded:Connect(function()
+
+task.wait(1)
+
+if enabled then
+updatePlayers()
+end
+
+end)
+
+end)
+
+-- =========================
+-- FIND PLAYER BY ROLE
+-- =========================
+
+local function findSheriff()
+
+for _,plr in pairs(Players:GetPlayers()) do
+
+if plr ~= player then
+
+local backpack = plr:FindFirstChild("Backpack")
+local char = plr.Character
+
+if backpack and backpack:FindFirstChild("Gun") then
+return plr
+end
+
+if char and char:FindFirstChild("Gun") then
+return plr
+end
+
+end
+
+end
+
+end
+
+local function findMurderer()
+
+for _,plr in pairs(Players:GetPlayers()) do
+
+if plr ~= player then
+
+local backpack = plr:FindFirstChild("Backpack")
+local char = plr.Character
+
+if backpack and backpack:FindFirstChild("Knife") then
+return plr
+end
+
+if char and char:FindFirstChild("Knife") then
+return plr
+end
+
+end
+
+end
+
+end
+
+-- =========================
+-- TELEPORT FUNCTION
+-- =========================
+
+local function teleportTo(plr)
+
+if plr and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+
+local myChar = player.Character
+
+if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+
+myChar.HumanoidRootPart.CFrame =
+plr.Character.HumanoidRootPart.CFrame * CFrame.new(0,0,3)
+
+end
+
+end
+
+end
+
+-- =========================
+-- BUTTONS
+-- =========================
+
+TeleportTab:Button({
+Title="วาร์ปไปยังนายอำเภอ",
+Callback=function()
+
+local sheriff = findSheriff()
+
+if sheriff then
+teleportTo(sheriff)
+end
+
+end
+})
+
+TeleportTab:Button({
+Title="วาร์ปไปยังฆาตรกร",
+Callback=function()
+
+local murderer = findMurderer()
+
+if murderer then
+teleportTo(murderer)
+end
+
+end
+})
+
+-- =========================
+-- MURDER LOCK SYSTEM
+-- =========================
+
+local lockEnabled = false
+local circleRadius = 200
+
+local camera = workspace.CurrentCamera
+
+-- SettingsTab
+local gui = Instance.new("ScreenGui")
+gui.ResetOnSpawn = false
+gui.Parent = player.PlayerGui
+
+local circle = Instance.new("Frame")
+circle.AnchorPoint = Vector2.new(0.5,0.5)
+circle.Position = UDim2.new(0.5,0,0.5,0)
+circle.Size = UDim2.new(0,circleRadius,0,circleRadius)
+circle.BackgroundTransparency = 1
+circle.Visible = false
+circle.Parent = gui
+
+local stroke = Instance.new("UIStroke")
+stroke.Color = Color3.fromRGB(255,0,0)
+stroke.Thickness = 2
+stroke.Parent = circle
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(1,0)
+corner.Parent = circle
+
+-- หา Murderer
+local function getMurderer()
+
+for _,plr in pairs(Players:GetPlayers()) do
+
+if plr ~= player then
+
+local backpack = plr:FindFirstChild("Backpack")
+local char = plr.Character
+
+if backpack and backpack:FindFirstChild("Knife") then
+return plr
+end
+
+if char and char:FindFirstChild("Knife") then
+return plr
+end
+
+end
+
+end
+
+end
+
+-- ตรวจว่าอยู่ในวงไหม
+local function isInCircle(pos)
+
+local screenPos,visible = camera:WorldToViewportPoint(pos)
+
+if not visible then
+return false
+end
+
+local center = Vector2.new(camera.ViewportSize.X/2,camera.ViewportSize.Y/2)
+local dist = (Vector2.new(screenPos.X,screenPos.Y) - center).Magnitude
+
+return dist <= circleRadius/2
+
+end
+
+-- ล็อกกล้อง
+RunService.RenderStepped:Connect(function()
+
+if not lockEnabled then return end
+
+local murderer = getMurderer()
+
+if murderer and murderer.Character and murderer.Character:FindFirstChild("Head") then
+
+local head = murderer.Character.Head
+
+if isInCircle(head.Position) then
+
+camera.CFrame = CFrame.new(camera.CFrame.Position, head.Position)
+
+end
+
+end
+
+end)
+
+-- =========================
+-- UI SETTINGS
+-- =========================
+
+GunTab:Toggle({
+Title="ล็อกตัวฆาตกร",
+Default=false,
+Callback=function(state)
+
+lockEnabled = state
+circle.Visible = state
+
+end
+})
+
+GunTab:Slider({
+Title="ขนาดวงตรวจจับ",
+Value={
+Min=100,
+Max=600,
+Default=200
+},
+Callback=function(v)
+
+circleRadius = v
+circle.Size = UDim2.new(0,v,0,v)
+
+end
+})
+
+TeleportTab:Button({
+Title = "วาร์ปไปปืนที่ตก",
+Callback = function()
+
+local player = game.Players.LocalPlayer
+local char = player.Character
+if not char then return end
+
+local root = char:FindFirstChild("HumanoidRootPart")
+if not root then return end
+
+-- หาปืนที่ตก
+local gunDrop = workspace:FindFirstChild("GunDrop", true)
+
+if gunDrop then
+
+-- จำตำแหน่งเดิม
+local oldPos = root.CFrame
+
+-- วาร์ปไปปืน
+root.CFrame = gunDrop.CFrame * CFrame.new(0,0,0)
+
+-- รอ 0.5 วิ
+task.wait(0.5)
+
+-- วาร์ปกลับ
+if root then
+root.CFrame = oldPos
+end
+
+end
+
+end
+})
+
+TeleportTab:Button({
+Title="วาร์ปไปล็อบบี้",
+Callback=function()
+
+local char = player.Character
+if not char then return end
+
+local root = char:FindFirstChild("HumanoidRootPart")
+if not root then return end
+
+local lobby = workspace:FindFirstChild("Lobby")
+
+if lobby then
+
+local part
+
+if lobby:IsA("Model") then
+part = lobby.PrimaryPart or lobby:FindFirstChildWhichIsA("BasePart")
+elseif lobby:IsA("BasePart") then
+part = lobby
+end
+
+if part then
+root.CFrame = part.CFrame + Vector3.new(0,3,0)
+end
+
+end
+
+end
+})
+
+TeleportTab:Button({
+Title="วาร์ปไปยังแมพ",
+Callback=function()
+
+local char = player.Character
+if not char then return end
+
+local root = char:FindFirstChild("HumanoidRootPart")
+if not root then return end
+
+local spawnPart = workspace:FindFirstChild("Spawn", true)
+
+if spawnPart and spawnPart:IsA("BasePart") then
+root.CFrame = spawnPart.CFrame + Vector3.new(0,3,0)
+end
+
+end
+})
+
+
+-- =========================
+-- AUTO SHOOT MURDERER
+-- =========================
+
+local autoShoot = false
+local camera = workspace.CurrentCamera
+
+-- หา Murderer ที่อยู่ในจอ
+local function getMurdererTarget()
+
+local closest = nil  
+local distance = math.huge  
+
+for _,plr in pairs(Players:GetPlayers()) do  
+
+	if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then  
+
+		local backpack = plr:FindFirstChild("Backpack")  
+		local char = plr.Character  
+
+		local isMurderer = false  
+
+		if backpack and backpack:FindFirstChild("Knife") then  
+			isMurderer = true  
+		end  
+
+		if char and char:FindFirstChild("Knife") then  
+			isMurderer = true  
+		end  
+
+		if isMurderer then  
+
+			local pos, visible =  
+			camera:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position)  
+
+			if visible then  
+
+				local dist =  
+				(Vector2.new(pos.X,pos.Y)  
+				-  
+				Vector2.new(  
+					camera.ViewportSize.X/2,  
+					camera.ViewportSize.Y/2  
+				)).Magnitude  
+
+				if dist < distance then  
+					distance = dist  
+					closest = plr  
+				end  
+
+			end  
+
+		end  
+
+	end  
+
+end  
+
+return closest
+
+end
+
+-- LOOP ยิง
+RunService.RenderStepped:Connect(function()
+
+if not autoShoot then return end  
+
+local char = player.Character  
+if not char then return end  
+
+local tool = char:FindFirstChild("Gun")  
+if not tool then return end  
+
+local remote = tool:FindFirstChild("Shoot")  
+if not remote then return end  
+
+local root = char:FindFirstChild("HumanoidRootPart")  
+if not root then return end  
+
+local attachment = root:FindFirstChild("GunRaycastAttachment")  
+if not attachment then return end  
+
+local target = getMurdererTarget()  
+if not target then return end  
+
+local targetHRP = target.Character:FindFirstChild("HumanoidRootPart")  
+if not targetHRP then return end  
+
+remote:FireServer(  
+	attachment.WorldCFrame,  
+	CFrame.new(targetHRP.Position)  
+)
+
+end)
+
+-- =========================
+-- WINDUI BUTTON
+-- =========================
+
+SettingsTab:Toggle({
+Title="ออโต้ยิงฆาตกร",
+Default=false,
+Callback=function(state)
+
+autoShoot = state
+
+end
+})
+
+-- SERVICES
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+
+-- =========================
+-- WALK FLING + SPIN SYSTEM
+-- =========================
+
+local function walkFling(target)
+
+	local char = player.Character
+	if not char then return end
+
+	local root = char:FindFirstChild("HumanoidRootPart")
+	local hum = char:FindFirstChild("Humanoid")
+	if not root or not hum then return end
+
+	if not target.Character then return end
+	local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
+	if not targetRoot then return end
+
+	-- จำตำแหน่งเดิม
+	local oldPos = root.CFrame
+
+	-- กล้อง
+	local cam = workspace.CurrentCamera
+	local oldSubject = cam.CameraSubject
+	local targetHum = target.Character:FindFirstChildOfClass("Humanoid")
+
+	if targetHum then
+		cam.CameraSubject = targetHum
+	end
+
+	local enabled = true
+
+	-- 🌪 หมุนเตะ
+	local spin = Instance.new("BodyAngularVelocity")
+	spin.MaxTorque = Vector3.new(math.huge,math.huge,math.huge)
+	spin.AngularVelocity = Vector3.new(0,99999,0)
+	spin.P = math.huge
+	spin.Parent = root
+
+	-- 💥 ระบบ fling เดิม
+	task.spawn(function()
+
+		while enabled do
+
+			RunService.Heartbeat:Wait()
+
+			local vel = root.Velocity
+			root.Velocity = vel * 8000 + Vector3.new(0,8000,0)
+
+			RunService.RenderStepped:Wait()
+
+			root.Velocity = vel
+
+		end
+
+	end)
+
+	-- ติดตัว + เดินชน
+	local start = tick()
+
+	while tick() - start < 2 do
+
+		if targetRoot then
+
+			local offset = Vector3.new(
+				math.random(-2,2),
+				0,
+				math.random(-2,2)
+			)
+
+			root.CFrame = targetRoot.CFrame * CFrame.new(offset)
+
+			root.Velocity = (targetRoot.Position - root.Position).Unit * 120
+
+		end
+
+		RunService.Heartbeat:Wait()
+
+	end
+
+	enabled = false
+
+	spin:Destroy()
+
+	root.Velocity = Vector3.zero
+	root.RotVelocity = Vector3.zero
+
+	RunService.Heartbeat:Wait()
+
+	-- กล้องกลับ
+	cam.CameraSubject = oldSubject
+
+	-- กลับตำแหน่งเดิม
+	root.CFrame = oldPos
+
+end
+
+-- =========================
+-- FIND ROLES
+-- =========================
+
+local function findSheriff()
+
+	for _,v in pairs(Players:GetPlayers()) do
+
+		if v ~= player then
+
+			if v.Backpack:FindFirstChild("Gun") then
+				return v
+			end
+
+			if v.Character and v.Character:FindFirstChild("Gun") then
+				return v
+			end
+
+		end
+
+	end
+
+end
+
+local function findMurderer()
+
+	for _,v in pairs(Players:GetPlayers()) do
+
+		if v ~= player then
+
+			if v.Backpack:FindFirstChild("Knife") then
+				return v
+			end
+
+			if v.Character and v.Character:FindFirstChild("Knife") then
+				return v
+			end
+
+		end
+
+	end
+
+end
+
+-- =========================
+-- PLAYER SELECT
+-- =========================
+
+local selectedPlayer = nil
+local playerDropdown
+
+local function getPlayers()
+
+	local list = {}
+
+	for _,v in pairs(Players:GetPlayers()) do
+		if v ~= player then
+			table.insert(list,v.Name)
+		end
+	end
+
+	return list
+
+end
+
+local function getPlayerByName(name)
+
+	for _,v in pairs(Players:GetPlayers()) do
+		if v.Name == name then
+			return v
+		end
+	end
+
+end
+
+playerDropdown = VisualsTab:Dropdown({
+Title = "เลือกผู้เล่น",
+Values = getPlayers(),
+Callback = function(v)
+
+	selectedPlayer = getPlayerByName(v)
+
+end
+})
+
+local function refreshPlayers()
+
+	if playerDropdown and playerDropdown.Refresh then
+		playerDropdown:Refresh(getPlayers())
+	end
+
+end
+
+Players.PlayerAdded:Connect(function()
+	task.wait(1)
+	refreshPlayers()
+end)
+
+Players.PlayerRemoving:Connect(function()
+	task.wait(1)
+	refreshPlayers()
+end)
+
+-- =========================
+-- BUTTONS
+-- =========================
+
+VisualsTab:Button({
+Title="เตะ Sheriff",
+Callback=function()
+
+	local sheriff = findSheriff()
+
+	if sheriff then
+		walkFling(sheriff)
+	end
+
+end
+})
+
+VisualsTab:Button({
+Title="เตะ Murderer",
+Callback=function()
+
+	local murderer = findMurderer()
+
+	if murderer then
+		walkFling(murderer)
+	end
+
+end
+})
+
+VisualsTab:Button({
+Title="กระเด็นคนที่เลือก",
+Callback=function()
+
+	if selectedPlayer then
+		walkFling(selectedPlayer)
+	end
+
+end
+})
+
+
+-- =========================
+-- SECTION (กวนตีนคนในเซิฟ)
+-- =========================
+
+local TrollSection = VisualsTab:Section({
+Title = "ระบบเตะ"
+})
+
+-- =========================
+-- VARIABLES
+-- =========================
+
+local touchKick = false
+local flingAll = false
+
+-- =========================
+-- FLING SYSTEM
+-- =========================
+
+local function flingPlayer(target)
+
+	local char = player.Character
+	if not char then return end
+
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+
+	if not target.Character then return end
+	local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
+	if not targetRoot then return end
+
+	local oldPos = root.CFrame
+	local enabled = true
+
+	task.spawn(function()
+
+		while enabled do
+
+			RunService.Heartbeat:Wait()
+
+			local vel = root.Velocity
+			root.Velocity = vel * 8000 + Vector3.new(0,8000,0)
+
+			RunService.RenderStepped:Wait()
+
+			root.Velocity = vel
+
+		end
+
+	end)
+
+	local start = tick()
+
+	while tick() - start < 2 do
+
+		if targetRoot then
+
+			root.CFrame = targetRoot.CFrame
+			root.Velocity = (targetRoot.Position - root.Position).Unit * 150
+
+		end
+
+		RunService.Heartbeat:Wait()
+
+	end
+
+	enabled = false
+	root.CFrame = oldPos
+
+end
+
+-- =========================
+-- เตะเมื่อเดินชน
+-- =========================
+
+TrollSection:Toggle({
+Title="เตะ",
+Default=false,
+Callback=function(state)
+	touchKick = state
+end
+})
+
+RunService.Heartbeat:Connect(function()
+
+	if not touchKick then return end
+
+	local char = player.Character
+	if not char then return end
+
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+
+	for _,plr in pairs(Players:GetPlayers()) do
+
+		if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+
+			local dist = (root.Position - plr.Character.HumanoidRootPart.Position).Magnitude
+
+			if dist < 3 then
+				flingPlayer(plr)
+			end
+
+		end
+
+	end
+
+end)
+
+-- =========================
+-- เตะทุกคนในเซิฟ
+-- =========================
+
+TrollSection:Toggle({
+Title="เตะทุกคนในเซิฟ",
+Default=false,
+Callback=function(state)
+
+	flingAll = state
+
+	if state then
+
+		task.spawn(function()
+
+			while flingAll do
+
+				for _,plr in pairs(Players:GetPlayers()) do
+
+					if not flingAll then break end
+
+					if plr ~= player then
+
+						flingPlayer(plr)
+						task.wait(1)
+
+					end
+
+				end
+
+			end
+
+		end)
+
+	end
+
+end
+})
+
+-- =========================
+-- SECTION การเคลื่อนไหว
+-- =========================
+
+local MoveSection = SettingsTab:Section({
+Title = "การเคลื่อนไหว"
+})
+
+-- =========================
+-- VARIABLES
+-- =========================
+
+local walkSpeed = 16
+local jumpPower = 50
+local infJump = false
+
+-- =========================
+-- ปรับความเร็ว
+-- =========================
+
+MoveSection:Slider({
+Title = "ความเร็ว",
+Step = 1,
+Value = {
+Min = 16,
+Max = 200,
+Default = 16
+},
+Callback = function(value)
+
+	walkSpeed = value
+
+	if player.Character and player.Character:FindFirstChild("Humanoid") then
+		player.Character.Humanoid.WalkSpeed = walkSpeed
+	end
+
+end
+})
+
+-- =========================
+-- ปรับกระโดดสูง
+-- =========================
+
+MoveSection:Slider({
+Title = "ความสูงกระโดด",
+Step = 1,
+Value = {
+Min = 50,
+Max = 200,
+Default = 50
+},
+Callback = function(value)
+
+	jumpPower = value
+
+	if player.Character and player.Character:FindFirstChild("Humanoid") then
+		player.Character.Humanoid.JumpPower = jumpPower
+	end
+
+end
+})
+
+-- =========================
+-- กระโดดไม่จำกัด
+-- =========================
+
+MoveSection:Toggle({
+Title = "กระโดดไม่จำกัด",
+Default = false,
+Callback = function(state)
+
+	infJump = state
+
+end
+})
+
+-- =========================
+-- INFINITE JUMP SYSTEM
+-- =========================
+
+local UIS = game:GetService("UserInputService")
+
+UIS.JumpRequest:Connect(function()
+
+	if infJump then
+
+		local char = player.Character
+		if char and char:FindFirstChild("Humanoid") then
+			char.Humanoid:ChangeState("Jumping")
+		end
+
+	end
+
+end)
+
+-- =========================
+-- SECTION เสกอาวุธ
+-- =========================
+
+local WeaponSection = SettingsTab:Section({
+Title = "เสกอาวุธ"
+})
+
+-- =========================
+-- FUNCTION หา Tool ทั้งเกม
+-- =========================
+
+local function findTool(toolName)
+
+	for _,v in pairs(game:GetDescendants()) do
+		if v:IsA("Tool") and v.Name == toolName then
+			return v
+		end
+	end
+
+end
+
+-- =========================
+-- เสกมีด
+-- =========================
+
+WeaponSection:Button({
+Title = "เสกมีด",
+Callback = function()
+
+	local tool = findTool("Knife")
+
+	if tool then
+		local clone = tool:Clone()
+		clone.Parent = player.Backpack
+	end
+
+end
+})
+
+-- =========================
+-- เสกปืน
+-- =========================
+
+WeaponSection:Button({
+Title = "เสกปืน",
+Callback = function()
+
+	local tool = findTool("Gun")
+
+	if tool then
+		local clone = tool:Clone()
+		clone.Parent = player.Backpack
+	end
+
+end
+})
+
+-- =========================
+-- SECTION เสกไอเทม
+-- =========================
+
+local SpawnItemSection = SettingsTab:Section({
+Title = "เสกไอเทม"
+})
+
+local selectedItem = nil
+local itemList = {}
+
+-- =========================
+-- สแกน Tool ทั้งเกม
+-- =========================
+
+local function scanTools()
+
+	itemList = {}
+
+	for _,v in pairs(game:GetDescendants()) do
+		if v:IsA("Tool") then
+			table.insert(itemList,v.Name)
+		end
+	end
+
+	table.sort(itemList)
+
+end
+
+scanTools()
+
+-- =========================
+-- Dropdown เลือกไอเทม
+-- =========================
+
+local ItemDropdown = SpawnItemSection:Dropdown({
+Title = "เลือกไอเทม",
+Values = itemList,
+Multi = false,
+AllowNone = true,
+Callback = function(value)
+	selectedItem = value
+end
+})
+
+-- =========================
+-- ปุ่มสแกนไอเทม
+-- =========================
+
+SpawnItemSection:Button({
+Title = "สแกนไอเทมในเกม",
+Callback = function()
+
+	scanTools()
+	ItemDropdown:Refresh(itemList)
+
+end
+})
+
+-- =========================
+-- ปุ่มเสกไอเทม
+-- =========================
+
+SpawnItemSection:Button({
+Title = "เสกไอเทม(ของปลอม)",
+Callback = function()
+
+	if not selectedItem then return end
+
+	for _,v in pairs(game:GetDescendants()) do
+		if v:IsA("Tool") and v.Name == selectedItem then
+
+			local clone = v:Clone()
+			clone.Parent = player.Backpack
+			break
+
+		end
+	end
+
+end
+})
+
+-- =========================
+-- SECTION HITBOX
+-- =========================
+
+local HitboxSection = MurderTab:Section({
+Title = "Hitbox"
+})
+
+local hitboxEnabled = false
+local hitboxSize = 12
+local circle = nil
+
+-- =========================
+-- สร้างวงกลม
+-- =========================
+
+local function createCircle()
+
+	if circle then
+		circle:Destroy()
+	end
+
+	circle = Instance.new("Part")
+	circle.Name = "RedCircle"
+	circle.Shape = Enum.PartType.Cylinder
+	circle.Size = Vector3.new(0.2, hitboxSize, hitboxSize)
+	circle.Color = Color3.fromRGB(255,0,0)
+	circle.Material = Enum.Material.Neon
+	circle.Anchored = true
+	circle.CanCollide = false
+	circle.Parent = workspace
+
+	circle.Orientation = Vector3.new(0,0,90)
+
+end
+
+-- =========================
+-- เปิด / ปิด
+-- =========================
+
+HitboxSection:Toggle({
+Title="ขยายฮิตบล็อก",
+Default=false,
+Callback=function(state)
+
+	hitboxEnabled = state
+
+	if state then
+		createCircle()
+	else
+		if circle then
+			circle:Destroy()
+			circle = nil
+		end
+	end
+
+end
+})
+
+-- =========================
+-- ปรับขนาดวง
+-- =========================
+
+HitboxSection:Slider({
+Title="ขนาดฮิตบล็อก",
+Step=1,
+Value={
+Min=6,
+Max=50,
+Default=12
+},
+Callback=function(value)
+
+	hitboxSize = value
+
+	if circle then
+		circle.Size = Vector3.new(0.2,hitboxSize,hitboxSize)
+	end
+
+end
+})
+
+-- =========================
+-- LOOP ระบบดูดผู้เล่น
+-- =========================
+
+local RunService = game:GetService("RunService")
+
+RunService.RenderStepped:Connect(function()
+
+	if not hitboxEnabled then return end
+
+	local char = player.Character
+	if not char then return end
+
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+
+	if circle then
+		circle.Position = Vector3.new(
+			root.Position.X,
+			root.Position.Y - 3,
+			root.Position.Z
+		)
+	end
+
+	for _,plr in pairs(Players:GetPlayers()) do
+
+		if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+
+			local enemyRoot = plr.Character.HumanoidRootPart
+
+			local dist = (enemyRoot.Position - root.Position).Magnitude
+
+			if dist < (hitboxSize/2) then
+
+				enemyRoot.CFrame =
+					root.CFrame *
+					CFrame.new(0,0,-4)
+
+			end
+
+		end
+
+	end
+
+end)
+
+-- =========================
+-- SECTION MASS KILL
+-- =========================
+
+local KillSection = MurderTab:Section({
+Title = "Mass Kill"
+})
+
+local killAll = false
+local autoKill = false
+
+-- =========================
+-- FUNCTION ดึงผู้เล่น
+-- =========================
+
+local function pullPlayers()
+
+	local char = player.Character
+	if not char then return end
+
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+
+	-- ถือมีด
+	local knife =
+		char:FindFirstChild("Knife") or
+		player.Backpack:FindFirstChild("Knife")
+
+	if knife and knife.Parent ~= char then
+		knife.Parent = char
+	end
+
+	for _,plr in pairs(Players:GetPlayers()) do
+
+		if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+
+			local enemyRoot = plr.Character.HumanoidRootPart
+
+			enemyRoot.CFrame =
+				root.CFrame *
+				CFrame.new(0,0,-3)
+
+		end
+
+	end
+
+end
+
+-- =========================
+-- Toggle ฆ่าทุกคน
+-- =========================
+
+KillSection:Toggle({
+Title="ฆ่าทุกคน",
+Default=false,
+Callback=function(state)
+
+	killAll = state
+
+	if state then
+		pullPlayers()
+	end
+
+end
+})
+
+-- =========================
+-- Toggle ออโต้ฆ่าทุกคน
+-- =========================
+
+KillSection:Toggle({
+Title="ออโต้ฆ่าทุกคน",
+Default=false,
+Callback=function(state)
+
+	autoKill = state
+
+end
+})
+
+-- =========================
+-- LOOP ตรวจมีด
+-- =========================
+
+RunService.RenderStepped:Connect(function()
+
+	if not autoKill then return end
+
+	local char = player.Character
+	if not char then return end
+
+	local knife =
+		char:FindFirstChild("Knife") or
+		player.Backpack:FindFirstChild("Knife")
+
+	if knife then
+		pullPlayers()
+	end
+
+end)
+
+
+	
+
+-- =========================
+-- WALK THROUGH PLAYERS
+-- =========================
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+
+local walkThrough = false
+
+RunService.Stepped:Connect(function()
+
+	if not walkThrough then return end
+
+	local char = player.Character
+	if not char then return end
+
+	for _,plr in pairs(Players:GetPlayers()) do
+
+		if plr ~= player and plr.Character then
+
+			for _,part in pairs(plr.Character:GetDescendants()) do
+				if part:IsA("BasePart") then
+					part.CanCollide = false
+				end
+			end
+
+		end
+
+	end
+
+end)
+
+
+-- =========================
+-- BUTTON
+-- =========================
+
+MainTab:Toggle({
+Title="เดินทะลุเพื่อน",
+Default=false,
+Callback=function(state)
+
+	walkThrough = state
+
+	if not state then
+
+		for _,plr in pairs(Players:GetPlayers()) do
+			if plr.Character then
+				for _,part in pairs(plr.Character:GetDescendants()) do
+					if part:IsA("BasePart") then
+						part.CanCollide = true
+					end
+				end
+			end
+		end
+
+	end
+
+end
+})
+
+-- =========================
+-- SERVICES
+-- =========================
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local selectedPlayer = nil
+
+-- =========================
+-- FUNCTION รายชื่อผู้เล่น
+-- =========================
+
+local function getPlayerList()
+
+	local list = {}
+
+	for _,plr in pairs(Players:GetPlayers()) do
+		if plr ~= player then
+			table.insert(list, plr.Name)
+		end
+	end
+
+	return list
+
+end
+
+-- =========================
+-- DROPDOWN เลือกผู้เล่น
+-- =========================
+
+local playerDropdown = TeleportTab:Dropdown({
+	Title = "เลือกผู้เล่น",
+	Values = getPlayerList(),
+	Callback = function(value)
+		selectedPlayer = value
+	end
+})
+
+-- =========================
+-- ปุ่มวาร์ป
+-- =========================
+
+TeleportTab:Button({
+	Title = "วาร์ปไปหาเพื่อน",
+	Callback = function()
+
+		if not selectedPlayer then
+			return
+		end
+
+		local target = Players:FindFirstChild(selectedPlayer)
+
+		if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+
+			local myChar = player.Character
+			if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+
+				myChar.HumanoidRootPart.CFrame =
+				target.Character.HumanoidRootPart.CFrame + Vector3.new(2,0,0)
+
+			end
+
+		end
+
+	end
+})
+
+-- =========================
+-- UPDATE รายชื่อผู้เล่น
+-- =========================
+
+local function refreshPlayers()
+	playerDropdown:Refresh(getPlayerList())
+end
+
+Players.PlayerAdded:Connect(refreshPlayers)
+Players.PlayerRemoving:Connect(refreshPlayers)
+
+-- =========================
+-- WALK THROUGH PLAYERS
+-- =========================
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+
+local walkThrough = false
+
+RunService.Stepped:Connect(function()
+
+	if not walkThrough then return end
+
+	local char = player.Character
+	if not char then return end
+
+	for _,plr in pairs(Players:GetPlayers()) do
+
+		if plr ~= player and plr.Character then
+
+			for _,part in pairs(plr.Character:GetDescendants()) do
+				if part:IsA("BasePart") then
+					part.CanCollide = false
+				end
+			end
+
+		end
+
+	end
+
+end)
+
+
+-- =========================
+-- BUTTON
+-- =========================
+
+MainTab:Toggle({
+Title="เดินทะลุเพื่อน",
+Default=false,
+Callback=function(state)
+
+	walkThrough = state
+
+	if not state then
+
+		for _,plr in pairs(Players:GetPlayers()) do
+			if plr.Character then
+				for _,part in pairs(plr.Character:GetDescendants()) do
+					if part:IsA("BasePart") then
+						part.CanCollide = true
+					end
+				end
+			end
+		end
+
+	end
+
+end
+})
+
+-- =========================
+-- SERVICES
+-- =========================
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+
+local player = Players.LocalPlayer
+
+local floatingGunButton = nil
+
+-- =========================
+-- FIND GUNDROP (SCAN MAP)
+-- =========================
+
+local function findGunDrop()
+
+	for _,v in ipairs(workspace:GetDescendants()) do
+
+		if v.Name == "GunDrop" and v:IsA("BasePart") then
+			return v
+		end
+
+	end
+
+	return nil
+end
+
+
+-- =========================
+-- CREATE FLOATING BUTTON
+-- =========================
+
+local function createFloatingGunButton()
+
+	if floatingGunButton then return end
+
+	local FloatingGui = Instance.new("ScreenGui")
+	FloatingGui.Name = "GunTeleportButton"
+	FloatingGui.ResetOnSpawn = false
+	FloatingGui.Parent = player.PlayerGui
+
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(0,140,0,52)
+	btn.Position = UDim2.new(0.5,-70,0.87,0)
+	btn.AnchorPoint = Vector2.new(0.5,0)
+	btn.BackgroundColor3 = Color3.fromRGB(180,220,255)
+	btn.BackgroundTransparency = 0.35
+	btn.TextColor3 = Color3.fromRGB(0,70,150)
+	btn.Text = "เก็บปืน"
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 14
+	btn.Parent = FloatingGui
+	btn.Active = true
+	btn.Draggable = true
+
+	local corner = Instance.new("UICorner", btn)
+	corner.CornerRadius = UDim.new(0,18)
+
+	local stroke = Instance.new("UIStroke", btn)
+	stroke.Thickness = 2.5
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	stroke.Color = Color3.fromRGB(0,120,255)
+
+	-- เอฟเฟกต์ขอบวิ่ง
+	task.spawn(function()
+
+		while btn.Parent do
+
+			TweenService:Create(
+				stroke,
+				TweenInfo.new(0.8,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),
+				{Color = Color3.fromRGB(0,80,255)}
+			):Play()
+
+			task.wait(0.8)
+
+			TweenService:Create(
+				stroke,
+				TweenInfo.new(0.8,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),
+				{Color = Color3.fromRGB(160,230,255)}
+			):Play()
+
+			task.wait(0.8)
+
+		end
+
+	end)
+
+
+	-- =========================
+	-- CLICK BUTTON
+	-- =========================
+
+	btn.MouseButton1Click:Connect(function()
+
+		local char = player.Character
+		if not char then return end
+
+		local root = char:FindFirstChild("HumanoidRootPart")
+		if not root then return end
+
+		local gun = findGunDrop()
+		if not gun then return end
+
+		local oldPos = root.CFrame
+
+		root.CFrame = gun.CFrame + Vector3.new(0,2,0)
+
+		task.wait(0.3)
+
+		root.CFrame = oldPos
+
+	end)
+
+	floatingGunButton = FloatingGui
+
+end
+
+
+-- =========================
+-- REMOVE FLOATING BUTTON
+-- =========================
+
+local function removeFloatingGunButton()
+
+	if floatingGunButton then
+		floatingGunButton:Destroy()
+		floatingGunButton = nil
+	end
+
+end
+
+
+-- =========================
+-- WINDUI TOGGLE
+-- =========================
+
+SettingsTab:Toggle({
+Title="วาร์ปไปเก็บปืน(ปุ่มลอย)",
+Default=false,
+Callback=function(state)
+
+	if state then
+		createFloatingGunButton()
+	else
+		removeFloatingGunButton()
+	end
+
+end
+})
+
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+
+local autoWin = false
+local undergroundPos
+
+local function getCharacter()
+	return player.Character or player.CharacterAdded:Wait()
+end
+
+local function findKnifePlayer()
+	for _,plr in pairs(Players:GetPlayers()) do
+		if plr ~= player then
+			local char = plr.Character
+			if char and char:FindFirstChild("Knife") then
+				return plr
+			end
+		end
+	end
+end
+
+local function hasGun()
+	local char = getCharacter()
+	if char:FindFirstChild("Gun") then
+		return true
+	end
+	if player.Backpack:FindFirstChild("Gun") then
+		return true
+	end
+	return false
+end
+
+local function hasKnife()
+	local char = getCharacter()
+	if char:FindFirstChild("Knife") then
+		return true
+	end
+	if player.Backpack:FindFirstChild("Knife") then
+		return true
+	end
+	return false
+end
+
+MapTab:Toggle({
+Title="ออโต้ชนะ",
+Default=false,
+Callback=function(state)
+
+autoWin = state
+
+if not state then
+	return
+end
+
+task.spawn(function()
+
+local char = getCharacter()
+local root = char:WaitForChild("HumanoidRootPart")
+
+-- วาร์ปลงใต้ดิน
+undergroundPos = root.Position - Vector3.new(0,15,0)
+root.CFrame = CFrame.new(undergroundPos)
+
+RunService.Heartbeat:Connect(function()
+
+if not autoWin then return end
+if not root then return end
+
+-- ล็อกตำแหน่งใต้ดิน
+root.CFrame = CFrame.new(undergroundPos)
+
+-- กรณีถือปืน
+if hasGun() then
+
+	local murderer = findKnifePlayer()
+
+	if murderer and murderer.Character then
+
+		local mroot = murderer.Character:FindFirstChild("HumanoidRootPart")
+
+		if mroot then
+
+			root.CFrame =
+			mroot.CFrame
+			* CFrame.new(0,5,0)
+
+			-- ตรงนี้ให้ใส่ระบบยิงปืนที่มึงเคยใช้
+			-- เช่น remote:FireServer(murderer)
+
+		end
+
+	end
+
+end
+
+-- กรณีถือมีด
+if hasKnife() then
+
+	for _,plr in pairs(Players:GetPlayers()) do
+
+		if plr ~= player and plr.Character then
+
+			local targetRoot =
+			plr.Character:FindFirstChild("HumanoidRootPart")
+
+			if targetRoot then
+
+				targetRoot.CFrame =
+				root.CFrame
+				* CFrame.new(0,0,-5)
+
+			end
+
+		end
+
+	end
+
+end
+
+end)
+
+end)
+
+end
+})
+
+local Players = game:GetService("Players")  
+local TweenService = game:GetService("TweenService")  
+  
+local player = Players.LocalPlayer  
+  
+-- =========================  
+-- หา Murderer  
+-- =========================  
+  
+local function getMurderer()  
+  
+	for _,plr in pairs(Players:GetPlayers()) do  
+  
+		if plr ~= player then  
+  
+			local char = plr.Character  
+			local backpack = plr:FindFirstChild("Backpack")  
+  
+			if char and char:FindFirstChild("Knife") then  
+				return plr  
+			end  
+  
+			if backpack and backpack:FindFirstChild("Knife") then  
+				return plr  
+			end  
+  
+		end  
+  
+	end  
+  
+end  
+  
+-- =========================  
+-- ยิงฆาตกร  
+-- =========================  
+  
+local function shootMurderer()
+
+    local char = player.Character
+    if not char then return end
+
+    local gun =
+        char:FindFirstChild("Gun")
+        or player.Backpack:FindFirstChild("Gun")
+
+    if not gun then return end
+
+    if gun.Parent ~= char then
+        gun.Parent = char
+    end
+
+    local remote = gun:FindFirstChild("Shoot")  -- ✅ แก้ตรงนี้
+    if not remote then return end
+
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    local attachment = root:FindFirstChild("GunRaycastAttachment")
+    if not attachment then return end
+
+    local murderer = getMurderer()
+    if not murderer then return end
+
+    local mchar = murderer.Character
+    if not mchar then return end
+
+    local mroot = mchar:FindFirstChild("HumanoidRootPart")
+    if not mroot then return end
+
+    local velocity = mroot.AssemblyLinearVelocity
+    local predictedPosition =
+        mroot.Position + velocity * 0.15
+
+    remote:FireServer(
+        attachment.WorldCFrame,
+        CFrame.new(predictedPosition)
+    )
+
+end
+  
+-- =========================  
+-- ปุ่มลอยยิงฆาตกร  
+-- =========================  
+  
+local floatingShootButton = nil  
+  
+local function createFloatingShootButton()  
+  
+	if floatingShootButton then  
+		floatingShootButton:Destroy()  
+	end  
+  
+	local FloatingGui = Instance.new("ScreenGui")  
+	FloatingGui.Parent = player.PlayerGui  
+	FloatingGui.ResetOnSpawn = false  
+  
+	local btn = Instance.new("TextButton")  
+	btn.Size = UDim2.new(0,140,0,52)  
+	btn.Position = UDim2.new(0.5,-70,0.87,0)  
+	btn.AnchorPoint = Vector2.new(0.5,0)  
+	btn.BackgroundColor3 = Color3.fromRGB(180,220,255)  
+	btn.BackgroundTransparency = 0.35  
+	btn.TextColor3 = Color3.fromRGB(0,70,150)  
+	btn.Text = "ยิงฆาตกร"  
+	btn.Font = Enum.Font.GothamBold  
+	btn.TextSize = 14  
+	btn.Parent = FloatingGui  
+	btn.Active = true  
+	btn.Draggable = true  
+  
+	local corner = Instance.new("UICorner", btn)  
+	corner.CornerRadius = UDim.new(0,18)  
+  
+	local stroke = Instance.new("UIStroke", btn)  
+	stroke.Thickness = 2.5  
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border  
+	stroke.Color = Color3.fromRGB(0,120,255)  
+  
+	-- เอฟเฟกต์ขอบไล่สี  
+	task.spawn(function()  
+  
+		while btn.Parent do  
+  
+			TweenService:Create(  
+				stroke,  
+				TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),  
+				{Color = Color3.fromRGB(0,80,255)}  
+			):Play()  
+  
+			task.wait(0.8)  
+  
+			TweenService:Create(  
+				stroke,  
+				TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),  
+				{Color = Color3.fromRGB(160,230,255)}  
+			):Play()  
+  
+			task.wait(0.8)  
+  
+		end  
+  
+	end)  
+  
+	btn.MouseButton1Click:Connect(function()  
+  
+		shootMurderer()  
+  
+	end)  
+  
+	floatingShootButton = FloatingGui  
+  
+end  
+  
+-- =========================  
+-- ปุ่มใน GunTab  
+-- =========================  
+  
+GunTab:Button({  
+	Title="ยิงฆาตกร",  
+	Callback=function()  
+  
+		shootMurderer()  
+  
+	end  
+})  
+  
+GunTab:Button({  
+	Title="ยิงฆาตกร (ปุ่มลอย)",  
+	Callback=function()  
+  
+		createFloatingShootButton()  
+  
+	end  
+})
+
+-- =========================
+-- ROLE ESP SYSTEM
+-- =========================
+
+local roleESP = {
+	murder = false,
+	sheriff = false,
+	innocent = false
+}
+
+local espObjects = {}
+
+local function clearESP()
+
+	for _,v in pairs(espObjects) do
+		if v then
+			v:Destroy()
+		end
+	end
+
+	espObjects = {}
+
+end
+
+
+local function createESP(plr,color,text)
+
+	if not plr.Character then return end
+	local char = plr.Character
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+
+	local highlight = Instance.new("Highlight")
+	highlight.FillTransparency = 1
+	highlight.OutlineColor = color
+	highlight.OutlineTransparency = 0
+	highlight.Parent = char
+
+	local bill = Instance.new("BillboardGui")
+	bill.Size = UDim2.new(0,120,0,40)
+	bill.StudsOffset = Vector3.new(0,3,0)
+	bill.AlwaysOnTop = true
+	bill.Parent = root
+
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(1,0,1,0)
+	label.BackgroundTransparency = 1
+	label.TextColor3 = color
+	label.TextStrokeTransparency = 0
+	label.Font = Enum.Font.GothamBold
+	label.TextScaled = true
+	label.Text = text
+	label.Parent = bill
+
+	table.insert(espObjects,highlight)
+	table.insert(espObjects,bill)
+
+end
+
+
+local function updateESP()
+
+	clearESP()
+
+	for _,plr in pairs(Players:GetPlayers()) do
+
+		if plr ~= player then
+
+			local char = plr.Character
+			local backpack = plr:FindFirstChild("Backpack")
+
+			if char then
+
+				local hasKnife =
+				(char:FindFirstChild("Knife"))
+				or
+				(backpack and backpack:FindFirstChild("Knife"))
+
+				local hasGun =
+				(char:FindFirstChild("Gun"))
+				or
+				(backpack and backpack:FindFirstChild("Gun"))
+
+				if roleESP.murder and hasKnife then
+					createESP(plr,Color3.fromRGB(255,0,0),"ไอ้ชั่ว")
+				end
+
+				if roleESP.sheriff and hasGun then
+					createESP(plr,Color3.fromRGB(0,120,255),"นักปราบชั่ว")
+				end
+
+				if roleESP.innocent and not hasKnife and not hasGun then
+					createESP(plr,Color3.fromRGB(0,255,120),"คนดี")
+				end
+
+			end
+
+		end
+
+	end
+
+end
+
+
+task.spawn(function()
+
+	while true do
+		task.wait(1)
+
+		if roleESP.murder or roleESP.sheriff or roleESP.innocent then
+			updateESP()
+		end
+
+	end
+
+end)
+
+-- =========================
+-- BUTTONS
+-- =========================
+
+MainTab:Toggle({
+	Title="มองหาฆาตกร",
+	Default=false,
+	Callback=function(v)
+
+		roleESP.murder = v
+		updateESP()
+
+	end
+})
+
+MainTab:Toggle({
+	Title="มองหานายอำเภอ",
+	Default=false,
+	Callback=function(v)
+
+		roleESP.sheriff = v
+		updateESP()
+
+	end
+})
+
+MainTab:Toggle({
+	Title="มองผู้บริสุทธิ์",
+	Default=false,
+	Callback=function(v)
+
+		roleESP.innocent = v
+		updateESP()
+
+	end
+})
+
+local RunService = game:GetService("RunService")
+
+local flying = false
+local autoReset = false
+local flyMode = "ปกติ"
+
+local collectedCoins = {}
+local startedCollecting = false
+local flySpeed = 16
+
+--========================
+-- UI
+--========================
+
+MapTab:Paragraph({
+    Title = "คำเตือน",
+    Desc = "⚠️ แนะนำให้ปรับ 19 ถ้าเกินเสี่ยงโดนแบน"
+})
+
+MapTab:Slider({
+    Title = "ความเร็วลอย",
+    Value = {Min = 1, Max = 26, Default = 16},
+    Callback = function(v)
+        flySpeed = v
+    end
+})
+
+MapTab:Dropdown({
+    Title = "ท่าลอย",
+    Values = {"ปกติ", "นอนคว่ำ"},
+    Default = "ปกติ",
+    Callback = function(v)
+        flyMode = v
+    end
+})
+
+MapTab:Toggle({
+    Title = "รีตัวเมื่อเหรียญหมด",
+    Default = false,
+    Callback = function(v)
+        autoReset = v
+    end
+})
+
+--========================
+-- CHARACTER
+--========================
+
+local function getChar()
+    return player.Character or player.CharacterAdded:Wait()
+end
+
+local function noclipLoop(char)
+    task.spawn(function()
+        while flying and char.Parent do
+            for _, v in pairs(char:GetDescendants()) do
+                if v:IsA("BasePart") then
+                    v.CanCollide = false
+                end
+            end
+            RunService.Stepped:Wait()
+        end
+    end)
+end
+
+local function restore()
+    local char = getChar()
+    local hum = char:WaitForChild("Humanoid")
+    local hrp = char:WaitForChild("HumanoidRootPart")
+
+    hum.PlatformStand = false
+    hrp.AssemblyLinearVelocity = Vector3.zero
+
+    for _, v in pairs(char:GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.CanCollide = true
+        end
+    end
+end
+
+-- ตรวจจับเมื่อตายแล้วเกิดใหม่
+player.CharacterAdded:Connect(function(char)
+    if not flying then return end
+
+    -- รอให้ทุก part โหลดเสร็จก่อน
+    char:WaitForChild("HumanoidRootPart")
+    char:WaitForChild("Humanoid")
+
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    local lastPos = hrp.Position
+    repeat
+        task.wait(0.2)
+        local newPos = hrp.Position
+        if (newPos - lastPos).Magnitude > 1 then
+            lastPos = newPos
+        else
+            break
+        end
+    until not flying
+
+    task.wait(0.3)
+
+    if flying then
+        -- noclip ทันทีก่อนเลย ไม่รอ
+        for _, v in pairs(char:GetDescendants()) do
+            if v:IsA("BasePart") then
+                v.CanCollide = false
+            end
+        end
+        noclipLoop(char) -- แล้วค่อย loop ต่อเนื่อง
+    end
+end)
+
+--========================
+-- หาเหรียญใกล้สุด (เฉพาะหมุนปกติ)
+--========================
+
+local function getNearestCoin(root)
+    local nearest
+    local dist = math.huge
+
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v.Name == "Coin_Server"
+        and v:IsA("BasePart")
+        and v:FindFirstChild("TouchInterest")
+        and v:FindFirstChild("CoinVisual")
+        and not collectedCoins[v]
+        and not v:GetAttribute("Collected") then
+
+            local d = (root.Position - v.Position).Magnitude
+
+            if d < dist then
+                dist = d
+                nearest = v
+            end
+        end
+    end
+
+    return nearest
+end
+
+--========================
+-- ลอยไปเหรียญ
+--========================
+
+local function flyTo(targetPart)
+    local char = getChar()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    local hum = char:WaitForChild("Humanoid")
+
+    hum.PlatformStand = true
+    local timeout = tick() + 10
+
+    while flying and char.Parent and targetPart.Parent do
+        if tick() > timeout then break end
+        if targetPart:GetAttribute("Collected") then break end
+
+        local targetPos = targetPart.Position
+
+        if flyMode == "นอนคว่ำ" then
+            targetPos = targetPos - Vector3.new(0, 3, 0)
+        end
+
+        local dir = (targetPos - hrp.Position).Unit
+        hrp.AssemblyLinearVelocity = dir * flySpeed
+
+        if flyMode == "นอนคว่ำ" then
+            hrp.CFrame = CFrame.new(hrp.Position, targetPart.Position)
+                * CFrame.Angles(math.rad(90), 0, 0)
+        else
+            hrp.CFrame = CFrame.new(hrp.Position, targetPart.Position)
+        end
+
+        if (hrp.Position - targetPos).Magnitude < 2 then
+            hrp.CFrame = CFrame.new(targetPos)
+            break
+        end
+
+        RunService.RenderStepped:Wait()
+    end
+
+    hrp.AssemblyLinearVelocity = Vector3.zero
+    collectedCoins[targetPart] = true
+    startedCollecting = true
+end
+
+--========================
+-- TOGGLE ฟามเหรียญ
+--========================
+
+MapTab:Toggle({
+    Title = "ฟามเหรียญ",
+    Default = false,
+    Callback = function(state)
+        flying = state
+        collectedCoins = {}
+        startedCollecting = false
+
+        local char = getChar()
+
+        if not state then
+            restore()
+            return
+        end
+
+        noclipLoop(char)
+
+        task.spawn(function()
+            while flying do
+                local ok, err = pcall(function()
+                    local char = getChar()
+                    local root = char:WaitForChild("HumanoidRootPart", 5)
+                    if not root then return end
+
+                    local coin = getNearestCoin(root)
+
+                    if coin then
+                        flyTo(coin)
+                    else
+                        if autoReset and startedCollecting then
+                            if char then
+                                char:BreakJoints()
+                            end
+                            task.wait(2)
+                            startedCollecting = false
+                        end
+                        task.wait(0.1)
+                    end
+                end)
+
+                if not ok then
+                    warn("CoinFarm error: " .. tostring(err))
+                    task.wait(0.5)
+                end
+            end
+        end)
+    end
+})
+
+-- =========================
+-- เมนูหลัก: กันโดนเตะ
+-- =========================
+local AntiAFKConnection
+
+MapTab:Toggle({
+    Title = "กันโดนเตะ",
+    Default = true, -- เปิดตลอดเวลา
+    Callback = function(state)
+        if state then
+            if not AntiAFKConnection then
+                AntiAFKConnection = player.Idled:Connect(function()
+                    pcall(function()
+                        local VirtualUser = game:GetService("VirtualUser")
+                        VirtualUser:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+                        task.wait(1)
+                        VirtualUser:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+                    end)
+                end)
+            end
+        else
+            if AntiAFKConnection then
+                AntiAFKConnection:Disconnect()
+                AntiAFKConnection = nil
+            end
+        end
+    end
+})
+
+-- เปิดทำงานอัตโนมัติเลย
+MapTab:GetToggle("กันโดนเตะ"):SetState(true)
