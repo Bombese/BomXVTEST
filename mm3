@@ -21,7 +21,7 @@ local gunDropEnabled = false
 
 local Window = WindUI:CreateWindow({
 Title = "CoreForce X",
-Icon = "cpu",
+Icon = "rbxassetid://105075040184016",
 Author = "Developer",
 Folder = "TEST",
 
