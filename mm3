@@ -22,8 +22,8 @@ local gunDropEnabled = false
 local Window = WindUI:CreateWindow({
 Title = "CoreForce X",
 Icon = "rbxassetid://105075040184016",
-Author = "Developer",
-Folder = "TEST",
+Author = "Dev : ❄️YukiPuff☁️",
+Folder = "Star",
 
 Size = UDim2.fromOffset(580,460),
 MinSize = Vector2.new(560,350),
@@ -665,7 +665,7 @@ end
 })
 
 TeleportTab:Button({
-Title="วาร์ปไปล็อบบี้",
+Title="TP to Lobby ",
 Callback=function()
 
 local char = player.Character
@@ -1060,7 +1060,7 @@ end
 })
 
 VisualsTab:Button({
-Title="กระเด็นคนที่เลือก",
+Title="Bounce Players",
 Callback=function()
 
 	if selectedPlayer then
@@ -1635,7 +1635,7 @@ end
 -- =========================
 
 KillSection:Toggle({
-Title="ฆ่าทุกคน",
+Title="TP Kill",
 Default=false,
 Callback=function(state)
 
@@ -2428,15 +2428,15 @@ local function updateESP()
 				(backpack and backpack:FindFirstChild("Gun"))
 
 				if roleESP.murder and hasKnife then
-					createESP(plr,Color3.fromRGB(255,0,0),"ไอ้ชั่ว")
+					createESP(plr,Color3.fromRGB(255,0,0),"Merder")
 				end
 
 				if roleESP.sheriff and hasGun then
-					createESP(plr,Color3.fromRGB(0,120,255),"นักปราบชั่ว")
+					createESP(plr,Color3.fromRGB(0,120,255),"Sheriff")
 				end
 
 				if roleESP.innocent and not hasKnife and not hasGun then
-					createESP(plr,Color3.fromRGB(0,255,120),"คนดี")
+					createESP(plr,Color3.fromRGB(0,255,120),"Innocent")
 				end
 
 			end
