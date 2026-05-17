@@ -108,3 +108,61 @@ RunService.Heartbeat:Connect(function()
         end
     end)
 end)
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local LocalPlayer = Players.LocalPlayer
+
+-- ค่าหลัก
+local HitboxEnabled = false
+local HitboxSize = 10
+
+-- Tab เดิมของมึง
+local Tab = Window:Tab({
+    Title = "Hitbox",
+    Icon = "rbxassetid://6031280882"
+})
+
+-- Slider ปรับขนาด
+Tab:Slider({
+    Title = "Hitbox Size",
+    Min = 2,
+    Max = 30,
+    Default = 10,
+    Callback = function(v)
+        HitboxSize = v
+    end
+})
+
+-- Toggle เปิด/ปิด
+Tab:Toggle({
+    Title = "Enable Hitbox",
+    Default = false,
+    Callback = function(v)
+        HitboxEnabled = v
+    end
+})
+
+-- ระบบ Hitbox
+local function Apply(plr)
+    if plr == LocalPlayer then return end
+    local char = plr.Character
+    if not char then return end
+
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        hrp.Size = Vector3.new(HitboxSize, HitboxSize, HitboxSize)
+        hrp.Transparency = 0.6
+        hrp.Material = Enum.Material.Neon
+        hrp.Color = Color3.fromRGB(255, 0, 0)
+        hrp.CanCollide = false
+    end
+end
+
+RunService.Heartbeat:Connect(function()
+    if not HitboxEnabled then return end
+
+    for _,plr in pairs(Players:GetPlayers()) do
+        Apply(plr)
+    end
+end)
