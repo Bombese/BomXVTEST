@@ -15,3 +15,96 @@ local Window = WindUI:CreateWindow({
         Draggable = true,
     }
 })
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+local SelectedPlayer = nil
+local FloatEnabled = false
+
+-- สร้าง Tab
+local MainTab = Window:Tab({
+    Title = "Main",
+    Icon = "rbxassetid://6031280882"
+})
+
+-- รายชื่อผู้เล่น
+local function GetPlayerList()
+    local t = {}
+
+    for _,plr in pairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
+            table.insert(t, plr.Name)
+        end
+    end
+
+    return t
+end
+
+-- Dropdown
+local Dropdown = MainTab:Dropdown({
+    Title = "Select Player",
+    Values = GetPlayerList(),
+    Multi = false,
+    Callback = function(v)
+        SelectedPlayer = Players:FindFirstChild(v)
+    end
+})
+
+-- รีเฟรชรายชื่อ
+local function RefreshDropdown()
+    Dropdown:Refresh(GetPlayerList())
+end
+
+Players.PlayerAdded:Connect(RefreshDropdown)
+Players.PlayerRemoving:Connect(RefreshDropdown)
+
+-- Toggle
+MainTab:Toggle({
+    Title = "Float On Head",
+    Default = false,
+    Callback = function(v)
+        FloatEnabled = v
+    end
+})
+
+-- NoClip
+local function NoClip(char)
+    for _,v in pairs(char:GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.CanCollide = false
+        end
+    end
+end
+
+if LocalPlayer.Character then
+    NoClip(LocalPlayer.Character)
+end
+
+LocalPlayer.CharacterAdded:Connect(function(char)
+    repeat task.wait() until char:FindFirstChild("HumanoidRootPart")
+    NoClip(char)
+end)
+
+-- ลอย
+RunService.Heartbeat:Connect(function()
+    pcall(function()
+        if FloatEnabled
+        and SelectedPlayer
+        and SelectedPlayer.Character
+        and LocalPlayer.Character then
+
+            local HRP = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            local THRP = SelectedPlayer.Character:FindFirstChild("HumanoidRootPart")
+
+            if HRP and THRP then
+                HRP.CFrame =
+                    THRP.CFrame *
+                    CFrame.new(0,7,0) *
+                    CFrame.Angles(math.rad(-90),0,0)
+
+                HRP.Velocity = Vector3.zero
+            end
+        end
+    end)
+end)
