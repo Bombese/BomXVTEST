@@ -1,0 +1,17 @@
+-- Load WindUI
+local WindUI = loadstring(game:HttpGet(
+    "https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"
+))()
+
+-- Window
+local Window = WindUI:CreateWindow({
+    Title = "SFcondo Script Hiler HUB (Premium)",
+    Icon = "user",
+    Author = "https://discord.gg/AXTKtmUvyf",
+    OpenButton = {
+        Title = "Hitler HUB",
+        Icon = "monitor",
+        Enabled = true,
+        Draggable = true,
+    }
+})
