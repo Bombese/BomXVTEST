@@ -1,9 +1,7 @@
--- Load WindUI
 local WindUI = loadstring(game:HttpGet(
     "https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"
 ))()
 
--- Window
 local Window = WindUI:CreateWindow({
     Title = "SFcondo Script Hiler HUB (Premium)",
     Icon = "user",
@@ -22,13 +20,11 @@ local LocalPlayer = Players.LocalPlayer
 local SelectedPlayer = nil
 local FloatEnabled = false
 
--- สร้าง Tab
 local MainTab = Window:Tab({
     Title = "Main",
     Icon = "rbxassetid://6031280882"
 })
 
--- รายชื่อผู้เล่น
 local function GetPlayerList()
     local t = {}
 
@@ -41,7 +37,6 @@ local function GetPlayerList()
     return t
 end
 
--- Dropdown
 local Dropdown = MainTab:Dropdown({
     Title = "Select Player",
     Values = GetPlayerList(),
@@ -51,7 +46,6 @@ local Dropdown = MainTab:Dropdown({
     end
 })
 
--- รีเฟรชรายชื่อ
 local function RefreshDropdown()
     Dropdown:Refresh(GetPlayerList())
 end
@@ -59,7 +53,6 @@ end
 Players.PlayerAdded:Connect(RefreshDropdown)
 Players.PlayerRemoving:Connect(RefreshDropdown)
 
--- Toggle
 MainTab:Toggle({
     Title = "Float On Head",
     Default = false,
@@ -68,7 +61,6 @@ MainTab:Toggle({
     end
 })
 
--- NoClip
 local function NoClip(char)
     for _,v in pairs(char:GetDescendants()) do
         if v:IsA("BasePart") then
@@ -86,7 +78,6 @@ LocalPlayer.CharacterAdded:Connect(function(char)
     NoClip(char)
 end)
 
--- ลอย
 RunService.Heartbeat:Connect(function()
     pcall(function()
         if FloatEnabled
@@ -113,17 +104,14 @@ local RunService = game:GetService("RunService")
 
 local LocalPlayer = Players.LocalPlayer
 
--- ค่าหลัก
 local HitboxEnabled = false
 local HitboxSize = 10
 
--- Tab เดิมของมึง
 local Tab = Window:Tab({
     Title = "Hitbox",
     Icon = "rbxassetid://6031280882"
 })
 
--- Slider ปรับขนาด
 Tab:Slider({
     Title = "Hitbox Size",
     Min = 2,
@@ -134,7 +122,6 @@ Tab:Slider({
     end
 })
 
--- Toggle เปิด/ปิด
 Tab:Toggle({
     Title = "Enable Hitbox",
     Default = false,
@@ -143,7 +130,6 @@ Tab:Toggle({
     end
 })
 
--- ระบบ Hitbox
 local function Apply(plr)
     if plr == LocalPlayer then return end
     local char = plr.Character
